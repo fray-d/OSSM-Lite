@@ -18,7 +18,7 @@ using namespace sml;
 // Global OSSM pointer (kept for backward compatibility during migration)
 OSSM *ossm = nullptr;
 
-// Static member definition - now forwards to global settings
+// Static member definition, with first pattern.
 SettingPercents OSSM::setting = {.speed = 0,
                                  .stroke = 50,
                                  .sensation = 50,
@@ -109,7 +109,7 @@ void OSSM::ble_click(String commandString) {
     }
 }
 
-String OSSM::getCurrentState() {
+String OSSM::getCurrentState(bool detailed) {
     String currentState;
     if (stateMachine != nullptr) {
         stateMachine->visit_current_states(
@@ -117,6 +117,10 @@ String OSSM::getCurrentState() {
     }
 
     String json = "{";
+    if (detailed) {
+        json += "\"timestamp\":" + String(millis()) + ",";
+        json += "\"position\":" + String(float(-stepper->getCurrentPosition()) / float(1_mm)) + ",";
+    }
     json += "\"state\":\"" + currentState + "\",";
     json += "\"speed\":" + String((int)settings.speed) + ",";
     json += "\"stroke\":" + String((int)settings.stroke) + ",";

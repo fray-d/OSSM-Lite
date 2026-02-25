@@ -17,6 +17,7 @@ namespace sml = boost::sml;
 using namespace sml;
 
 namespace pattern_controls {
+    
 static void drawPatternControlsTask(void *pvParameters) {
     SettingPercents savedSettings = settings;
 
