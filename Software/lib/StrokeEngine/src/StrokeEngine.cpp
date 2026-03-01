@@ -5,8 +5,7 @@
 #include "pattern.h"
 
 // static pointer to engine and _servo
-void StrokeEngine::begin(machineGeometry *physics, motorProperties *motor,
-                         FastAccelStepper *servo) {
+void StrokeEngine::begin(machineGeometry *physics, motorProperties *motor, FastAccelStepper *servo) {
     _servo = servo;
     // store the machine geometry and motor properties pointer
     _physics = physics;

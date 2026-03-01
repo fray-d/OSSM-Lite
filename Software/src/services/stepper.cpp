@@ -2,7 +2,6 @@
 
 FastAccelStepperEngine stepperEngine = FastAccelStepperEngine();
 FastAccelStepper *stepper = nullptr;
-class StrokeEngine Stroker;
 
 void initStepper() {
     stepperEngine.init();

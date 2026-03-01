@@ -17,6 +17,8 @@
 namespace sml = boost::sml;
 using namespace sml;
 
+class StrokeEngine Stroker;
+
 namespace stroke_engine {
 
 static void startStrokeEngineTask(void *pvParameters) {
