@@ -14,6 +14,7 @@ namespace Tasks {
     extern TaskHandle_t drawPreflightTaskH;
 
     extern TaskHandle_t runHomingTaskH;
+    extern TaskHandle_t runAdvancedPenetrationTaskH;
     extern TaskHandle_t runSimplePenetrationTaskH;
     extern TaskHandle_t runStrokeEngineTaskH;
 
