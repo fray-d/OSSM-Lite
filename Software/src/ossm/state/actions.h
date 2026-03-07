@@ -14,6 +14,7 @@ void ossmResetSettingsSimplePen();
 void ossmResetSettingsStreaming();
 void ossmIncrementControlStrokeEngine();
 void ossmIncrementControlStreaming();
+void ossmStartAdvancedPenetration();
 void ossmStartSimplePenetration();
 void ossmStartStrokeEngine();
 void ossmEmergencyStop();
@@ -54,6 +55,8 @@ namespace actions {
     constexpr auto incrementControlStrokeEngine = []() { ossmIncrementControlStrokeEngine(); };
 
     constexpr auto incrementControlStreaming = []() { ossmIncrementControlStreaming(); };
+
+    constexpr auto startAdvancedPenetration = []() { ossmStartAdvancedPenetration(); };
 
     constexpr auto startSimplePenetration = []() { ossmStartSimplePenetration(); };
 

@@ -31,6 +31,7 @@ struct OSSMStateMachine {
             "homing.backward"_s + done[(isStrokeTooShort)] = "error"_s,
             "homing.backward"_s + done[isFirstHomed] / setHomed = "menu"_s,
             "homing.backward"_s + done[(isOption(Menu::SimplePenetration))] / setHomed = "simplePenetration"_s,
+            "homing.backward"_s + done[(isOption(Menu::AdvancedPenetration))] / setHomed = "advancedPenetration"_s,
             "homing.backward"_s + done[(isOption(Menu::StrokeEngine))] / setHomed = "strokeEngine"_s,
             "homing.backward"_s + done[(isOption(Menu::Streaming))] / setHomed = "streaming"_s,
 
@@ -38,6 +39,7 @@ struct OSSMStateMachine {
             "menu.idle"_s + buttonPress[(isOption(Menu::SimplePenetration))] = "simplePenetration"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::StrokeEngine))] = "strokeEngine"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Streaming))] = "streaming"_s,
+            "menu.idle"_s + buttonPress[(isOption(Menu::AdvancedPenetration))] = "advancedPenetration"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Pairing)) && isOnline] = "pairing"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Pairing)) && !isOnline] = "pairing.wifi"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::UpdateOSSM))] = "update"_s,
@@ -51,6 +53,13 @@ struct OSSMStateMachine {
             "simplePenetration.preflight"_s + done / (resetSettingsSimplePen, drawPlayControls, startSimplePenetration) = "simplePenetration.idle"_s,
             "simplePenetration.preflight"_s + longPress = "menu"_s,
             "simplePenetration.idle"_s + longPress / (emergencyStop, setNotHomed) = "menu"_s,
+
+            "advancedPenetration"_s [isNotHomed] = "homing"_s,
+            "advancedPenetration"_s [isPreflightSafe] / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
+            "advancedPenetration"_s / drawPreflight = "advancedPenetration.preflight"_s,
+            "advancedPenetration.preflight"_s + done / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
+            "advancedPenetration.preflight"_s + longPress = "menu"_s,
+            "advancedPenetration.idle"_s + longPress = "menu"_s,
 
             "strokeEngine"_s [isNotHomed] = "homing"_s,
             "strokeEngine"_s [isPreflightSafe] / (resetSettingsStrokeEngine, drawPlayControls, startStrokeEngine) = "strokeEngine.idle"_s,

@@ -9,6 +9,7 @@ enum Menu {
     SimplePenetration,
     StrokeEngine,
     Streaming,
+    AdvancedPenetration,
     Pairing,
     UpdateOSSM,
     WiFiSetup,
@@ -18,10 +19,15 @@ enum Menu {
 };
 
 static const char* menuStrings[Menu::NUM_OPTIONS] = {
-    UserConfig::language.SimplePenetration, UserConfig::language.StrokeEngine,
-    UserConfig::language.Streaming,         UserConfig::language.Pairing,
-    UserConfig::language.Update,            UserConfig::language.WiFiSetup,
-    UserConfig::language.GetHelp,           UserConfig::language.Restart,
+    UserConfig::language.SimplePenetration, 
+    UserConfig::language.StrokeEngine,
+    UserConfig::language.Streaming,
+    UserConfig::language.AdvancedPenetration,
+    UserConfig::language.Pairing,
+    UserConfig::language.Update,
+    UserConfig::language.WiFiSetup,
+    UserConfig::language.GetHelp,
+    UserConfig::language.Restart,
 };
 
 #endif  // OSSM_SOFTWARE_MENU_H

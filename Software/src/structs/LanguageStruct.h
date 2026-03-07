@@ -19,6 +19,7 @@ struct LanguageStruct {
     const char* Restart;
     const char* Settings;
     const char* SimplePenetration;
+    const char* AdvancedPenetration;
     const char* Skip;
     const char* Speed;
     const char* SpeedWarning;
