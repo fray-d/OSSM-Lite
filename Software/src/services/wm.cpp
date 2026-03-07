@@ -20,7 +20,9 @@ void initWM() {
 #if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 #else
-    WiFi.begin();
+    if (wifiPrefs.begin("wifi", true)) {
+        WiFi.begin();
+    }
 #endif
 
     ESP_LOGI("WM", "WiFi initialization complete, status: %d", WiFi.status());

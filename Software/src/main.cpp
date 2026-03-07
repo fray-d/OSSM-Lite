@@ -89,7 +89,9 @@ void setup() {
                     ESP_LOGD("MAIN", "Initializing communication services");
                     initNimble();
                     initWM();
-                    initMQTT();
+                    if (WiFi.status() == WL_CONNECTED) {
+                        initMQTT();
+                    }
                     initialized = true;
                     vTaskDelete(nullptr);
                 }
