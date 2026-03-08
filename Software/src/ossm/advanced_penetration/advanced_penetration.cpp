@@ -19,29 +19,49 @@ enum AdvancedControls {
     MAX_DEPTH,
     MIN_DEPTH,
     ACCELERATION,
-    Count
+    Count,
+    SPEED //uncounted
+};
+
+struct AdvancedControl {
+    AdvancedControls id;
+    float value;
+    String name;
 };
 
 struct AdvancedSettings {
-    float speed;
-    float maxDepth = 10;
-    float minDepth = 0;
-    float acceleration = 50;
-    float speedKnob;
-    AdvancedControls control = AdvancedControls::MAX_DEPTH;
-    bool operator==(const AdvancedSettings &a) const {
-        return this->speed == a.speed
-        && this->maxDepth == a.maxDepth
-        && this->minDepth == a.minDepth
-        && this->acceleration == a.acceleration
-        && abs(this->speedKnob - a.speedKnob) <= 1;
-    }
-    bool operator!=(const AdvancedSettings &a) const {
-        return !(*this == a);
-    }
+    AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
+    AdvancedControl maxDepth = {AdvancedControls::MAX_DEPTH,10,"Max Depth"};
+    AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
+    AdvancedControl acceleration = {AdvancedControls::ACCELERATION, 50, "Acceleration"};
+
+    AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
 };
 
-AdvancedSettings currentSettings = {0,0};
+AdvancedSettings currentSettings;
+uint8_t controlPosition;
+AdvancedControls lastControl = AdvancedControls::SPEED;
+
+void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
+    if (currentSettings.selectedControl == a.id) {
+        if (lastControl != a.id) {
+            encoder.setEncoderValue(a.value);
+            encoder.setBoundaries(minVal, maxVal, false);
+            lastControl = a.id;
+        } 
+        a.value = constrain(encoder.readEncoder(),minVal, maxVal);
+        display.setFont(Config::Font::bold);
+        String controlText = a.name;
+        uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
+        display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
+        controlPosition += 3;
+        drawShape::settingBar("",a.value, controlPosition, 10, RIGHT_ALIGNED, 0, 40);
+        controlPosition -= 15;
+    } else {
+        drawShape::settingBarSmall(a.value, controlPosition, 10, 40);
+        controlPosition -= 5;
+    }
+}
 
 static void startAdvancedPenetrationTask(void *pvParameters) {
     auto isInCorrectState = []() {
@@ -50,86 +70,36 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                stateMachine->is("advancedPenetration.idle"_s);
     };
 
-    AdvancedSettings lastSettings = {1,1};
-    static float encoderValue = 0;
     encoder.setAcceleration(10);
-    encoder.setBoundaries(0, 100, false);
-    setControlEncoder();
+    float lastEncoder = 0;
 
     while (isInCorrectState()) {
-        currentSettings.speedKnob = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
-        encoderValue = encoder.readEncoder();
-
-        switch(currentSettings.control) {
-            case AdvancedControls::MAX_DEPTH:
-                if (encoderValue >= currentSettings.minDepth){
-                    currentSettings.maxDepth = encoderValue;
-                } else {
-                    encoder.setEncoderValue(currentSettings.minDepth);
-                }
-                break;
-            case AdvancedControls::MIN_DEPTH:
-                if (encoderValue <= currentSettings.maxDepth) {
-                    currentSettings.minDepth = encoderValue;
-                } else {
-                    encoder.setEncoderValue(currentSettings.maxDepth);
-                }
-                break;
-            case AdvancedControls::ACCELERATION:
-                currentSettings.acceleration = encoderValue;
-                break;
-            default:
-                break;
-        }
-
-        if (currentSettings != lastSettings) {
-            currentSettings.speed = currentSettings.speedKnob;
-            lastSettings = currentSettings;
+        float speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
+        float encoderValue = encoder.readEncoder();
+        if ( abs(speedValue - currentSettings.speed.value) > 1
+                    || encoderValue != lastEncoder 
+                    || currentSettings.selectedControl != lastControl) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
+                currentSettings.speed.value = speedValue;
+                lastEncoder = encoderValue;
+
                 String headerText = UserConfig::language.AdvancedPenetration;
                 setHeader(headerText);
                 clearPage(true);
 
-                drawShape::settingBar("", currentSettings.speed);
-                display.setFont(Config::Font::bold);
-                int controlPosition = 125;
-                String controlText = "";
+                drawShape::settingBar("", currentSettings.speed.value);
+                controlPosition = 125;
 
-                if (currentSettings.control == AdvancedControls::ACCELERATION) {
-                    controlText = String("Acceleration");
-                    controlPosition += 3;
-                    drawShape::settingBar("",currentSettings.acceleration, controlPosition, 10, RIGHT_ALIGNED, 0, 40);
-                    controlPosition -= 15;
-                } else {
-                    drawShape::settingBarSmall(currentSettings.acceleration, controlPosition, 10, 40);
-                    controlPosition -= 5;
-                }
-                if (currentSettings.control == AdvancedControls::MIN_DEPTH) {
-                    controlText = String("Min Depth");
-                    controlPosition += 3;
-                    drawShape::settingBar("",currentSettings.minDepth, controlPosition, 10, RIGHT_ALIGNED, 0, 40);
-                    controlPosition -= 15;
-                } else {
-                    drawShape::settingBarSmall(currentSettings.minDepth, controlPosition, 10, 40);
-                    controlPosition -= 5;
-                }
-                if (currentSettings.control == AdvancedControls::MAX_DEPTH) {
-                    controlText = String("Max Depth");
-                    controlPosition += 3;
-                    drawShape::settingBar("",currentSettings.maxDepth, controlPosition, 10, RIGHT_ALIGNED, 0, 40);
-                    controlPosition -= 15;
-                } else {
-                    drawShape::settingBarSmall(currentSettings.maxDepth, controlPosition, 10, 40);
-                    controlPosition -= 5;
-                }
-                drawShape::settingBarSmall(currentSettings.minDepth, controlPosition, 10, 40);
-                int stringWidth = display.getUTF8Width(controlText.c_str());
-                display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
+                //Reverse order... right to left.
+                updateControl(currentSettings.acceleration);
+                updateControl(currentSettings.minDepth,0,currentSettings.maxDepth.value);
+                updateControl(currentSettings.maxDepth,currentSettings.minDepth.value,100);
 
                 refreshPage(true);
                 xSemaphoreGive(displayMutex);
             }
         }
+        vTaskDelay(200);
     }
     vTaskDelete(nullptr);
 }
@@ -145,24 +115,7 @@ void startAdvancedPenetration() {
 }
 
 void incrementControlAdvanced() {
-    currentSettings.control = static_cast<AdvancedControls>((currentSettings.control + 1) % (int)AdvancedControls::Count);
-    setControlEncoder();
-}
-
-void setControlEncoder() {
-    switch (currentSettings.control) {
-        case AdvancedControls::MAX_DEPTH:
-            encoder.setEncoderValue(currentSettings.maxDepth);
-            break;
-        case AdvancedControls::MIN_DEPTH:
-            encoder.setEncoderValue(currentSettings.minDepth);
-            break;
-        case AdvancedControls::ACCELERATION:
-            encoder.setEncoderValue(currentSettings.acceleration);
-            break;
-        default:
-            break;
-    }
+    currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
 }
 
 }
