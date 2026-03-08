@@ -201,10 +201,9 @@ namespace drawShape {
     // Function to draw a setting bar with label and percentage
     static void settingBar(const String &name, float value, int x = 0,
                            int y = 0, Alignment alignment = LEFT_ALIGNED,
-                           int textPadding = 0, float minValue = 0,
+                           int textPadding = 0, int h = 50, float minValue = 0,
                            float maxValue = 100) {
         int w = 10;
-        int h = 50;
         int padding = 4;  // Padding after the bar for text
         int lh1 = 10;     // Line height position for first line of text
         int lh2 = 22;     // Line height position for second line of text
@@ -265,11 +264,10 @@ namespace drawShape {
         display.setDrawColor(1);
     }
 
-    static void settingBarSmall(float value, int x = 0, int y = 0,
+    static void settingBarSmall(float value, int x = 0, int y = 0, int h = 50,
                                 float minValue = 0, float maxValue = 100) {
         int w = 3;
         int mid = (w - 1) / 2;
-        int h = 50;
 
         // Calculate height of the bar based on the value and potential min/max
         float scaledValue =

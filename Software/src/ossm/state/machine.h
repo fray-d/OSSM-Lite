@@ -60,6 +60,7 @@ struct OSSMStateMachine {
             "advancedPenetration.preflight"_s + done / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
             "advancedPenetration.preflight"_s + longPress = "menu"_s,
             "advancedPenetration.idle"_s + longPress = "menu"_s,
+            "advancedPenetration.idle"_s + buttonPress / incrementControlAdvanced = "advancedPenetration.idle"_s,
 
             "strokeEngine"_s [isNotHomed] = "homing"_s,
             "strokeEngine"_s [isPreflightSafe] / (resetSettingsStrokeEngine, drawPlayControls, startStrokeEngine) = "strokeEngine.idle"_s,
