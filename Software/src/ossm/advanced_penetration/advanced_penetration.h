@@ -8,7 +8,7 @@ namespace advanced_penetration {
     void incrementControlAdvanced();
 
     void setControlEncoder();
-    
+
 }
 
 #endif
