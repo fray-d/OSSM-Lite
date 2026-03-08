@@ -99,6 +99,10 @@ void ossmResetSettingsStreaming() {
     encoder.setEncoderValue(settings.depth);
 }
 
+void ossmIncrementControlAdvanced() {
+    advanced_penetration::incrementControlAdvanced();
+}
+
 void ossmIncrementControlStrokeEngine() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 3);
     switch (session.playControl) {

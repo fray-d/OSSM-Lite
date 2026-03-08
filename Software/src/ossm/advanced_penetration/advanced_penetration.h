@@ -5,6 +5,10 @@ namespace advanced_penetration {
 
     void startAdvancedPenetration();
 
+    void incrementControlAdvanced();
+
+    void setControlEncoder();
+    
 }
 
 #endif
