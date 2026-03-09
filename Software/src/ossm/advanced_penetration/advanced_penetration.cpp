@@ -45,12 +45,11 @@ AdvancedControls lastControl = AdvancedControls::SPEED;
 void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
     if (currentSettings.selectedControl == a.id) {
         if (lastControl != a.id) {
-            encoder.setEncoderValue(a.value);
             encoder.setBoundaries(minVal, maxVal, false);
+            encoder.setEncoderValue(a.value);
             lastControl = a.id;
         } 
         a.value = constrain(encoder.readEncoder(),minVal, maxVal);
-        display.setFont(Config::Font::bold);
         String controlText = a.name;
         uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
         display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
@@ -63,12 +62,12 @@ void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
     }
 }
 
+bool isInCorrectState() {
+    return stateMachine->is("advancedPenetration"_s)
+        || stateMachine->is("advancedPenetration.idle"_s);
+};
+
 static void startAdvancedPenetrationTask(void *pvParameters) {
-    auto isInCorrectState = []() {
-        // Add any states that you want to support here.
-        return stateMachine->is("advancedPenetration"_s) ||
-               stateMachine->is("advancedPenetration.idle"_s);
-    };
 
     encoder.setAcceleration(10);
     float lastEncoder = 0;
@@ -91,15 +90,52 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 controlPosition = 125;
 
                 //Reverse order... right to left.
-                updateControl(currentSettings.acceleration);
-                updateControl(currentSettings.minDepth,0,currentSettings.maxDepth.value);
-                updateControl(currentSettings.maxDepth,currentSettings.minDepth.value,100);
+                updateControl(currentSettings.acceleration, 1);
+                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
+                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
 
                 refreshPage(true);
                 xSemaphoreGive(displayMutex);
             }
         }
         vTaskDelay(200);
+    }
+    vTaskDelete(nullptr);
+}
+
+float rampValue(float value, float exp){
+    return pow( 1 - pow( 1 - value, exp), 1 / exp);
+}
+
+static void startAdvancedPenetrationMotionTask(void *pvParameters) {
+    int strokeCount = 0;
+    while (isInCorrectState()) {
+        float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
+        stepper->setSpeedInHz(speed);
+        stepper->applySpeedAcceleration();
+
+        if (!stepper->isRunning() && speed > 0) {
+            float targetPosition = -calibration.measuredStrokeSteps;
+            if (strokeCount % 2 == 0) {
+                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
+            } else {
+                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
+            }
+
+            float distance = abs(targetPosition - stepper->getCurrentPosition());
+            float minAccel = speed / (distance / speed);
+            float maxAccel = min(minAccel * 5,Config::Driver::maxAcceleration * (1_mm));
+            float accelDifference = maxAccel - minAccel;
+            Serial.println(accelDifference);
+
+            uint32_t acceleration = accelDifference * rampValue(currentSettings.acceleration.value / 100.0, 0.8) + minAccel;
+
+            Serial.println(acceleration);
+            stepper->setAcceleration(acceleration);
+            stepper->moveTo(targetPosition,false);
+            strokeCount ++;
+        }
+        vTaskDelay(1);
     }
     vTaskDelete(nullptr);
 }
@@ -111,6 +147,11 @@ void startAdvancedPenetration() {
                             "startAdvancedPenetrationTask", stackSize, nullptr,
                             configMAX_PRIORITIES - 1,
                             &Tasks::runAdvancedPenetrationTaskH,
+                            Tasks::operationTaskCore);
+
+    xTaskCreatePinnedToCore(startAdvancedPenetrationMotionTask, 
+                            "startAdvancedPenetrationMotionTask", stackSize, nullptr,
+                            configMAX_PRIORITIES - 1, nullptr,
                             Tasks::operationTaskCore);
 }
 
