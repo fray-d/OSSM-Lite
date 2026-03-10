@@ -18,6 +18,8 @@ namespace advanced_penetration {
 enum AdvancedControls {
     MAX_DEPTH,
     MIN_DEPTH,
+    IN_SPEED,
+    OUT_SPEED,
     ACCELERATION,
     Count,
     SPEED //uncounted
@@ -31,6 +33,8 @@ struct AdvancedControl {
 
 struct AdvancedSettings {
     AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
+    AdvancedControl inSpeed = {AdvancedControls::IN_SPEED,100,"In Speed"};
+    AdvancedControl outSpeed = {AdvancedControls::OUT_SPEED,100,"Out Speed"};
     AdvancedControl maxDepth = {AdvancedControls::MAX_DEPTH,10,"Max Depth"};
     AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
     AdvancedControl acceleration = {AdvancedControls::ACCELERATION, 50, "Acceleration"};
@@ -92,6 +96,8 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
 
                 //Reverse order... right to left.
                 updateControl(currentSettings.acceleration, 1);
+                updateControl(currentSettings.outSpeed,1);
+                updateControl(currentSettings.inSpeed,1);
                 updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
                 updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
 
@@ -113,20 +119,26 @@ float rampValue(float value, float exp){
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     int strokeCount = 0;
     while (isInCorrectState()) {
-        vTaskDelay(1);
         if (currentSettings.speed.value == 0.0) {
             stepper->stopMove();
             continue;
         }
+        if (stepper->isRunning()) {
+            vTaskDelay(1);
+        } else {
+            strokeCount ++;
+        }
         if (currentSettings.changed || !stepper->isRunning()) {
-            float targetPosition = -calibration.measuredStrokeSteps;
-            if (strokeCount % 2 == 0) {
-                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
-            } else {
-                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
-            }
             currentSettings.changed = false;
             float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
+            float targetPosition = -calibration.measuredStrokeSteps;
+            if (strokeCount % 2 == 0) {
+                speed = speed * currentSettings.inSpeed.value / 100.0;
+                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
+            } else {
+                speed = speed * currentSettings.outSpeed.value / 100.0;
+                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
+            }
             stepper->setSpeedInHz(speed);
             stepper->applySpeedAcceleration();
 
@@ -143,7 +155,6 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             }
             if (!stepper->isRunning()) {
                 stepper->moveTo(targetPosition,false);
-                strokeCount ++;
             }
         }
     }
