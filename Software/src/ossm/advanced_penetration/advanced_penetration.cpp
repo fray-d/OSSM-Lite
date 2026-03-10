@@ -36,6 +36,7 @@ struct AdvancedSettings {
     AdvancedControl acceleration = {AdvancedControls::ACCELERATION, 50, "Acceleration"};
 
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
+    bool changed = false;
 };
 
 AdvancedSettings currentSettings;
@@ -94,6 +95,8 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
                 updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
 
+                currentSettings.changed = true;
+
                 refreshPage(true);
                 xSemaphoreGive(displayMutex);
             }
@@ -110,32 +113,39 @@ float rampValue(float value, float exp){
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     int strokeCount = 0;
     while (isInCorrectState()) {
-        float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
-        stepper->setSpeedInHz(speed);
-        stepper->applySpeedAcceleration();
-
-        if (!stepper->isRunning() && speed > 0) {
+        vTaskDelay(1);
+        if (currentSettings.speed.value == 0.0) {
+            stepper->stopMove();
+            continue;
+        }
+        if (currentSettings.changed || !stepper->isRunning()) {
             float targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
             } else {
                 targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
             }
+            currentSettings.changed = false;
+            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
+            stepper->setSpeedInHz(speed);
+            stepper->applySpeedAcceleration();
 
             float distance = abs(targetPosition - stepper->getCurrentPosition());
             float minAccel = speed / (distance / speed);
             float maxAccel = min(minAccel * 5,Config::Driver::maxAcceleration * (1_mm));
             float accelDifference = maxAccel - minAccel;
-            Serial.println(accelDifference);
 
             uint32_t acceleration = accelDifference * rampValue(currentSettings.acceleration.value / 100.0, 0.8) + minAccel;
-
-            Serial.println(acceleration);
-            stepper->setAcceleration(acceleration);
-            stepper->moveTo(targetPosition,false);
-            strokeCount ++;
+            float oldAcceleration = stepper->getAcceleration();
+            if (acceleration > oldAcceleration || !stepper->isRunning()){
+                stepper->setAcceleration(acceleration);
+                stepper->applySpeedAcceleration();
+            }
+            if (!stepper->isRunning()) {
+                stepper->moveTo(targetPosition,false);
+                strokeCount ++;
+            }
         }
-        vTaskDelay(1);
     }
     vTaskDelete(nullptr);
 }
