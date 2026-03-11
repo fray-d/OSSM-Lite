@@ -5,6 +5,7 @@
 
 enum Menu {
     SimplePenetration,
+    AdvancedPenetration,
     StrokeEngine,
     Streaming,
     Pairing,
@@ -16,7 +17,8 @@ enum Menu {
 };
 
 static const char* menuStrings[Menu::NUM_OPTIONS] = {
-    ui::strings::simplePenetration, ui::strings::strokeEngine,
+    ui::strings::simplePenetration, ui::strings::advancedPenetration,
+    ui::strings::strokeEngine,
     ui::strings::streaming,         ui::strings::pairing,
     ui::strings::update,            ui::strings::wifiSetup,
     ui::strings::helpTitle,         ui::strings::restart,

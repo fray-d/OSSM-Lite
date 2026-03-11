@@ -120,10 +120,9 @@ static void scroll(u8g2_t* u8g2, long position) {
 
 static void settingBar(u8g2_t* u8g2, const char* name, float value, int x = 0,
                         int y = 0, Alignment alignment = LEFT_ALIGNED,
-                        int textPadding = 0, float minValue = 0,
+                        int textPadding = 0, int h = 50, float minValue = 0,
                         float maxValue = 100) {
     int w = 10;
-    int h = 50;
     int padding = 4;
     int lh1 = 10;
 
@@ -162,11 +161,10 @@ static void settingBar(u8g2_t* u8g2, const char* name, float value, int x = 0,
     u8g2_SetDrawColor(u8g2, 1);
 }
 
-static void settingBarSmall(u8g2_t* u8g2, float value, int x = 0, int y = 0,
+static void settingBarSmall(u8g2_t* u8g2, float value, int x = 0, int y = 0, int h = 50,
                              float minValue = 0, float maxValue = 100) {
     int w = 3;
     int mid = (w - 1) / 2;
-    int h = 50;
 
     auto clamp = [](float v, float lo, float hi) {
         return v < lo ? lo : (v > hi ? hi : v);

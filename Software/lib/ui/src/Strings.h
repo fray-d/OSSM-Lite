@@ -26,6 +26,8 @@ namespace ui {
         // ============================================================
         // Menu items / operation modes
         // ============================================================
+        static const char advancedPenetration[] PROGMEM =
+            "Advanced Penetration";
         static const char simplePenetration[] PROGMEM =
             "Simple Penetration";
         static const char strokeEngine[] PROGMEM = "Stroke Engine";

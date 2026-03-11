@@ -25,6 +25,7 @@ static void drawPreflightTask(void *pvParameters) {
 
     auto isInPreflight = []() {
         return stateMachine->is("simplePenetration.preflight"_s) ||
+               stateMachine->is("advancedPenetration.preflight"_s) ||
                stateMachine->is("streaming.preflight"_s) ||
                stateMachine->is("strokeEngine.preflight"_s);
     };

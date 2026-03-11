@@ -11,6 +11,7 @@
 #include "ossm/pages/wifi.h"
 #include "ossm/pattern_controls/pattern_controls.h"
 #include "ossm/play_controls/play_controls.h"
+#include "ossm/advanced_penetration/advanced_penetration.h"
 #include "ossm/simple_penetration/simple_penetration.h"
 #include "ossm/streaming/streaming.h"
 #include "ossm/state/calibration.h"
@@ -98,6 +99,10 @@ void ossmResetSettingsStreaming() {
     encoder.setEncoderValue(settings.depth);
 }
 
+void ossmIncrementControlAdvanced() {
+    advanced_penetration::incrementControlAdvanced();
+}
+
 void ossmIncrementControlStrokeEngine() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 3);
     switch (session.playControl) {
@@ -132,6 +137,10 @@ void ossmIncrementControlStreaming() {
             break;
     }
 };
+
+void ossmStartAdvancedPenetration() {
+    advanced_penetration::startAdvancedPenetration();
+}
 
 void ossmStartSimplePenetration() {
     simple_penetration::startSimplePenetration();
