@@ -122,6 +122,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     while (isInCorrectState()) {
         if (currentSettings.speed.value == 0.0) {
             stepper->stopMove();
+            vTaskDelay(100);
             continue;
         }
         if (stepper->isRunning()) {
