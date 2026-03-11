@@ -2,13 +2,14 @@
 
 #include "constants/Config.h"
 #include "utils/analog.h"
+#include "ui.h"
 #include "services/display.h"
-#include "extensions/u8g2Extensions.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/state.h"
 #include "services/encoder.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
+#include "Strings.h"
 
 namespace sml = boost::sml;
 using namespace sml;
@@ -18,6 +19,8 @@ namespace advanced_penetration {
 enum AdvancedControls {
     MAX_DEPTH,
     MIN_DEPTH,
+    IN_SPEED,
+    OUT_SPEED,
     ACCELERATION,
     Count,
     SPEED //uncounted
@@ -31,6 +34,8 @@ struct AdvancedControl {
 
 struct AdvancedSettings {
     AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
+    AdvancedControl inSpeed = {AdvancedControls::IN_SPEED,100,"In Speed"};
+    AdvancedControl outSpeed = {AdvancedControls::OUT_SPEED,100,"Out Speed"};
     AdvancedControl maxDepth = {AdvancedControls::MAX_DEPTH,10,"Max Depth"};
     AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
     AdvancedControl acceleration = {AdvancedControls::ACCELERATION, 50, "Acceleration"};
@@ -55,10 +60,10 @@ void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
         uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
         display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
         controlPosition += 3;
-        drawShape::settingBar("",a.value, controlPosition, 10, RIGHT_ALIGNED, 0, 40);
+        ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40);
         controlPosition -= 15;
     } else {
-        drawShape::settingBarSmall(a.value, controlPosition, 10, 40);
+        ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40);
         controlPosition -= 5;
     }
 }
@@ -83,15 +88,17 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 currentSettings.speed.value = speedValue;
                 lastEncoder = encoderValue;
 
-                String headerText = UserConfig::language.AdvancedPenetration;
+                String headerText = ui::strings::advancedPenetration;
                 setHeader(headerText);
                 clearPage(true);
 
-                drawShape::settingBar("", currentSettings.speed.value);
+                ui::drawShape::settingBar(display.getU8g2(),"", currentSettings.speed.value);
                 controlPosition = 125;
 
                 //Reverse order... right to left.
                 updateControl(currentSettings.acceleration, 1);
+                updateControl(currentSettings.outSpeed,1);
+                updateControl(currentSettings.inSpeed,1);
                 updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
                 updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
 
@@ -113,20 +120,26 @@ float rampValue(float value, float exp){
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     int strokeCount = 0;
     while (isInCorrectState()) {
-        vTaskDelay(1);
         if (currentSettings.speed.value == 0.0) {
             stepper->stopMove();
             continue;
         }
+        if (stepper->isRunning()) {
+            vTaskDelay(1);
+        } else {
+            strokeCount ++;
+        }
         if (currentSettings.changed || !stepper->isRunning()) {
-            float targetPosition = -calibration.measuredStrokeSteps;
-            if (strokeCount % 2 == 0) {
-                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
-            } else {
-                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
-            }
             currentSettings.changed = false;
             float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
+            float targetPosition = -calibration.measuredStrokeSteps;
+            if (strokeCount % 2 == 0) {
+                speed = speed * currentSettings.inSpeed.value / 100.0;
+                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
+            } else {
+                speed = speed * currentSettings.outSpeed.value / 100.0;
+                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
+            }
             stepper->setSpeedInHz(speed);
             stepper->applySpeedAcceleration();
 
@@ -143,7 +156,6 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             }
             if (!stepper->isRunning()) {
                 stepper->moveTo(targetPosition,false);
-                strokeCount ++;
             }
         }
     }

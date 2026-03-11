@@ -2,6 +2,7 @@
 
 #include <mqtt_client.h>
 
+#include "constants/UserConfig.h"
 #include "ossm/OSSM.h"
 #include "ossm/state/ble.h"
 #include "ossm/state/calibration.h"
