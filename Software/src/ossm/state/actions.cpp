@@ -18,9 +18,11 @@
 #include "ossm/state/session.h"
 #include "ossm/state/settings.h"
 #include "ossm/stroke_engine/stroke_engine.h"
+#include "services/communication/mqtt.h"
 #include "services/encoder.h"
 #include "services/stepper.h"
 #include "services/wm.h"
+#include "utils/random.h"
 
 void ossmDrawHello() {
     pages::drawHello();
@@ -52,6 +54,8 @@ void ossmDrawPreflight() {
 }
 
 void ossmResetSettingsStrokeEngine() {
+    sessionId = uuid();
+
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
     settings.stroke = 50;
@@ -66,6 +70,8 @@ void ossmResetSettingsStrokeEngine() {
 }
 
 void ossmResetSettingsSimplePen() {
+    sessionId = uuid();
+
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
     settings.stroke = 0;
@@ -85,6 +91,8 @@ void ossmResetSettingsSimplePen() {
 }
 
 void ossmResetSettingsStreaming() {
+    sessionId = uuid();
+
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
     settings.stroke = 50;
@@ -181,6 +189,10 @@ void ossmDrawError() {
 
 void ossmCheckPairing() {
     pages::checkPairing();
+}
+
+void ossmDrawPairingSuccess() {
+    pages::drawPairingSuccess();
 }
 
 void ossmSetHomed() {
