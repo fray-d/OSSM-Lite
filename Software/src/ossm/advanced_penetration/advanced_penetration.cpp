@@ -21,7 +21,8 @@ enum AdvancedControls {
     MIN_DEPTH,
     IN_SPEED,
     OUT_SPEED,
-    ACCELERATION,
+    IN_ACCELERATION,
+    OUT_ACCELERATION,
     Count,
     SPEED //uncounted
 };
@@ -38,7 +39,8 @@ struct AdvancedSettings {
     AdvancedControl outSpeed = {AdvancedControls::OUT_SPEED,100,"Out Speed"};
     AdvancedControl maxDepth = {AdvancedControls::MAX_DEPTH,10,"Max Depth"};
     AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
-    AdvancedControl acceleration = {AdvancedControls::ACCELERATION, 50, "Acceleration"};
+    AdvancedControl inAcceleration = {AdvancedControls::IN_ACCELERATION, 1, "In Acceleration"};
+    AdvancedControl outAcceleration = {AdvancedControls::OUT_ACCELERATION, 1, "Out Acceleration"};
 
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
     bool changed = false;
@@ -96,7 +98,8 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 controlPosition = 125;
 
                 //Reverse order... right to left.
-                updateControl(currentSettings.acceleration, 1);
+                updateControl(currentSettings.outAcceleration, 1);
+                updateControl(currentSettings.inAcceleration, 1);
                 updateControl(currentSettings.outSpeed,1);
                 updateControl(currentSettings.inSpeed,1);
                 updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
@@ -125,9 +128,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             vTaskDelay(100);
             continue;
         }
-        if (stepper->isRunning()) {
-            vTaskDelay(1);
-        } else {
+        if (!stepper->isRunning()) {
             strokeCount ++;
         }
         if (currentSettings.changed || !stepper->isRunning()) {
@@ -149,9 +150,14 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             float maxAccel = min(minAccel * 5,Config::Driver::maxAcceleration * (1_mm));
             float accelDifference = maxAccel - minAccel;
 
-            uint32_t acceleration = accelDifference * rampValue(currentSettings.acceleration.value / 100.0, 0.8) + minAccel;
-            float oldAcceleration = stepper->getAcceleration();
-            if (acceleration > oldAcceleration || !stepper->isRunning()){
+            uint32_t acceleration = minAccel;
+            if (strokeCount % 2 == 0) {
+                acceleration += accelDifference * rampValue(currentSettings.inAcceleration.value/100.0, 0.8);
+            } else {
+                acceleration += accelDifference * rampValue(currentSettings.outAcceleration.value/100.0, 0.8);
+            }
+            
+            if (acceleration > stepper->getAcceleration() || !stepper->isRunning()){
                 stepper->setAcceleration(acceleration);
                 stepper->applySpeedAcceleration();
             }
@@ -159,6 +165,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
                 stepper->moveTo(targetPosition,false);
             }
         }
+        vTaskDelay(1);
     }
     vTaskDelete(nullptr);
 }
