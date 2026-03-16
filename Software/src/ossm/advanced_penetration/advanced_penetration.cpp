@@ -23,6 +23,11 @@ enum AdvancedControls {
     OUT_SPEED,
     IN_ACCELERATION,
     OUT_ACCELERATION,
+    MODIFICATION,
+    POS_STEPS,
+    POS_MAINT,
+    NEG_STEPS,
+    NEG_MAINT,
     Count,
     SPEED //uncounted
 };
@@ -31,7 +36,19 @@ struct AdvancedControl {
     AdvancedControls id;
     float value;
     String name;
+    float minValue = 0;
+    float maxValue = 100;
 };
+
+struct AdvancedModifier {
+    AdvancedControl modification = {AdvancedControls::MODIFICATION,0,"Max Modification"};
+    AdvancedControl posSteps = {AdvancedControls::POS_STEPS,1,"In Steps",1,20};
+    AdvancedControl negSteps = {AdvancedControls::NEG_STEPS,1,"Out Steps",1,20};
+    AdvancedControl posMaint = {AdvancedControls::POS_MAINT,0,"In Maintain Steps",0,20};
+    AdvancedControl negMaint = {AdvancedControls::NEG_MAINT,0,"Out Maintain Steps",0,20};
+};
+
+
 
 struct AdvancedSettings {
     AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
@@ -41,8 +58,8 @@ struct AdvancedSettings {
     AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
     AdvancedControl inAcceleration = {AdvancedControls::IN_ACCELERATION, 1, "In Acceleration"};
     AdvancedControl outAcceleration = {AdvancedControls::OUT_ACCELERATION, 1, "Out Acceleration"};
-
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
+    AdvancedModifier maxDepthModifier;
     bool changed = false;
 };
 
@@ -62,10 +79,10 @@ void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
         uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
         display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
         controlPosition += 3;
-        ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40);
+        ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40, a.minValue, a.maxValue);
         controlPosition -= 15;
     } else {
-        ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40);
+        ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40, a.minValue, a.maxValue);
         controlPosition -= 5;
     }
 }
@@ -98,6 +115,11 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 controlPosition = 125;
 
                 //Reverse order... right to left.
+                updateControl(currentSettings.maxDepthModifier.negMaint);
+                updateControl(currentSettings.maxDepthModifier.negSteps, 1);
+                updateControl(currentSettings.maxDepthModifier.posMaint);
+                updateControl(currentSettings.maxDepthModifier.posSteps, 1);
+                updateControl(currentSettings.maxDepthModifier.modification);
                 updateControl(currentSettings.outAcceleration, 1);
                 updateControl(currentSettings.inAcceleration, 1);
                 updateControl(currentSettings.outSpeed,1);
@@ -120,6 +142,41 @@ float rampValue(float value, float exp){
     return pow( 1 - pow( 1 - value, exp), 1 / exp);
 }
 
+float modifyValue(float minValue, float maxValue,AdvancedModifier modifier, int strokeCount){
+    int totalSteps = modifier.negMaint.value + modifier.negSteps.value + modifier.posMaint.value + modifier.posSteps.value;
+    int cycle = (strokeCount / 2) % totalSteps;
+    float difference = maxValue - minValue;
+    float usableDifference = difference * modifier.modification.value/100.0;
+    Serial.println(cycle);
+    if (cycle < modifier.posSteps.value){
+        Serial.println("Step Positive");
+        float slice = usableDifference/modifier.posSteps.value * (cycle + 1);
+        return maxValue - usableDifference + slice;
+    } else {
+        cycle -= modifier.posSteps.value;
+    }
+    if (cycle < modifier.posMaint.value) {
+        Serial.println("Wait Positive");
+        return maxValue;
+    } else {
+        cycle -= modifier.posMaint.value;
+    }
+    if (cycle < modifier.negSteps.value) {
+        Serial.println("Step Negative");
+        float slice = usableDifference/modifier.negSteps.value * (cycle + 1);
+        return maxValue - slice;
+    } else {
+        cycle -= modifier.negSteps.value;
+    }
+    if (cycle < modifier.negMaint.value) {
+        Serial.println("Wait Negative");
+        return maxValue - usableDifference;
+    } else {
+        Serial.println("WTF");
+    }
+    return maxValue;
+}
+
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     int strokeCount = 0;
     while (isInCorrectState()) {
@@ -137,7 +194,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             float targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.value / 100.0;
-                targetPosition = targetPosition * currentSettings.maxDepth.value / 100.0;
+                targetPosition = targetPosition * modifyValue(currentSettings.minDepth.value,currentSettings.maxDepth.value,currentSettings.maxDepthModifier,strokeCount)/100.0;
             } else {
                 speed = speed * currentSettings.outSpeed.value / 100.0;
                 targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
@@ -172,7 +229,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 
 void startAdvancedPenetration() {
     int stackSize = 10 * configMINIMAL_STACK_SIZE;
-
+    lastControl = AdvancedControls::SPEED;
     xTaskCreatePinnedToCore(startAdvancedPenetrationTask,
                             "startAdvancedPenetrationTask", stackSize, nullptr,
                             configMAX_PRIORITIES - 1,
