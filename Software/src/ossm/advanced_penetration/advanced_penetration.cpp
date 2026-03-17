@@ -23,12 +23,13 @@ enum AdvancedControls {
     OUT_SPEED,
     IN_ACCELERATION,
     OUT_ACCELERATION,
-    MODIFICATION,
-    POS_STEPS,
-    POS_MAINT,
-    NEG_STEPS,
-    NEG_MAINT,
     Count,
+    AMPLITUDE,
+    IN_STEP,
+    IN_WAIT,
+    OUT_STEP,
+    OUT_WAIT,
+    Count2,
     SPEED //uncounted
 };
 
@@ -41,14 +42,15 @@ struct AdvancedControl {
 };
 
 struct AdvancedModifier {
-    AdvancedControl modification = {AdvancedControls::MODIFICATION,0,"Max Modification"};
-    AdvancedControl posSteps = {AdvancedControls::POS_STEPS,1,"In Steps",1,20};
-    AdvancedControl negSteps = {AdvancedControls::NEG_STEPS,1,"Out Steps",1,20};
-    AdvancedControl posMaint = {AdvancedControls::POS_MAINT,0,"In Maintain Steps",0,20};
-    AdvancedControl negMaint = {AdvancedControls::NEG_MAINT,0,"Out Maintain Steps",0,20};
+    AdvancedControl amplitude = {AdvancedControls::AMPLITUDE,0,"Aplitude"};
+    AdvancedControl inStep = {AdvancedControls::IN_STEP,1,"In Steps",1,20};
+    AdvancedControl inWait = {AdvancedControls::IN_WAIT,0,"Linger",0,20};
+    AdvancedControl outStep = {AdvancedControls::OUT_STEP,1,"Out Steps",1,20};
+    AdvancedControl outWait = {AdvancedControls::OUT_WAIT,0,"Dwell",0,20};
+    int stepCount() {
+        return inStep.value + inWait.value + outStep.value + outWait.value;
+    }
 };
-
-
 
 struct AdvancedSettings {
     AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
@@ -61,9 +63,8 @@ struct AdvancedSettings {
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
     AdvancedModifier maxDepthModifier;
     bool changed = false;
-};
+} currentSettings;
 
-AdvancedSettings currentSettings;
 uint8_t controlPosition;
 AdvancedControls lastControl = AdvancedControls::SPEED;
 
@@ -89,7 +90,8 @@ void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
 
 bool isInCorrectState() {
     return stateMachine->is("advancedPenetration"_s)
-        || stateMachine->is("advancedPenetration.idle"_s);
+        || stateMachine->is("advancedPenetration.idle"_s)
+        || stateMachine->is("advancedPenetration.modifier"_s);
 };
 
 static void startAdvancedPenetrationTask(void *pvParameters) {
@@ -115,17 +117,20 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 controlPosition = 125;
 
                 //Reverse order... right to left.
-                updateControl(currentSettings.maxDepthModifier.negMaint);
-                updateControl(currentSettings.maxDepthModifier.negSteps, 1);
-                updateControl(currentSettings.maxDepthModifier.posMaint);
-                updateControl(currentSettings.maxDepthModifier.posSteps, 1);
-                updateControl(currentSettings.maxDepthModifier.modification);
-                updateControl(currentSettings.outAcceleration, 1);
-                updateControl(currentSettings.inAcceleration, 1);
-                updateControl(currentSettings.outSpeed,1);
-                updateControl(currentSettings.inSpeed,1);
-                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
-                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
+                if(stateMachine->is("advancedPenetration.modifier"_s)) {
+                    updateControl(currentSettings.maxDepthModifier.outWait);
+                    updateControl(currentSettings.maxDepthModifier.outStep, 1);
+                    updateControl(currentSettings.maxDepthModifier.inWait);
+                    updateControl(currentSettings.maxDepthModifier.inStep, 1);
+                    updateControl(currentSettings.maxDepthModifier.amplitude);
+                } else {
+                    updateControl(currentSettings.outAcceleration, 1);
+                    updateControl(currentSettings.inAcceleration, 1);
+                    updateControl(currentSettings.outSpeed,1);
+                    updateControl(currentSettings.inSpeed,1);
+                    updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
+                    updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
+                }
 
                 currentSettings.changed = true;
 
@@ -143,36 +148,28 @@ float rampValue(float value, float exp){
 }
 
 float modifyValue(float minValue, float maxValue,AdvancedModifier modifier, int strokeCount){
-    int totalSteps = modifier.negMaint.value + modifier.negSteps.value + modifier.posMaint.value + modifier.posSteps.value;
-    int cycle = (strokeCount / 2) % totalSteps;
+    int cycle = (strokeCount / 2) % modifier.stepCount();
     float difference = maxValue - minValue;
-    float usableDifference = difference * modifier.modification.value/100.0;
-    Serial.println(cycle);
-    if (cycle < modifier.posSteps.value){
-        Serial.println("Step Positive");
-        float slice = usableDifference/modifier.posSteps.value * (cycle + 1);
+    float usableDifference = difference * modifier.amplitude.value/100.0;
+    if (cycle < modifier.inStep.value){
+        float slice = usableDifference/modifier.inStep.value * (cycle + 1);
         return maxValue - usableDifference + slice;
     } else {
-        cycle -= modifier.posSteps.value;
+        cycle -= modifier.inStep.value;
     }
-    if (cycle < modifier.posMaint.value) {
-        Serial.println("Wait Positive");
+    if (cycle < modifier.inWait.value) {
         return maxValue;
     } else {
-        cycle -= modifier.posMaint.value;
+        cycle -= modifier.inWait.value;
     }
-    if (cycle < modifier.negSteps.value) {
-        Serial.println("Step Negative");
-        float slice = usableDifference/modifier.negSteps.value * (cycle + 1);
+    if (cycle < modifier.outStep.value) {
+        float slice = usableDifference/modifier.outStep.value * (cycle + 1);
         return maxValue - slice;
     } else {
-        cycle -= modifier.negSteps.value;
+        cycle -= modifier.outStep.value;
     }
-    if (cycle < modifier.negMaint.value) {
-        Serial.println("Wait Negative");
+    if (cycle < modifier.outWait.value) {
         return maxValue - usableDifference;
-    } else {
-        Serial.println("WTF");
     }
     return maxValue;
 }
@@ -243,7 +240,18 @@ void startAdvancedPenetration() {
 }
 
 void incrementControlAdvanced() {
-    currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
+    if(stateMachine->is("advancedPenetration.modifier"_s)) {
+        if(currentSettings.selectedControl < AdvancedControls::Count || currentSettings.selectedControl > (int)AdvancedControls::Count2 - 2) {
+            currentSettings.selectedControl = AdvancedControls::Count;
+        }
+        currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1));
+    } else {
+        if(currentSettings.selectedControl > AdvancedControls::Count) {
+            currentSettings.selectedControl = AdvancedControls::MAX_DEPTH;
+        } else {
+            currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
+        }
+    }
 }
 
 }
