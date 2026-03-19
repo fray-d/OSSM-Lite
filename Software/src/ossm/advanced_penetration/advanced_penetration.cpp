@@ -33,12 +33,15 @@ enum AdvancedControls {
     SPEED //uncounted
 };
 
+struct AdvancedModifier;
+
 struct AdvancedControl {
     AdvancedControls id;
     float value;
     String name;
     float minValue = 0;
     float maxValue = 100;
+    AdvancedModifier* modifier;
 };
 
 struct AdvancedModifier {
@@ -61,7 +64,6 @@ struct AdvancedSettings {
     AdvancedControl inAcceleration = {AdvancedControls::IN_ACCELERATION, 1, "In Acceleration"};
     AdvancedControl outAcceleration = {AdvancedControls::OUT_ACCELERATION, 1, "Out Acceleration"};
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
-    AdvancedModifier maxDepthModifier;
     bool changed = false;
 } currentSettings;
 
@@ -95,7 +97,6 @@ bool isInCorrectState() {
 };
 
 static void startAdvancedPenetrationTask(void *pvParameters) {
-
     encoder.setAcceleration(10);
     float lastEncoder = 0;
 
@@ -118,11 +119,11 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
 
                 //Reverse order... right to left.
                 if(stateMachine->is("advancedPenetration.modifier"_s)) {
-                    updateControl(currentSettings.maxDepthModifier.outWait);
-                    updateControl(currentSettings.maxDepthModifier.outStep, 1);
-                    updateControl(currentSettings.maxDepthModifier.inWait);
-                    updateControl(currentSettings.maxDepthModifier.inStep, 1);
-                    updateControl(currentSettings.maxDepthModifier.amplitude);
+                    updateControl(currentSettings.maxDepth.modifier->outWait);
+                    updateControl(currentSettings.maxDepth.modifier->outStep, 1);
+                    updateControl(currentSettings.maxDepth.modifier->inWait);
+                    updateControl(currentSettings.maxDepth.modifier->inStep, 1);
+                    updateControl(currentSettings.maxDepth.modifier->amplitude);
                 } else {
                     updateControl(currentSettings.outAcceleration, 1);
                     updateControl(currentSettings.inAcceleration, 1);
@@ -147,28 +148,28 @@ float rampValue(float value, float exp){
     return pow( 1 - pow( 1 - value, exp), 1 / exp);
 }
 
-float modifyValue(float minValue, float maxValue,AdvancedModifier modifier, int strokeCount){
-    int cycle = (strokeCount / 2) % modifier.stepCount();
+float modifyValue(float minValue, float maxValue,AdvancedModifier* modifier, int strokeCount){
+    int cycle = (strokeCount / 2) % modifier->stepCount();
     float difference = maxValue - minValue;
-    float usableDifference = difference * modifier.amplitude.value/100.0;
-    if (cycle < modifier.inStep.value){
-        float slice = usableDifference/modifier.inStep.value * (cycle + 1);
+    float usableDifference = difference * modifier->amplitude.value/100.0;
+    if (cycle < modifier->inStep.value){
+        float slice = usableDifference/modifier->inStep.value * (cycle + 1);
         return maxValue - usableDifference + slice;
     } else {
-        cycle -= modifier.inStep.value;
+        cycle -= modifier->inStep.value;
     }
-    if (cycle < modifier.inWait.value) {
+    if (cycle < modifier->inWait.value) {
         return maxValue;
     } else {
-        cycle -= modifier.inWait.value;
+        cycle -= modifier->inWait.value;
     }
-    if (cycle < modifier.outStep.value) {
-        float slice = usableDifference/modifier.outStep.value * (cycle + 1);
+    if (cycle < modifier->outStep.value) {
+        float slice = usableDifference/modifier->outStep.value * (cycle + 1);
         return maxValue - slice;
     } else {
-        cycle -= modifier.outStep.value;
+        cycle -= modifier->outStep.value;
     }
-    if (cycle < modifier.outWait.value) {
+    if (cycle < modifier->outWait.value) {
         return maxValue - usableDifference;
     }
     return maxValue;
@@ -191,7 +192,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             float targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.value / 100.0;
-                targetPosition = targetPosition * modifyValue(currentSettings.minDepth.value,currentSettings.maxDepth.value,currentSettings.maxDepthModifier,strokeCount)/100.0;
+                targetPosition = targetPosition * modifyValue(currentSettings.minDepth.value,currentSettings.maxDepth.value,currentSettings.maxDepth.modifier,strokeCount)/100.0;
             } else {
                 speed = speed * currentSettings.outSpeed.value / 100.0;
                 targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
@@ -225,6 +226,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 }
 
 void startAdvancedPenetration() {
+    currentSettings.maxDepth.modifier = new AdvancedModifier;
     int stackSize = 10 * configMINIMAL_STACK_SIZE;
     lastControl = AdvancedControls::SPEED;
     xTaskCreatePinnedToCore(startAdvancedPenetrationTask,
