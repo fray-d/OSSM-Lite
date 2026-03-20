@@ -42,10 +42,11 @@ struct AdvancedControl {
     float minValue = 0;
     float maxValue = 100;
     AdvancedModifier* modifier;
+    float getModifiedValue(int strokeCount);
 };
 
 struct AdvancedModifier {
-    AdvancedControl amplitude = {AdvancedControls::AMPLITUDE,0,"Aplitude"};
+    AdvancedControl amplitude = {AdvancedControls::AMPLITUDE,0,"Amplitude"};
     AdvancedControl inStep = {AdvancedControls::IN_STEP,1,"In Steps",1,20};
     AdvancedControl inWait = {AdvancedControls::IN_WAIT,0,"Linger",0,20};
     AdvancedControl outStep = {AdvancedControls::OUT_STEP,1,"Out Steps",1,20};
@@ -54,6 +55,36 @@ struct AdvancedModifier {
         return inStep.value + inWait.value + outStep.value + outWait.value;
     }
 };
+
+float AdvancedControl::getModifiedValue(int strokeCount){
+    if (modifier == nullptr) {
+        return value;
+    }
+    int cycle = (strokeCount / 2) % modifier->stepCount();
+    float difference = value - minValue;
+    float usableDifference = difference * modifier->amplitude.value/100.0;
+    if (cycle < modifier->inStep.value){
+        float slice = usableDifference/modifier->inStep.value * (cycle + 1);
+        return value - usableDifference + slice;
+    } else {
+        cycle -= modifier->inStep.value;
+    }
+    if (cycle < modifier->inWait.value) {
+        return value;
+    } else {
+        cycle -= modifier->inWait.value;
+    }
+    if (cycle < modifier->outStep.value) {
+        float slice = usableDifference/modifier->outStep.value * (cycle + 1);
+        return value - slice;
+    } else {
+        cycle -= modifier->outStep.value;
+    }
+    if (cycle < modifier->outWait.value) {
+        return value - usableDifference;
+    }
+    return value;
+}
 
 struct AdvancedSettings {
     AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
@@ -64,29 +95,59 @@ struct AdvancedSettings {
     AdvancedControl inAcceleration = {AdvancedControls::IN_ACCELERATION, 1, "In Acceleration"};
     AdvancedControl outAcceleration = {AdvancedControls::OUT_ACCELERATION, 1, "Out Acceleration"};
     AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
+    AdvancedControls selectedModifierControl = AdvancedControls::AMPLITUDE;
     bool changed = false;
 } currentSettings;
 
 uint8_t controlPosition;
 AdvancedControls lastControl = AdvancedControls::SPEED;
 
-void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
-    if (currentSettings.selectedControl == a.id) {
+void textControl(AdvancedControl& a, int height) {
+    if (currentSettings.selectedModifierControl == a.id) {
         if (lastControl != a.id) {
-            encoder.setBoundaries(minVal, maxVal, false);
+            encoder.setBoundaries(a.minValue, a.maxValue, false);
             encoder.setEncoderValue(a.value);
             lastControl = a.id;
-        } 
-        a.value = constrain(encoder.readEncoder(),minVal, maxVal);
-        String controlText = a.name;
-        uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-        display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
-        controlPosition += 3;
-        ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40, a.minValue, a.maxValue);
-        controlPosition -= 15;
+        }
+        a.value = constrain(encoder.readEncoder(),a.minValue,a.maxValue);
+    }
+    String controlText = a.name +": " + String(uint8_t(a.value));
+    uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
+    display.drawUTF8(128 - stringWidth, height, controlText.c_str());
+}
+
+void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
+    if(stateMachine->is("advancedPenetration.modifier"_s)) {
+        if (a.modifier == nullptr) {
+            a.modifier = new AdvancedModifier;
+        }
+        if (currentSettings.selectedControl == a.id) {
+            textControl(a.modifier->amplitude, 24);
+            textControl(a.modifier->inStep, 34);
+            textControl(a.modifier->inWait, 44);
+            textControl(a.modifier->outStep, 54);
+            textControl(a.modifier->outWait, 64);
+        }
     } else {
-        ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40, a.minValue, a.maxValue);
-        controlPosition -= 5;
+        if (currentSettings.selectedControl == a.id) {
+            if (lastControl != a.id) {
+                encoder.setBoundaries(minVal, maxVal, false);
+                encoder.setEncoderValue(a.value);
+                lastControl = a.id;
+            } 
+            a.value = constrain(encoder.readEncoder(),minVal, maxVal);
+            a.minValue = minVal;
+            a.maxValue = maxVal;
+            String controlText = a.name;
+            uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
+            display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
+            controlPosition += 3;
+            ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40);
+            controlPosition -= 15;
+        } else {
+            ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40);
+            controlPosition -= 5;
+        }
     }
 }
 
@@ -104,6 +165,7 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
         float speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         float encoderValue = encoder.readEncoder();
         if ( abs(speedValue - currentSettings.speed.value) > 1
+                    || speedValue == 0
                     || encoderValue != lastEncoder 
                     || currentSettings.selectedControl != lastControl) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
@@ -118,20 +180,12 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 controlPosition = 125;
 
                 //Reverse order... right to left.
-                if(stateMachine->is("advancedPenetration.modifier"_s)) {
-                    updateControl(currentSettings.maxDepth.modifier->outWait);
-                    updateControl(currentSettings.maxDepth.modifier->outStep, 1);
-                    updateControl(currentSettings.maxDepth.modifier->inWait);
-                    updateControl(currentSettings.maxDepth.modifier->inStep, 1);
-                    updateControl(currentSettings.maxDepth.modifier->amplitude);
-                } else {
-                    updateControl(currentSettings.outAcceleration, 1);
-                    updateControl(currentSettings.inAcceleration, 1);
-                    updateControl(currentSettings.outSpeed,1);
-                    updateControl(currentSettings.inSpeed,1);
-                    updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
-                    updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
-                }
+                updateControl(currentSettings.outAcceleration, 1);
+                updateControl(currentSettings.inAcceleration, 1);
+                updateControl(currentSettings.outSpeed,1);
+                updateControl(currentSettings.inSpeed,1);
+                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
+                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
 
                 currentSettings.changed = true;
 
@@ -146,33 +200,6 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
 
 float rampValue(float value, float exp){
     return pow( 1 - pow( 1 - value, exp), 1 / exp);
-}
-
-float modifyValue(float minValue, float maxValue,AdvancedModifier* modifier, int strokeCount){
-    int cycle = (strokeCount / 2) % modifier->stepCount();
-    float difference = maxValue - minValue;
-    float usableDifference = difference * modifier->amplitude.value/100.0;
-    if (cycle < modifier->inStep.value){
-        float slice = usableDifference/modifier->inStep.value * (cycle + 1);
-        return maxValue - usableDifference + slice;
-    } else {
-        cycle -= modifier->inStep.value;
-    }
-    if (cycle < modifier->inWait.value) {
-        return maxValue;
-    } else {
-        cycle -= modifier->inWait.value;
-    }
-    if (cycle < modifier->outStep.value) {
-        float slice = usableDifference/modifier->outStep.value * (cycle + 1);
-        return maxValue - slice;
-    } else {
-        cycle -= modifier->outStep.value;
-    }
-    if (cycle < modifier->outWait.value) {
-        return maxValue - usableDifference;
-    }
-    return maxValue;
 }
 
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
@@ -191,10 +218,10 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
             float targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
-                speed = speed * currentSettings.inSpeed.value / 100.0;
-                targetPosition = targetPosition * modifyValue(currentSettings.minDepth.value,currentSettings.maxDepth.value,currentSettings.maxDepth.modifier,strokeCount)/100.0;
+                speed = speed * currentSettings.inSpeed.getModifiedValue(strokeCount) / 100.0;
+                targetPosition = targetPosition * currentSettings.maxDepth.getModifiedValue(strokeCount)/100.0;
             } else {
-                speed = speed * currentSettings.outSpeed.value / 100.0;
+                speed = speed * currentSettings.outSpeed.getModifiedValue(strokeCount) / 100.0;
                 targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
             }
             stepper->setSpeedInHz(speed);
@@ -207,11 +234,10 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 
             uint32_t acceleration = minAccel;
             if (strokeCount % 2 == 0) {
-                acceleration += accelDifference * rampValue(currentSettings.inAcceleration.value/100.0, 0.8);
+                acceleration += accelDifference * rampValue(currentSettings.inAcceleration.getModifiedValue(strokeCount)/100.0, 0.8);
             } else {
-                acceleration += accelDifference * rampValue(currentSettings.outAcceleration.value/100.0, 0.8);
+                acceleration += accelDifference * rampValue(currentSettings.outAcceleration.getModifiedValue(strokeCount)/100.0, 0.8);
             }
-            
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()){
                 stepper->setAcceleration(acceleration);
                 stepper->applySpeedAcceleration();
@@ -226,7 +252,6 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 }
 
 void startAdvancedPenetration() {
-    currentSettings.maxDepth.modifier = new AdvancedModifier;
     int stackSize = 10 * configMINIMAL_STACK_SIZE;
     lastControl = AdvancedControls::SPEED;
     xTaskCreatePinnedToCore(startAdvancedPenetrationTask,
@@ -242,17 +267,12 @@ void startAdvancedPenetration() {
 }
 
 void incrementControlAdvanced() {
+
     if(stateMachine->is("advancedPenetration.modifier"_s)) {
-        if(currentSettings.selectedControl < AdvancedControls::Count || currentSettings.selectedControl > (int)AdvancedControls::Count2 - 2) {
-            currentSettings.selectedControl = AdvancedControls::Count;
-        }
-        currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1));
+        currentSettings.selectedModifierControl = static_cast<AdvancedControls>((currentSettings.selectedModifierControl + 1) % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count) + (int)AdvancedControls::Count);
+        Serial.println(currentSettings.selectedModifierControl);
     } else {
-        if(currentSettings.selectedControl > AdvancedControls::Count) {
-            currentSettings.selectedControl = AdvancedControls::MAX_DEPTH;
-        } else {
-            currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
-        }
+        currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
     }
 }
 
