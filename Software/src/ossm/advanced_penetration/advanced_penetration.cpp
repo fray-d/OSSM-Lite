@@ -275,7 +275,6 @@ void startAdvancedPenetration() {
 }
 
 void incrementControlAdvanced() {
-
     if(stateMachine->is("advancedPenetration.modifier"_s)) {
         currentSettings.selectedModifierControl = static_cast<AdvancedControls>(
                                                 (currentSettings.selectedModifierControl - (int)AdvancedControls::AMPLITUDE + 1) 
@@ -284,6 +283,10 @@ void incrementControlAdvanced() {
     } else {
         currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
     }
+}
+
+void setAdvancedChanged() {
+    currentSettings.changed = true;
 }
 
 }

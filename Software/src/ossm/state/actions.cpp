@@ -111,6 +111,10 @@ void ossmIncrementControlAdvanced() {
     advanced_penetration::incrementControlAdvanced();
 }
 
+void ossmSetAdvancedChanged() {
+    advanced_penetration::setAdvancedChanged();
+}
+
 void ossmIncrementControlStrokeEngine() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 3);
     switch (session.playControl) {
