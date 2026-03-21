@@ -277,10 +277,10 @@ void startAdvancedPenetration() {
 void incrementControlAdvanced() {
 
     if(stateMachine->is("advancedPenetration.modifier"_s)) {
-        currentSettings.selectedModifierControl = static_cast<AdvancedControls>((currentSettings.selectedModifierControl + 1) 
-                                                % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count)
+        currentSettings.selectedModifierControl = static_cast<AdvancedControls>(
+                                                (currentSettings.selectedModifierControl - (int)AdvancedControls::AMPLITUDE + 1) 
+                                                % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count - 1)
                                                 + (int)AdvancedControls::AMPLITUDE);
-        Serial.println(currentSettings.selectedModifierControl);
     } else {
         currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
     }
