@@ -9,6 +9,8 @@ namespace advanced_penetration {
 
     void setControlEncoder();
 
+    void setAdvancedChanged();
+
 }
 
 #endif
