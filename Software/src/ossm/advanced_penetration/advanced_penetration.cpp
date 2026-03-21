@@ -43,6 +43,15 @@ struct AdvancedControl {
     float maxValue = 100;
     AdvancedModifier* modifier;
     float getModifiedValue(int strokeCount);
+    float getNormalizedModifiedValue(int strokeCount) {
+        return getModifiedValue(strokeCount) / 100.0;
+    }
+    float getRampValue(float exp){
+        return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
+    }
+    float getRampedModifiedValue(int strokeCount, float exp) {
+        return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
+    }
 };
 
 struct AdvancedModifier {
@@ -60,8 +69,11 @@ float AdvancedControl::getModifiedValue(int strokeCount){
     if (modifier == nullptr) {
         return value;
     }
-    int cycle = (strokeCount / 2) % modifier->stepCount();
     float difference = value - minValue;
+    if (id == AdvancedControls::MIN_DEPTH){
+        difference = value - maxValue;
+    }
+    int cycle = (strokeCount / 2) % modifier->stepCount();
     float usableDifference = difference * modifier->amplitude.value/100.0;
     if (cycle < modifier->inStep.value){
         float slice = usableDifference/modifier->inStep.value * (cycle + 1);
@@ -198,10 +210,6 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
     vTaskDelete(nullptr);
 }
 
-float rampValue(float value, float exp){
-    return pow( 1 - pow( 1 - value, exp), 1 / exp);
-}
-
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     int strokeCount = 0;
     while (isInCorrectState()) {
@@ -215,14 +223,14 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
         }
         if (currentSettings.changed || !stepper->isRunning()) {
             currentSettings.changed = false;
-            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * rampValue(currentSettings.speed.value / 100.0, 0.8);
+            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue(0.8);
             float targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
-                speed = speed * currentSettings.inSpeed.getModifiedValue(strokeCount) / 100.0;
-                targetPosition = targetPosition * currentSettings.maxDepth.getModifiedValue(strokeCount)/100.0;
+                speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
+                targetPosition = targetPosition * currentSettings.maxDepth.getNormalizedModifiedValue(strokeCount);
             } else {
-                speed = speed * currentSettings.outSpeed.getModifiedValue(strokeCount) / 100.0;
-                targetPosition = targetPosition * currentSettings.minDepth.value / 100.0;
+                speed = speed * currentSettings.outSpeed.getNormalizedModifiedValue(strokeCount);
+                targetPosition = targetPosition * currentSettings.minDepth.getNormalizedModifiedValue(strokeCount);
             }
             stepper->setSpeedInHz(speed);
             stepper->applySpeedAcceleration();
@@ -234,9 +242,9 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 
             uint32_t acceleration = minAccel;
             if (strokeCount % 2 == 0) {
-                acceleration += accelDifference * rampValue(currentSettings.inAcceleration.getModifiedValue(strokeCount)/100.0, 0.8);
+                acceleration += accelDifference * currentSettings.inAcceleration.getRampedModifiedValue(strokeCount,0.8);
             } else {
-                acceleration += accelDifference * rampValue(currentSettings.outAcceleration.getModifiedValue(strokeCount)/100.0, 0.8);
+                acceleration += accelDifference * currentSettings.outAcceleration.getRampedModifiedValue(strokeCount, 0.8);
             }
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()){
                 stepper->setAcceleration(acceleration);
@@ -269,7 +277,9 @@ void startAdvancedPenetration() {
 void incrementControlAdvanced() {
 
     if(stateMachine->is("advancedPenetration.modifier"_s)) {
-        currentSettings.selectedModifierControl = static_cast<AdvancedControls>((currentSettings.selectedModifierControl + 1) % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count) + (int)AdvancedControls::Count);
+        currentSettings.selectedModifierControl = static_cast<AdvancedControls>((currentSettings.selectedModifierControl + 1) 
+                                                % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count)
+                                                + (int)AdvancedControls::AMPLITUDE);
         Serial.println(currentSettings.selectedModifierControl);
     } else {
         currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
