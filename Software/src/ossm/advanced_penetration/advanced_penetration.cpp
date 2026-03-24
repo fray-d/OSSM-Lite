@@ -285,8 +285,8 @@ void incrementControlAdvanced() {
     }
 }
 
-void setAdvancedChanged() {
-    currentSettings.changed = true;
+void setAdvancedChanged() { 
+    lastControl = AdvancedControls::SPEED;
 }
 
 }
