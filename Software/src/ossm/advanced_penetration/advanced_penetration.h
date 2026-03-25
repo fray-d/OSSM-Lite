@@ -5,11 +5,9 @@ namespace advanced_penetration {
 
     void startAdvancedPenetration();
 
-    void incrementControlAdvanced();
+    void advancedClick();
 
-    void setControlEncoder();
-
-    void setAdvancedChanged();
+    void advancedDoubleClick();
 
 }
 

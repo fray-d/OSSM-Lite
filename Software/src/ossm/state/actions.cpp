@@ -107,12 +107,12 @@ void ossmResetSettingsStreaming() {
     encoder.setEncoderValue(settings.depth);
 }
 
-void ossmIncrementControlAdvanced() {
-    advanced_penetration::incrementControlAdvanced();
+void ossmAdvancedClick() {
+    advanced_penetration::advancedClick();
 }
 
-void ossmSetAdvancedChanged() {
-    advanced_penetration::setAdvancedChanged();
+void ossmAdvancedDoubleClick() {
+    advanced_penetration::advancedDoubleClick();
 }
 
 void ossmIncrementControlStrokeEngine() {
