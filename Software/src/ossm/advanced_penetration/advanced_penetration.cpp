@@ -274,7 +274,7 @@ void startAdvancedPenetration() {
                             Tasks::operationTaskCore);
 }
 
-void incrementControlAdvanced() {
+void advancedClick() {
     if(stateMachine->is("advancedPenetration.modifier"_s)) {
         currentSettings.selectedModifierControl = static_cast<AdvancedControls>(
                                                 (currentSettings.selectedModifierControl - (int)AdvancedControls::AMPLITUDE + 1) 
@@ -285,7 +285,7 @@ void incrementControlAdvanced() {
     }
 }
 
-void setAdvancedChanged() { 
+void advancedDoubleClick() { 
     lastControl = AdvancedControls::SPEED;
 }
 
