@@ -16,151 +16,178 @@ using namespace sml;
 
 namespace advanced_penetration {
 
-enum AdvancedControls {
-    MAX_DEPTH,
-    MIN_DEPTH,
-    IN_SPEED,
-    OUT_SPEED,
-    IN_ACCELERATION,
-    OUT_ACCELERATION,
-    Count,
+static const char depth[] PROGMEM = "Depth";
+static const char speed[] PROGMEM = "Speed";
+static const char accel[] PROGMEM = "Accel";
+static const char modifier[] PROGMEM = "Modifier";
+static const char amplitude[] PROGMEM = "Amplitude";
+static const char in_step[] PROGMEM = "Rise";
+static const char in_wait[] PROGMEM = "Linger";
+static const char out_step[] PROGMEM = "Fall";
+static const char out_wait[] PROGMEM = "Dwell";
+
+enum MenuStatus {
+    BASE_MENU,
+    BASE_VALUE,
+    MODIFIER_MENU,
+    MODIFIER_VALUE,
+    STATUS_COUNT
+};
+
+enum BaseMenu {
+    SPEED_1,
+    ACCEL_1,
+    DEPTH_1,
+    SPEED_2,
+    ACCEL_2,
+    DEPTH_2,
+    BASE_COUNT
+};
+
+enum ModifierMenu {
+    MODIFIER_BACK,
     AMPLITUDE,
     IN_STEP,
     IN_WAIT,
     OUT_STEP,
     OUT_WAIT,
-    Count2,
-    SPEED //uncounted
+    MODIFIER_COUNT
 };
 
 struct AdvancedModifier;
 
-struct AdvancedControl {
-    AdvancedControls id;
-    float value;
-    String name;
-    float minValue = 0;
-    float maxValue = 100;
-    AdvancedModifier* modifier;
-    float getModifiedValue(int strokeCount);
-    float getNormalizedModifiedValue(int strokeCount) {
-        return getModifiedValue(strokeCount) / 100.0;
-    }
+struct Control {
+    u8_t value;
+    u8_t minValue = 0;
+    u8_t maxValue = 100;
     float getRampValue(float exp){
         return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
+    }
+};
+
+struct ModifierControl : public Control {
+    ModifierMenu id;
+};
+
+struct AdvancedModifier {
+    ModifierControl amplitude = {0, 0, 100, ModifierMenu::AMPLITUDE};
+    ModifierControl inStep = {1, 0, 100, ModifierMenu::IN_STEP};
+    ModifierControl inWait = {0, 0, 100, ModifierMenu::IN_WAIT};
+    ModifierControl outStep = {1, 0, 100, ModifierMenu::OUT_STEP};
+    ModifierControl outWait = {0, 0, 100, ModifierMenu::OUT_WAIT};
+    int stepCount() {
+        return inStep.value + inWait.value + outStep.value + outWait.value;
+    }
+    bool active() {
+        return amplitude.value > 0;
+    }
+};
+
+struct AdvancedControl : Control {
+    BaseMenu id;
+    AdvancedModifier* modifier;
+    u8_t getModifiedValue(int strokeCount){
+        if (modifier == nullptr) {
+            return value;
+        }
+        int8_t difference = value - minValue;
+        if (id == BaseMenu::DEPTH_2){
+            difference = value - maxValue;
+        }
+        int cycle = (strokeCount / 2) % modifier->stepCount();
+        int8_t usableDifference = difference * modifier->amplitude.value/100.0;
+        if (cycle < modifier->inStep.value){
+            int8_t slice = usableDifference/modifier->inStep.value * (cycle + 1);
+            return value - usableDifference + slice;
+        } else {
+            cycle -= modifier->inStep.value;
+        }
+        if (cycle < modifier->inWait.value) {
+            return value;
+        } else {
+            cycle -= modifier->inWait.value;
+        }
+        if (cycle < modifier->outStep.value) {
+            int8_t slice = usableDifference/modifier->outStep.value * (cycle + 1);
+            return value - slice;
+        } else {
+            cycle -= modifier->outStep.value;
+        }
+        if (cycle < modifier->outWait.value) {
+            return value - usableDifference;
+        }
+        return value;
+    }
+    float getNormalizedModifiedValue(int strokeCount) {
+        return getModifiedValue(strokeCount) / 100.0;
     }
     float getRampedModifiedValue(int strokeCount, float exp) {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
 };
 
-struct AdvancedModifier {
-    AdvancedControl amplitude = {AdvancedControls::AMPLITUDE,0,"Amplitude"};
-    AdvancedControl inStep = {AdvancedControls::IN_STEP,1,"In Steps",1,20};
-    AdvancedControl inWait = {AdvancedControls::IN_WAIT,0,"Linger",0,20};
-    AdvancedControl outStep = {AdvancedControls::OUT_STEP,1,"Out Steps",1,20};
-    AdvancedControl outWait = {AdvancedControls::OUT_WAIT,0,"Dwell",0,20};
-    int stepCount() {
-        return inStep.value + inWait.value + outStep.value + outWait.value;
-    }
-};
-
-float AdvancedControl::getModifiedValue(int strokeCount){
-    if (modifier == nullptr) {
-        return value;
-    }
-    float difference = value - minValue;
-    if (id == AdvancedControls::MIN_DEPTH){
-        difference = value - maxValue;
-    }
-    int cycle = (strokeCount / 2) % modifier->stepCount();
-    float usableDifference = difference * modifier->amplitude.value/100.0;
-    if (cycle < modifier->inStep.value){
-        float slice = usableDifference/modifier->inStep.value * (cycle + 1);
-        return value - usableDifference + slice;
-    } else {
-        cycle -= modifier->inStep.value;
-    }
-    if (cycle < modifier->inWait.value) {
-        return value;
-    } else {
-        cycle -= modifier->inWait.value;
-    }
-    if (cycle < modifier->outStep.value) {
-        float slice = usableDifference/modifier->outStep.value * (cycle + 1);
-        return value - slice;
-    } else {
-        cycle -= modifier->outStep.value;
-    }
-    if (cycle < modifier->outWait.value) {
-        return value - usableDifference;
-    }
-    return value;
-}
-
 struct AdvancedSettings {
-    AdvancedControl speed = {AdvancedControls::SPEED,0,"Speed"};
-    AdvancedControl inSpeed = {AdvancedControls::IN_SPEED,100,"In Speed"};
-    AdvancedControl outSpeed = {AdvancedControls::OUT_SPEED,100,"Out Speed"};
-    AdvancedControl maxDepth = {AdvancedControls::MAX_DEPTH,10,"Max Depth"};
-    AdvancedControl minDepth = {AdvancedControls::MIN_DEPTH,0,"Min Depth"};
-    AdvancedControl inAcceleration = {AdvancedControls::IN_ACCELERATION, 1, "In Acceleration"};
-    AdvancedControl outAcceleration = {AdvancedControls::OUT_ACCELERATION, 1, "Out Acceleration"};
-    AdvancedControls selectedControl = AdvancedControls::MAX_DEPTH;
-    AdvancedControls selectedModifierControl = AdvancedControls::AMPLITUDE;
+    AdvancedControl speed = {0,0,100, BaseMenu::BASE_COUNT};
+    AdvancedControl inSpeed = {100,1,100, BaseMenu::SPEED_1};
+    AdvancedControl outSpeed = {100,1,100, BaseMenu::SPEED_2};
+    AdvancedControl maxDepth = {10,0,100, BaseMenu::DEPTH_1};
+    AdvancedControl minDepth = {0,0,100, BaseMenu::DEPTH_2};
+    AdvancedControl inAcceleration = {1,1,100, BaseMenu::ACCEL_1};
+    AdvancedControl outAcceleration = {1,1,100, BaseMenu::ACCEL_2};
+
+    MenuStatus status = MenuStatus::BASE_MENU;
+    MenuStatus lastStatus = MenuStatus::STATUS_COUNT;
+    BaseMenu baseMenu = BaseMenu::DEPTH_1;
+    ModifierMenu modifierMenu = ModifierMenu::AMPLITUDE;
     bool changed = false;
 } currentSettings;
 
-uint8_t controlPosition;
-AdvancedControls lastControl = AdvancedControls::SPEED;
+// void textControl(AdvancedControl& a, int height) {
+//     if (currentSettings.selectedModifierControl == a.id) {
+//         if (currentSettings.lastControl != a.id) {
+//             encoder.setBoundaries(a.minValue, a.maxValue, false);
+//             encoder.setEncoderValue(a.value);
+//             currentSettings.lastControl = a.id;
+//         }
+//         a.value = constrain(encoder.readEncoder(),a.minValue,a.maxValue);
+//     }
+//     String controlText = a.name +": " + String(uint8_t(a.value));
+//     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
+//     display.drawUTF8(128 - stringWidth, height, controlText.c_str());
+// }
 
-void textControl(AdvancedControl& a, int height) {
-    if (currentSettings.selectedModifierControl == a.id) {
-        if (lastControl != a.id) {
-            encoder.setBoundaries(a.minValue, a.maxValue, false);
-            encoder.setEncoderValue(a.value);
-            lastControl = a.id;
-        }
-        a.value = constrain(encoder.readEncoder(),a.minValue,a.maxValue);
-    }
-    String controlText = a.name +": " + String(uint8_t(a.value));
+void centeredText(String controlText, u8_t x, u8_t y) {
     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-    display.drawUTF8(128 - stringWidth, height, controlText.c_str());
+    display.drawUTF8(x - stringWidth/2, y, controlText.c_str());
 }
 
-void updateControl(AdvancedControl& a, float minVal = 0, float maxVal = 100) {
-    if(stateMachine->is("advancedPenetration.modifier"_s)) {
-        if (a.modifier == nullptr) {
-            a.modifier = new AdvancedModifier;
-        }
-        if (currentSettings.selectedControl == a.id) {
-            textControl(a.modifier->amplitude, 24);
-            textControl(a.modifier->inStep, 34);
-            textControl(a.modifier->inWait, 44);
-            textControl(a.modifier->outStep, 54);
-            textControl(a.modifier->outWait, 64);
-        }
-    } else {
-        if (currentSettings.selectedControl == a.id) {
-            if (lastControl != a.id) {
+void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y) {
+    if (currentSettings.status == MenuStatus::MODIFIER_MENU){
+        return;
+    }
+    display.setFont(u8g2_font_helvR08_tf);
+    if (currentSettings.baseMenu == a.id) {
+        display.drawFrame(x-13,y-11,26,14);
+        if (currentSettings.status == MenuStatus::BASE_VALUE){
+            if (currentSettings.lastStatus != currentSettings.status) {
                 encoder.setBoundaries(minVal, maxVal, false);
                 encoder.setEncoderValue(a.value);
-                lastControl = a.id;
-            } 
+            }
+            display.setFont(u8g2_font_helvB08_tf);
             a.value = constrain(encoder.readEncoder(),minVal, maxVal);
             a.minValue = minVal;
             a.maxValue = maxVal;
-            String controlText = a.name;
-            uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-            display.drawUTF8(128 - stringWidth, 64, controlText.c_str());
-            controlPosition += 3;
-            ui::drawShape::settingBar(display.getU8g2(),"",a.value, controlPosition, 10, ui::Alignment::RIGHT_ALIGNED, 0, 40);
-            controlPosition -= 15;
-        } else {
-            ui::drawShape::settingBarSmall(display.getU8g2(),a.value, controlPosition, 10, 40);
-            controlPosition -= 5;
         }
+        currentSettings.lastStatus = currentSettings.status;
     }
+    if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT && currentSettings.status == MenuStatus::BASE_MENU) {
+        if (a.modifier != nullptr && a.modifier->active()) {
+            display.setFont(u8g2_font_helvB08_tf);
+        }
+        centeredText("Mod", x, y);
+        return;
+    }
+    centeredText(String(a.value), x, y);
 }
 
 bool isInCorrectState() {
@@ -170,16 +197,16 @@ bool isInCorrectState() {
 };
 
 static void startAdvancedPenetrationTask(void *pvParameters) {
-    encoder.setAcceleration(10);
-    float lastEncoder = 0;
+    encoder.setAcceleration(0);
+    u8_t lastEncoder = 0;
 
     while (isInCorrectState()) {
-        float speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
-        float encoderValue = encoder.readEncoder();
+        u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
+        u8_t encoderValue = encoder.readEncoder();
         if ( abs(speedValue - currentSettings.speed.value) > 1
                     || speedValue == 0
                     || encoderValue != lastEncoder 
-                    || currentSettings.selectedControl != lastControl) {
+                    || currentSettings.status != currentSettings.lastStatus) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
                 currentSettings.speed.value = speedValue;
                 lastEncoder = encoderValue;
@@ -189,15 +216,34 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 clearPage(true);
 
                 ui::drawShape::settingBar(display.getU8g2(),"", currentSettings.speed.value);
-                controlPosition = 125;
 
-                //Reverse order... right to left.
-                updateControl(currentSettings.outAcceleration, 1);
-                updateControl(currentSettings.inAcceleration, 1);
-                updateControl(currentSettings.outSpeed,1);
-                updateControl(currentSettings.inSpeed,1);
-                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
-                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
+                int item = floor(encoderValue / 3);
+
+                switch (currentSettings.status) {
+                    case MenuStatus::BASE_MENU:
+                        item = item % BaseMenu::BASE_COUNT;
+                        currentSettings.baseMenu = BaseMenu(item);
+                    case MenuStatus::BASE_VALUE:
+                        display.setFont(u8g2_font_helvR08_tf);
+                        centeredText(speed, 30, 24);
+                        centeredText(accel, 70, 24);
+                        centeredText(depth, 110, 24);
+                        break;
+                    case MenuStatus::MODIFIER_MENU:
+                        item = item % ModifierMenu::MODIFIER_COUNT;
+                        currentSettings.modifierMenu = ModifierMenu(item);
+                        Serial.println(currentSettings.modifierMenu);
+                        break;
+                    default:
+                        break;
+                }
+
+                updateControl(currentSettings.inSpeed,1, 100, 30, 40);
+                updateControl(currentSettings.outSpeed,1, 100, 30, 58);
+                updateControl(currentSettings.inAcceleration, 1, 100, 70, 40);
+                updateControl(currentSettings.outAcceleration, 1, 100, 70, 58);
+                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value, 100, 110, 40);
+                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value, 110, 58);
 
                 currentSettings.changed = true;
 
@@ -205,7 +251,7 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 xSemaphoreGive(displayMutex);
             }
         }
-        vTaskDelay(200);
+        vTaskDelay(100);
     }
     vTaskDelete(nullptr);
 }
@@ -224,7 +270,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
         if (currentSettings.changed || !stepper->isRunning()) {
             currentSettings.changed = false;
             float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue(0.8);
-            float targetPosition = -calibration.measuredStrokeSteps;
+            int32_t targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
                 targetPosition = targetPosition * currentSettings.maxDepth.getNormalizedModifiedValue(strokeCount);
@@ -235,12 +281,11 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             stepper->setSpeedInHz(speed);
             stepper->applySpeedAcceleration();
 
-            float distance = abs(targetPosition - stepper->getCurrentPosition());
-            float minAccel = speed / (distance / speed);
-            float maxAccel = min(minAccel * 5,Config::Driver::maxAcceleration * (1_mm));
-            float accelDifference = maxAccel - minAccel;
-
-            uint32_t acceleration = minAccel;
+            u32_t distance = abs(targetPosition - stepper->getCurrentPosition());
+            u32_t minAccel = speed / (distance / speed);
+            u32_t maxAccel = min(minAccel * 5,u32_t(Config::Driver::maxAcceleration * (1_mm)));
+            u32_t accelDifference = maxAccel - minAccel;
+            u32_t acceleration = minAccel;
             if (strokeCount % 2 == 0) {
                 acceleration += accelDifference * currentSettings.inAcceleration.getRampedModifiedValue(strokeCount,0.8);
             } else {
@@ -261,7 +306,11 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
 
 void startAdvancedPenetration() {
     int stackSize = 10 * configMINIMAL_STACK_SIZE;
-    lastControl = AdvancedControls::SPEED;
+    currentSettings.lastStatus = MenuStatus::STATUS_COUNT;
+    currentSettings.status = MenuStatus::BASE_MENU;
+    encoder.setBoundaries(0,BaseMenu::BASE_COUNT * 6 - 1, true);
+    encoder.setEncoderValue(0);
+
     xTaskCreatePinnedToCore(startAdvancedPenetrationTask,
                             "startAdvancedPenetrationTask", stackSize, nullptr,
                             configMAX_PRIORITIES - 1,
@@ -275,18 +324,40 @@ void startAdvancedPenetration() {
 }
 
 void advancedClick() {
-    if(stateMachine->is("advancedPenetration.modifier"_s)) {
-        currentSettings.selectedModifierControl = static_cast<AdvancedControls>(
-                                                (currentSettings.selectedModifierControl - (int)AdvancedControls::AMPLITUDE + 1) 
-                                                % ((int)AdvancedControls::Count2-(int)AdvancedControls::Count - 1)
-                                                + (int)AdvancedControls::AMPLITUDE);
-    } else {
-        currentSettings.selectedControl = static_cast<AdvancedControls>((currentSettings.selectedControl + 1) % (int)AdvancedControls::Count);
+    int c = 100;
+    bool loop = true;
+    switch (currentSettings.status) {
+        case MenuStatus::BASE_MENU:
+            if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT) {
+                currentSettings.status = MenuStatus::MODIFIER_MENU;
+                c = ModifierMenu::MODIFIER_COUNT * 3;
+            } else {
+                currentSettings.status = MenuStatus::BASE_VALUE;
+                loop = false;
+            }
+            break;
+        case MenuStatus::BASE_VALUE:
+            currentSettings.status = MenuStatus::BASE_MENU;
+            encoder.setEncoderValue(currentSettings.baseMenu*3-1);
+            c = BaseMenu::BASE_COUNT * 6;
+            break;
+        case MenuStatus::MODIFIER_MENU:
+            currentSettings.status = MenuStatus::BASE_MENU;
+            encoder.setEncoderValue(currentSettings.baseMenu*6-1);
+            c = BaseMenu::BASE_COUNT * 6;
+            break;
+        case MenuStatus::MODIFIER_VALUE:
+            currentSettings.status = MenuStatus::MODIFIER_MENU;
+            c = ModifierMenu::MODIFIER_COUNT * 3;
+            break;
+        default:
+            break;
     }
+    encoder.setBoundaries(0, c - 1, loop);
+    Serial.println(currentSettings.status);
 }
 
 void advancedDoubleClick() { 
-    lastControl = AdvancedControls::SPEED;
 }
 
 }
