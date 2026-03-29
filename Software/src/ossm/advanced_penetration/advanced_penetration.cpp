@@ -63,7 +63,7 @@ struct ModifierControl : public Control {
 };
 
 struct AdvancedModifier {
-    ModifierControl amplitude = {50, 0, 100, ModifierMenu::AMPLITUDE};
+    ModifierControl amplitude = {0, 0, 100, ModifierMenu::AMPLITUDE};
     ModifierControl inStep = {1, 1, 25, ModifierMenu::IN_STEP};
     ModifierControl inWait = {0, 0, 25, ModifierMenu::IN_WAIT};
     ModifierControl outStep = {1, 1, 25, ModifierMenu::OUT_STEP};
@@ -109,7 +109,7 @@ struct AdvancedControl : Control {
         if (id == BaseMenu::DEPTH_2){
             difference = value - maxValue;
         }
-        return difference * modifier->getModification(cycle);;
+        return value - difference * (1 - modifier->getModification(cycle));
     }
     float getNormalizedModifiedValue(int strokeCount) {
         return getModifiedValue(strokeCount) / 100.0;
@@ -189,6 +189,8 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
         }
         return;
     }
+    a.minValue = minVal;
+    a.maxValue = maxVal;
     if (currentSettings.baseMenu == a.id) {
         display.drawFrame(x-13,y-11,26,14);
         if (currentSettings.status == MenuStatus::BASE_VALUE){
@@ -198,8 +200,6 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
             }
             display.setFont(u8g2_font_helvB08_tf);
             a.value = constrain(encoder.readEncoder(),minVal, maxVal);
-            a.minValue = minVal;
-            a.maxValue = maxVal;
         }
         currentSettings.lastStatus = currentSettings.status;
     }
