@@ -223,7 +223,7 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
                 encoder.setBoundaries(minVal, maxVal, false);
                 encoder.setEncoderValue(a.value);
             }
-            display.setFont(u8g2_font_timR08_tf);
+            display.setFont(u8g2_font_timB08_tf);
             a.value = constrain(encoder.readEncoder(),minVal, maxVal);
         }
         currentSettings.lastStatus = currentSettings.status;
