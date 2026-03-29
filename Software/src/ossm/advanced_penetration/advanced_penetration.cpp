@@ -29,12 +29,12 @@ enum MenuStatus {
 };
 
 enum BaseMenu {
+    DEPTH_1,
+    DEPTH_2,
     SPEED_1,
     SPEED_2,
     ACCEL_1,
     ACCEL_2,
-    DEPTH_1,
-    DEPTH_2,
     BASE_COUNT
 };
 
@@ -56,6 +56,9 @@ struct Control {
     float exp = 0.8;
     float getRampValue(){
         return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
+    };
+    float getNormalized(){
+        return value / float(maxValue);
     }
 };
 
@@ -100,6 +103,7 @@ struct AdvancedModifier {
 
 struct AdvancedControl : Control {
     BaseMenu id;
+    String name;
     AdvancedModifier* modifier;
     u8_t getModifiedValue(int strokeCount){
         if (modifier == nullptr) {
@@ -122,12 +126,18 @@ struct AdvancedControl : Control {
 
 struct AdvancedSettings {
     AdvancedControl speed = {0, 0, 100, 0.8, BaseMenu::BASE_COUNT};
-    AdvancedControl inSpeed = {100, 1, 100, 0, BaseMenu::SPEED_1};
-    AdvancedControl outSpeed = {100, 1, 100, 0, BaseMenu::SPEED_2};
-    AdvancedControl maxDepth = {10, 0, 100, 0, BaseMenu::DEPTH_1};
-    AdvancedControl minDepth = {0, 0, 100, 0, BaseMenu::DEPTH_2};
-    AdvancedControl inAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_1};
-    AdvancedControl outAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_2};
+    AdvancedControl inSpeed = {100, 1, 100, 0, BaseMenu::SPEED_1, "S+"};
+    AdvancedControl outSpeed = {100, 1, 100, 0, BaseMenu::SPEED_2, "S-"};
+    AdvancedControl maxDepth = {10, 0, 100, 0, BaseMenu::DEPTH_1, "D+"};
+    AdvancedControl minDepth = {0, 0, 100, 0, BaseMenu::DEPTH_2, "D-"};
+    AdvancedControl inAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_1, "A+"};
+    AdvancedControl outAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_2, "A-"};
+    int usableDepth() {
+        return maxDepth.value - minDepth.value;
+    };
+    float speedProportion() {
+        return outSpeed.value / float(inSpeed.value + outSpeed.value);
+    };
 
     MenuStatus status = MenuStatus::BASE_MENU;
     MenuStatus lastStatus = MenuStatus::STATUS_COUNT;
@@ -157,7 +167,7 @@ void drawModifierControl(ModifierControl& m, u8_t x, u8_t y) {
     centeredText(String(m.value), x, y);
 }
 
-void drawModifier(AdvancedControl& a, u8_t x=12, u8_t y=10, u8_t w=100, u8_t h=54) {
+void drawModifier(AdvancedControl& a, u8_t x=10, u8_t y=10, u8_t w=101, u8_t h=54) {
     if (a.modifier == nullptr) {
         a.modifier = new AdvancedModifier;
     }
@@ -181,8 +191,22 @@ void drawModifier(AdvancedControl& a, u8_t x=12, u8_t y=10, u8_t w=100, u8_t h=5
     }
 }
 
+void drawStroke(u8_t x=10, u8_t y=10, u8_t w=101, u8_t h=54) {
+    display.drawFrame(x,y,w,h);
+    display.setClipWindow(x,y,x+w,y+h);
+    u8_t x1 = x-1;
+    u8_t x2 = (w * currentSettings.speedProportion()) + x-1;
+    u8_t x3 = x + w - 1;
+    u8_t y1 = y + h - (currentSettings.minDepth.getNormalized() * h);
+    u8_t y2 = y + h - (currentSettings.maxDepth.getNormalized() * h);
+    display.drawLine(x1,y1,x2,y2);
+    display.drawLine(x2,y2,x3,y1);
+    display.setClipWindow(0,0,display.getWidth(),display.getHeight());
+
+}
+
 void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y) {
-    display.setFont(u8g2_font_helvR08_tf);
+    display.setFont(u8g2_font_timR08_tf);
     if (currentSettings.status == MenuStatus::MODIFIER_MENU
                 || currentSettings.status == MenuStatus::MODIFIER_VALUE){
         if (currentSettings.baseMenu == a.id) {
@@ -193,22 +217,23 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
     a.minValue = minVal;
     a.maxValue = maxVal;
     if (currentSettings.baseMenu == a.id) {
-        display.drawFrame(x-13,y-11,26,14);
+        display.drawFrame(x-9,y-9,17,11);
         if (currentSettings.status == MenuStatus::BASE_VALUE){
             if (currentSettings.lastStatus != currentSettings.status) {
                 encoder.setBoundaries(minVal, maxVal, false);
                 encoder.setEncoderValue(a.value);
             }
-            display.setFont(u8g2_font_helvB08_tf);
+            display.setFont(u8g2_font_timR08_tf);
             a.value = constrain(encoder.readEncoder(),minVal, maxVal);
         }
         currentSettings.lastStatus = currentSettings.status;
+        drawStroke();
     }
     if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT && currentSettings.status == MenuStatus::BASE_MENU) {
         if (a.modifier != nullptr && a.modifier->active()) {
-            display.setFont(u8g2_font_helvB08_tf);
+            display.setFont(u8g2_font_timB08_tf);
         }
-        centeredText("Mod", x, y);
+        centeredText(a.name, x, y);
         return;
     }
     centeredText(String(a.value), x, y);
@@ -290,11 +315,6 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                     case MenuStatus::BASE_MENU:
                         item = item % BaseMenu::BASE_COUNT;
                         currentSettings.baseMenu = BaseMenu(item);
-                    case MenuStatus::BASE_VALUE:
-                        display.setFont(u8g2_font_helvR08_tf);
-                        centeredText(speed, 30, 24);
-                        centeredText(accel, 70, 24);
-                        centeredText(depth, 110, 24);
                         break;
                     case MenuStatus::MODIFIER_MENU:
                         item = item % ModifierMenu::MODIFIER_COUNT;
@@ -304,12 +324,12 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                         break;
                 }
 
-                updateControl(currentSettings.inSpeed,1, 100, 30, 40);
-                updateControl(currentSettings.outSpeed,1, 100, 30, 58);
-                updateControl(currentSettings.inAcceleration, 1, 100, 70, 40);
-                updateControl(currentSettings.outAcceleration, 1, 100, 70, 58);
-                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value, 100, 110, 40);
-                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value, 110, 58);
+                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value, 100, 120, 19);
+                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value, 120, 28);
+                updateControl(currentSettings.inSpeed,1, 100, 120, 37);
+                updateControl(currentSettings.outSpeed,1, 100, 120, 46);
+                updateControl(currentSettings.inAcceleration, 1, 100, 120, 55);
+                updateControl(currentSettings.outAcceleration, 1, 100, 120, 64);
 
                 currentSettings.changed = true;
 
