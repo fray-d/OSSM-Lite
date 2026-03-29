@@ -30,10 +30,10 @@ enum MenuStatus {
 
 enum BaseMenu {
     SPEED_1,
-    ACCEL_1,
-    DEPTH_1,
     SPEED_2,
+    ACCEL_1,
     ACCEL_2,
+    DEPTH_1,
     DEPTH_2,
     BASE_COUNT
 };
@@ -53,7 +53,8 @@ struct Control {
     u8_t value;
     u8_t minValue = 0;
     u8_t maxValue = 100;
-    float getRampValue(float exp){
+    float exp = 0.8;
+    float getRampValue(){
         return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
     }
 };
@@ -63,12 +64,12 @@ struct ModifierControl : public Control {
 };
 
 struct AdvancedModifier {
-    ModifierControl amplitude = {0, 0, 100, ModifierMenu::AMPLITUDE};
-    ModifierControl inStep = {1, 1, 25, ModifierMenu::IN_STEP};
-    ModifierControl inWait = {0, 0, 25, ModifierMenu::IN_WAIT};
-    ModifierControl outStep = {1, 1, 25, ModifierMenu::OUT_STEP};
-    ModifierControl outWait = {0, 0, 25, ModifierMenu::OUT_WAIT};
-    ModifierControl offset = {0, 0, 100, ModifierMenu::OFFSET};
+    ModifierControl amplitude = {0, 0, 100, 0, ModifierMenu::AMPLITUDE};
+    ModifierControl inStep = {1, 1, 25, 0, ModifierMenu::IN_STEP};
+    ModifierControl inWait = {0, 0, 25, 0, ModifierMenu::IN_WAIT};
+    ModifierControl outStep = {1, 1, 25, 0, ModifierMenu::OUT_STEP};
+    ModifierControl outWait = {0, 0, 25, 0, ModifierMenu::OUT_WAIT};
+    ModifierControl offset = {0, 0, 100, 0, ModifierMenu::OFFSET};
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
     }
@@ -114,19 +115,19 @@ struct AdvancedControl : Control {
     float getNormalizedModifiedValue(int strokeCount) {
         return getModifiedValue(strokeCount) / 100.0;
     }
-    float getRampedModifiedValue(int strokeCount, float exp) {
+    float getRampedModifiedValue(int strokeCount) {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
 };
 
 struct AdvancedSettings {
-    AdvancedControl speed = {0,0,100, BaseMenu::BASE_COUNT};
-    AdvancedControl inSpeed = {100,1,100, BaseMenu::SPEED_1};
-    AdvancedControl outSpeed = {100,1,100, BaseMenu::SPEED_2};
-    AdvancedControl maxDepth = {10,0,100, BaseMenu::DEPTH_1};
-    AdvancedControl minDepth = {0,0,100, BaseMenu::DEPTH_2};
-    AdvancedControl inAcceleration = {1,1,100, BaseMenu::ACCEL_1};
-    AdvancedControl outAcceleration = {1,1,100, BaseMenu::ACCEL_2};
+    AdvancedControl speed = {0, 0, 100, 0.8, BaseMenu::BASE_COUNT};
+    AdvancedControl inSpeed = {100, 1, 100, 0, BaseMenu::SPEED_1};
+    AdvancedControl outSpeed = {100, 1, 100, 0, BaseMenu::SPEED_2};
+    AdvancedControl maxDepth = {10, 0, 100, 0, BaseMenu::DEPTH_1};
+    AdvancedControl minDepth = {0, 0, 100, 0, BaseMenu::DEPTH_2};
+    AdvancedControl inAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_1};
+    AdvancedControl outAcceleration = {1, 1, 100, 0.8, BaseMenu::ACCEL_2};
 
     MenuStatus status = MenuStatus::BASE_MENU;
     MenuStatus lastStatus = MenuStatus::STATUS_COUNT;
@@ -334,7 +335,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
         }
         if (currentSettings.changed || !stepper->isRunning()) {
             currentSettings.changed = false;
-            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue(0.8);
+            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue();
             int32_t targetPosition = -calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
@@ -352,9 +353,9 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             u32_t accelDifference = maxAccel - minAccel;
             u32_t acceleration = minAccel;
             if (strokeCount % 2 == 0) {
-                acceleration += accelDifference * currentSettings.inAcceleration.getRampedModifiedValue(strokeCount,0.8);
+                acceleration += accelDifference * currentSettings.inAcceleration.getRampedModifiedValue(strokeCount);
             } else {
-                acceleration += accelDifference * currentSettings.outAcceleration.getRampedModifiedValue(strokeCount, 0.8);
+                acceleration += accelDifference * currentSettings.outAcceleration.getRampedModifiedValue(strokeCount);
             }
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()){
                 stepper->setAcceleration(acceleration);
