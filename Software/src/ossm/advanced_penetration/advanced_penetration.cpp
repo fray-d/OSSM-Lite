@@ -19,12 +19,6 @@ namespace advanced_penetration {
 static const char depth[] PROGMEM = "Depth";
 static const char speed[] PROGMEM = "Speed";
 static const char accel[] PROGMEM = "Accel";
-static const char modifier[] PROGMEM = "Modifier";
-static const char amplitude[] PROGMEM = "Amplitude";
-static const char in_step[] PROGMEM = "Rise";
-static const char in_wait[] PROGMEM = "Linger";
-static const char out_step[] PROGMEM = "Fall";
-static const char out_wait[] PROGMEM = "Dwell";
 
 enum MenuStatus {
     BASE_MENU,
@@ -54,8 +48,6 @@ enum ModifierMenu {
     GO_BACK,
     MODIFIER_COUNT
 };
-
-struct AdvancedModifier;
 
 struct Control {
     u8_t value;
@@ -221,6 +213,49 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
     centeredText(String(a.value), x, y);
 }
 
+void advancedClick() {
+    u8_t c = 100;
+    bool loop = true;
+    u8_t value = 0;
+    switch (currentSettings.status) {
+        case MenuStatus::BASE_MENU:
+            if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT) {
+                currentSettings.status = MenuStatus::MODIFIER_MENU;
+                c = ModifierMenu::MODIFIER_COUNT * 3;
+            } else {
+                currentSettings.status = MenuStatus::BASE_VALUE;
+                loop = false;
+            }
+            break;
+        case MenuStatus::BASE_VALUE:
+            currentSettings.status = MenuStatus::BASE_MENU;
+            value = currentSettings.baseMenu * 3;
+            c = BaseMenu::BASE_COUNT * 6;
+            break;
+        case MenuStatus::MODIFIER_MENU:
+            if (currentSettings.modifierMenu == ModifierMenu::GO_BACK) {
+                currentSettings.status = MenuStatus::BASE_MENU;
+                value = (currentSettings.baseMenu + BaseMenu::BASE_COUNT) * 3;
+                c = BaseMenu::BASE_COUNT * 6;
+            } else {
+                currentSettings.status = MenuStatus::MODIFIER_VALUE;
+                loop = false;
+            }
+            break;
+        case MenuStatus::MODIFIER_VALUE:
+            currentSettings.status = MenuStatus::MODIFIER_MENU;
+            value = currentSettings.modifierMenu * 3;
+            c = ModifierMenu::MODIFIER_COUNT * 3;
+            break;
+        default:
+            break;
+    }
+    encoder.setBoundaries(0, c - 1, loop);
+    encoder.setEncoderValue(value);
+}
+
+void advancedDoubleClick() { 
+}
 bool isInCorrectState() {
     return stateMachine->is("advancedPenetration"_s)
         || stateMachine->is("advancedPenetration.idle"_s)
@@ -352,49 +387,4 @@ void startAdvancedPenetration() {
                             configMAX_PRIORITIES - 1, nullptr,
                             Tasks::operationTaskCore);
 }
-
-void advancedClick() {
-    u8_t c = 100;
-    bool loop = true;
-    u8_t value = 0;
-    switch (currentSettings.status) {
-        case MenuStatus::BASE_MENU:
-            if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT) {
-                currentSettings.status = MenuStatus::MODIFIER_MENU;
-                c = ModifierMenu::MODIFIER_COUNT * 3;
-            } else {
-                currentSettings.status = MenuStatus::BASE_VALUE;
-                loop = false;
-            }
-            break;
-        case MenuStatus::BASE_VALUE:
-            currentSettings.status = MenuStatus::BASE_MENU;
-            value = currentSettings.baseMenu * 3;
-            c = BaseMenu::BASE_COUNT * 6;
-            break;
-        case MenuStatus::MODIFIER_MENU:
-            if (currentSettings.modifierMenu == ModifierMenu::GO_BACK) {
-                currentSettings.status = MenuStatus::BASE_MENU;
-                value = (currentSettings.baseMenu + BaseMenu::BASE_COUNT) * 3;
-                c = BaseMenu::BASE_COUNT * 6;
-            } else {
-                currentSettings.status = MenuStatus::MODIFIER_VALUE;
-                loop = false;
-            }
-            break;
-        case MenuStatus::MODIFIER_VALUE:
-            currentSettings.status = MenuStatus::MODIFIER_MENU;
-            value = currentSettings.modifierMenu * 3;
-            c = ModifierMenu::MODIFIER_COUNT * 3;
-            break;
-        default:
-            break;
-    }
-    encoder.setBoundaries(0, c - 1, loop);
-    encoder.setEncoderValue(value);
-}
-
-void advancedDoubleClick() { 
-}
-
 }
