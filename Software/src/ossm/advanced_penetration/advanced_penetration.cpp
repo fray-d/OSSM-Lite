@@ -58,7 +58,7 @@ struct Control {
         return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
     };
     float getNormalized(){
-        return value / float(maxValue);
+        return value / 100.0;
     }
 };
 
@@ -158,7 +158,7 @@ void drawModifierControl(ModifierControl& m, u8_t x, u8_t y) {
             display.setFont(u8g2_font_timB08_tn);
             if (currentSettings.lastStatus != currentSettings.status) {
                 encoder.setBoundaries(m.minValue, m.maxValue, false);
-                encoder.setEncoderValue(m.value);
+                encoder.setEncoderValue(m.value - 1);
             }
             m.value = constrain(encoder.readEncoder(),m.minValue, m.maxValue);
         }
@@ -221,7 +221,7 @@ void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y)
         if (currentSettings.status == MenuStatus::BASE_VALUE){
             if (currentSettings.lastStatus != currentSettings.status) {
                 encoder.setBoundaries(minVal, maxVal, false);
-                encoder.setEncoderValue(a.value);
+                encoder.setEncoderValue(a.value - 1);
             }
             display.setFont(u8g2_font_timB08_tf);
             a.value = constrain(encoder.readEncoder(),minVal, maxVal);
