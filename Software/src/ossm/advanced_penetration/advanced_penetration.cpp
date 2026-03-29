@@ -45,12 +45,13 @@ enum BaseMenu {
 };
 
 enum ModifierMenu {
-    MODIFIER_BACK,
     AMPLITUDE,
     IN_STEP,
     IN_WAIT,
     OUT_STEP,
     OUT_WAIT,
+    OFFSET,
+    GO_BACK,
     MODIFIER_COUNT
 };
 
@@ -70,13 +71,34 @@ struct ModifierControl : public Control {
 };
 
 struct AdvancedModifier {
-    ModifierControl amplitude = {0, 0, 100, ModifierMenu::AMPLITUDE};
-    ModifierControl inStep = {1, 0, 100, ModifierMenu::IN_STEP};
-    ModifierControl inWait = {0, 0, 100, ModifierMenu::IN_WAIT};
-    ModifierControl outStep = {1, 0, 100, ModifierMenu::OUT_STEP};
-    ModifierControl outWait = {0, 0, 100, ModifierMenu::OUT_WAIT};
-    int stepCount() {
+    ModifierControl amplitude = {50, 0, 100, ModifierMenu::AMPLITUDE};
+    ModifierControl inStep = {1, 1, 25, ModifierMenu::IN_STEP};
+    ModifierControl inWait = {0, 0, 25, ModifierMenu::IN_WAIT};
+    ModifierControl outStep = {1, 1, 25, ModifierMenu::OUT_STEP};
+    ModifierControl outWait = {0, 0, 25, ModifierMenu::OUT_WAIT};
+    ModifierControl offset = {0, 0, 100, ModifierMenu::OFFSET};
+    u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
+    }
+    float getModification(int cycle){
+        float ratio = amplitude.value / 100.0;
+        cycle = (cycle + offset.value) % stepCount();
+        if (cycle < inStep.value){
+            float slice = ratio / inStep.value * (cycle + 1);
+            return 1 - slice;
+        } else {
+            cycle -= inStep.value;
+        }
+        if (cycle < inWait.value) {
+            return 1 - ratio;
+        } else {
+            cycle -= inWait.value;
+        }
+        if (cycle < outStep.value) {
+            float slice = ratio / outStep.value * (cycle + 1);
+            return 1 - ratio + slice;
+        } 
+        return 1;
     }
     bool active() {
         return amplitude.value > 0;
@@ -90,33 +112,12 @@ struct AdvancedControl : Control {
         if (modifier == nullptr) {
             return value;
         }
+        int cycle = (strokeCount / 2) % modifier->stepCount();
         int8_t difference = value - minValue;
         if (id == BaseMenu::DEPTH_2){
             difference = value - maxValue;
         }
-        int cycle = (strokeCount / 2) % modifier->stepCount();
-        int8_t usableDifference = difference * modifier->amplitude.value/100.0;
-        if (cycle < modifier->inStep.value){
-            int8_t slice = usableDifference/modifier->inStep.value * (cycle + 1);
-            return value - usableDifference + slice;
-        } else {
-            cycle -= modifier->inStep.value;
-        }
-        if (cycle < modifier->inWait.value) {
-            return value;
-        } else {
-            cycle -= modifier->inWait.value;
-        }
-        if (cycle < modifier->outStep.value) {
-            int8_t slice = usableDifference/modifier->outStep.value * (cycle + 1);
-            return value - slice;
-        } else {
-            cycle -= modifier->outStep.value;
-        }
-        if (cycle < modifier->outWait.value) {
-            return value - usableDifference;
-        }
-        return value;
+        return difference * modifier->getModification(cycle);;
     }
     float getNormalizedModifiedValue(int strokeCount) {
         return getModifiedValue(strokeCount) / 100.0;
@@ -142,30 +143,60 @@ struct AdvancedSettings {
     bool changed = false;
 } currentSettings;
 
-// void textControl(AdvancedControl& a, int height) {
-//     if (currentSettings.selectedModifierControl == a.id) {
-//         if (currentSettings.lastControl != a.id) {
-//             encoder.setBoundaries(a.minValue, a.maxValue, false);
-//             encoder.setEncoderValue(a.value);
-//             currentSettings.lastControl = a.id;
-//         }
-//         a.value = constrain(encoder.readEncoder(),a.minValue,a.maxValue);
-//     }
-//     String controlText = a.name +": " + String(uint8_t(a.value));
-//     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-//     display.drawUTF8(128 - stringWidth, height, controlText.c_str());
-// }
-
 void centeredText(String controlText, u8_t x, u8_t y) {
     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
     display.drawUTF8(x - stringWidth/2, y, controlText.c_str());
 }
 
+void drawModifierControl(ModifierControl& m, u8_t x, u8_t y) {
+    display.setFont(u8g2_font_timR08_tn);
+    if (currentSettings.modifierMenu == m.id) {
+        if (currentSettings.status == MenuStatus::MODIFIER_VALUE) {
+            display.setFont(u8g2_font_timB08_tn);
+            if (currentSettings.lastStatus != currentSettings.status) {
+                encoder.setBoundaries(m.minValue, m.maxValue, false);
+                encoder.setEncoderValue(m.value);
+            }
+            m.value = constrain(encoder.readEncoder(),m.minValue, m.maxValue);
+        }
+        currentSettings.lastStatus = currentSettings.status;
+    }
+    centeredText(String(m.value), x, y);
+}
+
+void drawModifier(AdvancedControl& a, u8_t x=12, u8_t y=10, u8_t w=100, u8_t h=54) {
+    if (a.modifier == nullptr) {
+        a.modifier = new AdvancedModifier;
+    }
+    drawModifierControl(a.modifier->amplitude, 120, 19);
+    drawModifierControl(a.modifier->inStep, 120, 28);
+    drawModifierControl(a.modifier->inWait, 120, 37);
+    drawModifierControl(a.modifier->outStep, 120, 46);
+    drawModifierControl(a.modifier->outWait, 120, 55);
+    drawModifierControl(a.modifier->offset, 120, 64);
+
+    display.drawFrame(111,y+9*currentSettings.modifierMenu,17,11);
+
+    u8_t steps = a.modifier->stepCount();
+    u8_t barWdith = w / steps;
+    w = barWdith * steps;
+    x = 112 - w;
+    for (int step = 0; step < steps; step ++) {
+        u8_t value = h * a.modifier->getModification(step);
+        display.drawBox(x,y + h - value,barWdith,value);
+        x += barWdith;
+    }
+}
+
 void updateControl(AdvancedControl& a, u8_t minVal, u8_t maxVal, u8_t x, u8_t y) {
-    if (currentSettings.status == MenuStatus::MODIFIER_MENU){
+    display.setFont(u8g2_font_helvR08_tf);
+    if (currentSettings.status == MenuStatus::MODIFIER_MENU
+                || currentSettings.status == MenuStatus::MODIFIER_VALUE){
+        if (currentSettings.baseMenu == a.id) {
+            drawModifier(a);
+        }
         return;
     }
-    display.setFont(u8g2_font_helvR08_tf);
     if (currentSettings.baseMenu == a.id) {
         display.drawFrame(x-13,y-11,26,14);
         if (currentSettings.status == MenuStatus::BASE_VALUE){
@@ -215,7 +246,7 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 setHeader(headerText);
                 clearPage(true);
 
-                ui::drawShape::settingBar(display.getU8g2(),"", currentSettings.speed.value);
+                ui::drawShape::settingBar(display.getU8g2(),"", currentSettings.speed.value, 0, 0, ui::LEFT_ALIGNED, 0, 54);
 
                 int item = floor(encoderValue / 3);
 
@@ -232,7 +263,6 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                     case MenuStatus::MODIFIER_MENU:
                         item = item % ModifierMenu::MODIFIER_COUNT;
                         currentSettings.modifierMenu = ModifierMenu(item);
-                        Serial.println(currentSettings.modifierMenu);
                         break;
                     default:
                         break;
@@ -324,8 +354,9 @@ void startAdvancedPenetration() {
 }
 
 void advancedClick() {
-    int c = 100;
+    u8_t c = 100;
     bool loop = true;
+    u8_t value = 0;
     switch (currentSettings.status) {
         case MenuStatus::BASE_MENU:
             if (encoder.readEncoder()/3 >= BaseMenu::BASE_COUNT) {
@@ -338,23 +369,29 @@ void advancedClick() {
             break;
         case MenuStatus::BASE_VALUE:
             currentSettings.status = MenuStatus::BASE_MENU;
-            encoder.setEncoderValue(currentSettings.baseMenu*3-1);
+            value = currentSettings.baseMenu * 3;
             c = BaseMenu::BASE_COUNT * 6;
             break;
         case MenuStatus::MODIFIER_MENU:
-            currentSettings.status = MenuStatus::BASE_MENU;
-            encoder.setEncoderValue(currentSettings.baseMenu*6-1);
-            c = BaseMenu::BASE_COUNT * 6;
+            if (currentSettings.modifierMenu == ModifierMenu::GO_BACK) {
+                currentSettings.status = MenuStatus::BASE_MENU;
+                value = (currentSettings.baseMenu + BaseMenu::BASE_COUNT) * 3;
+                c = BaseMenu::BASE_COUNT * 6;
+            } else {
+                currentSettings.status = MenuStatus::MODIFIER_VALUE;
+                loop = false;
+            }
             break;
         case MenuStatus::MODIFIER_VALUE:
             currentSettings.status = MenuStatus::MODIFIER_MENU;
+            value = currentSettings.modifierMenu * 3;
             c = ModifierMenu::MODIFIER_COUNT * 3;
             break;
         default:
             break;
     }
     encoder.setBoundaries(0, c - 1, loop);
-    Serial.println(currentSettings.status);
+    encoder.setEncoderValue(value);
 }
 
 void advancedDoubleClick() { 
