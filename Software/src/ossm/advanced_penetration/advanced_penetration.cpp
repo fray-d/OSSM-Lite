@@ -56,12 +56,12 @@ struct Control {
     u8_t value;
     u8_t minValue = 0;
     u8_t maxValue = 100;
-    float getRampValue(float exp = 0.8){
-        return pow(1 - pow(1 - (value/100.0), exp), 1 / exp);
-    };
     float getNormalized(){
         return value / 100.0;
     }
+    float getRampValue(float exp = 0.8){
+        return pow(1 - pow(1 - getNormalized(), exp), 1 / exp);
+    };
 };
 
 struct ModifierControl : public Control {
@@ -132,19 +132,16 @@ struct AdvancedSettings {
     AdvancedControl outSpeed = {100, 1, 100, BaseMenu::SPEED_2, s2};
     AdvancedControl maxDepth = {10, 0, 100, BaseMenu::DEPTH_1, d1};
     AdvancedControl minDepth = {0, 0, 100, BaseMenu::DEPTH_2, d2};
-    AdvancedControl inAcceleration = {50, 1, 100, BaseMenu::ACCEL_1, a1};
-    AdvancedControl outAcceleration = {50, 1, 100, BaseMenu::ACCEL_2, a2};
+    AdvancedControl inAcceleration = {50, 0, 100, BaseMenu::ACCEL_1, a1};
+    AdvancedControl outAcceleration = {50, 0, 100, BaseMenu::ACCEL_2, a2};
     MenuStatus status = MenuStatus::BASE_MENU;
     MenuStatus lastStatus = MenuStatus::STATUS_COUNT;
     BaseMenu baseMenu = BaseMenu::DEPTH_1;
     ModifierMenu modifierMenu = ModifierMenu::AMPLITUDE;
     u8_t textPosition = 19;
     bool changed = false;
-    int usableDepth() {
+    u8_t usableDepth() {
         return maxDepth.value - minDepth.value;
-    };
-    float speedProportion() {
-        return outSpeed.value / float(inSpeed.value + outSpeed.value);
     };
 } currentSettings;
 
@@ -201,21 +198,75 @@ void drawModifier(AdvancedControl& a) {
     }
 }
 
+struct StrokeMath {
+    float accelTime;
+    float accel;
+    float totalTime;
+};
+
+StrokeMath calculate(u8_t speed, float accelValue) {
+    StrokeMath stroke;
+    float minAccel = speed / (currentSettings.usableDepth() / float(speed));
+    stroke.accel = minAccel + (minAccel * 4) * accelValue;
+    stroke.accelTime = speed / stroke.accel;
+    float accelDistance = 0.5 * stroke.accel * pow(stroke.accelTime,2);
+    float maxSpeedDistance = currentSettings.usableDepth() - accelDistance * 2;
+    float maxSpeedTime = maxSpeedDistance / speed;
+    stroke.totalTime = stroke.accelTime * 2 + maxSpeedTime;
+    return stroke;
+}
+
 void drawStroke(u8_t x=10, u8_t y=10, u8_t w=101, u8_t h=54) {
-    display.drawFrame(x,y,w,h);
-    display.setClipWindow(x,y,x+w,y+h);
-    u8_t x1 = x-1;
-    u8_t x2 = (w * currentSettings.speedProportion()) + x-1;
-    u8_t x3 = x + w - 1;
-    u8_t y1 = y + h - (currentSettings.minDepth.getNormalized() * h);
-    u8_t y2 = y + h - (currentSettings.maxDepth.getNormalized() * h);
-    display.drawLine(x1,y1,x2,y2);
-    display.drawLine(x2,y2,x3,y1);
-    display.setClipWindow(0,0,display.getWidth(),display.getHeight());
+  //  display.drawFrame(x,y,w,h);
+   // display.setClipWindow(x,y,x+w,y+h);
+    StrokeMath inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue());
+    StrokeMath outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue());
+    u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
+    float inSlice = inStroke.totalTime / split;
+    float outSlice = outStroke.totalTime / (w-split);
+    u8_t x1 = x - 1;
+    u8_t y1 = 63 - (currentSettings.minDepth.getNormalized() * h);
+    u8_t x2 = x + split;
+    u8_t y2 = 63 - (currentSettings.maxDepth.getNormalized() * h);
+    u8_t x3 = x + w;
+    u8_t lx1 = 0;
+    u8_t ly1 = 0;
+    u8_t lx2 = 0;
+    u8_t ly2 = 0;
+
+    for (int px = 0; px < split; px++){
+        if (px <= inStroke.accelTime / inSlice) {
+            u8_t py = 0.5 * inStroke.accel * pow(inSlice * px,2);
+            py = py / 100.0 * h;
+            lx1 = x1 + px;
+            lx2 = x2 - px;
+            ly1 = y1 - py;
+            ly2 = y2 + py;
+            display.drawPixel(lx1,ly1);
+            display.drawPixel(lx2,ly2);
+        }
+    }
+    display.drawLine(lx1,ly1,lx2,ly2);
+
+    for (int px = 0; px < (w-split); px++){
+        if (px <= outStroke.accelTime / outSlice) {
+            u8_t py = 0.5 * outStroke.accel * pow(outSlice * px,2);
+            py = py / 100.0 * h;
+            lx1 = x2 + px;
+            lx2 = x3 - px;
+            ly1 = y2 + py;
+            ly2 = y1 - py;
+            display.drawPixel(lx1,ly1);
+            display.drawPixel(lx2,ly2);
+        }
+    }
+    display.drawLine(lx1,ly1,lx2,ly2);
+
+  //  display.setClipWindow(0,0,display.getWidth(),display.getHeight());
 
 }
 
-void updateControl(AdvancedControl& a, u8_t minVal = 1, u8_t maxVal = 100) {
+void updateControl(AdvancedControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
     display.setFont(u8g2_font_timR08_tf);
     if (currentSettings.status == MenuStatus::MODIFIER_MENU
                 || currentSettings.status == MenuStatus::MODIFIER_VALUE){
@@ -299,7 +350,7 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
         u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         u8_t encoderValue = encoder.readEncoder();
         if ( abs(speedValue - currentSettings.speed.value) > 1
-                    || speedValue == 0
+                    //|| speedValue == 0
                     || encoderValue != lastEncoder 
                     || currentSettings.status != currentSettings.lastStatus) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
@@ -329,8 +380,8 @@ static void startAdvancedPenetrationTask(void *pvParameters) {
                 currentSettings.textPosition = 19;
                 updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
                 updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
-                updateControl(currentSettings.inSpeed);
-                updateControl(currentSettings.outSpeed);
+                updateControl(currentSettings.inSpeed, 1);
+                updateControl(currentSettings.outSpeed, 1);
                 updateControl(currentSettings.inAcceleration);
                 updateControl(currentSettings.outAcceleration);
                 currentSettings.changed = true;
