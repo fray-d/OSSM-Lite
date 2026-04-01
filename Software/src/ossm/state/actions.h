@@ -13,7 +13,6 @@ void ossmResetSettingsStrokeEngine();
 void ossmResetSettingsSimplePen();
 void ossmResetSettingsStreaming();
 void ossmAdvancedClick();
-void ossmAdvancedDoubleClick();
 void ossmIncrementControlStrokeEngine();
 void ossmIncrementControlStreaming();
 void ossmStartAdvancedPenetration();
@@ -60,8 +59,6 @@ namespace actions {
     constexpr auto incrementControlStreaming = []() { ossmIncrementControlStreaming(); };
 
     constexpr auto advancedClick = []() { ossmAdvancedClick(); };
-
-    constexpr auto advancedDoubleClick = []() { ossmAdvancedDoubleClick();};
 
     constexpr auto startAdvancedPenetration = []() { ossmStartAdvancedPenetration(); };
 

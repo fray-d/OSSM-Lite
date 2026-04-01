@@ -7,8 +7,6 @@ namespace advanced_penetration {
 
     void advancedClick();
 
-    void advancedDoubleClick();
-
 }
 
 #endif

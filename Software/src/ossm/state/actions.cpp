@@ -111,10 +111,6 @@ void ossmAdvancedClick() {
     advanced_penetration::advancedClick();
 }
 
-void ossmAdvancedDoubleClick() {
-    advanced_penetration::advancedDoubleClick();
-}
-
 void ossmIncrementControlStrokeEngine() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 3);
     switch (session.playControl) {
