@@ -86,6 +86,7 @@ static void drawMenuTask(void *pvParameters) {
 }
 
 void drawMenu() {
+    if(!isDisplayAvailable()) return;
     int stackSize = 5 * configMINIMAL_STACK_SIZE;
     xTaskCreate(drawMenuTask, "drawMenuTask", stackSize, nullptr, 1,
                 &Tasks::drawMenuTaskH);

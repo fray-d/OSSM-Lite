@@ -1,6 +1,6 @@
 #include "display.h"
-
 #include <esp_log.h>
+#include <Wire.h>
 
 SemaphoreHandle_t displayMutex = nullptr;
 static auto TAG = "DISPLAY";
@@ -33,6 +33,14 @@ void initDisplay() {
 #ifdef LOG_SCREEN_STATE
     startScreenLogTask();
 #endif
+}
+
+bool isDisplayAvailable() {
+    Wire.beginTransmission(0x3C);
+    if(Wire.endTransmission() != 0) {
+        return false;
+    } 
+    return true;
 }
 
 #define ICON_TILES 4
