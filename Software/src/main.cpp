@@ -48,6 +48,8 @@ void setup() {
     // Display
     initDisplay();
 
+    ESP_LOGD("Main", "Display %s", isDisplayAvailable() ? "connected":"disconnected");
+    
     // Initialize header bar task
     initHeaderBar();
 

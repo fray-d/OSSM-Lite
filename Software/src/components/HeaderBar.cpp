@@ -195,6 +195,7 @@ void drawBleIcon() {
 }
 
 void initHeaderBar() {
+    if(!isDisplayAvailable()) return;
     ESP_LOGI(HEADERBAR_TAG, "Initializing header bar task");
 
     BaseType_t result =

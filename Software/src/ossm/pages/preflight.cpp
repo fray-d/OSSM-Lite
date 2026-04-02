@@ -61,6 +61,7 @@ static void drawPreflightTask(void *pvParameters) {
 };
 
 void drawPreflight() {
+    if(!isDisplayAvailable()) return;
     int stackSize = 3 * configMINIMAL_STACK_SIZE;
     xTaskCreate(drawPreflightTask, "drawPreflightTask", stackSize, nullptr, 1,
                 &Tasks::drawPreflightTaskH);

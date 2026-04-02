@@ -62,6 +62,7 @@ static void drawHelloTask(void *pvParameters) {
 }
 
 void drawHello() {
+    if(!isDisplayAvailable()) return;
     int stackSize = 3 * configMINIMAL_STACK_SIZE;
     xTaskCreate(drawHelloTask, "drawHello", stackSize, nullptr, 1,
                 &Tasks::drawHelloTaskH);

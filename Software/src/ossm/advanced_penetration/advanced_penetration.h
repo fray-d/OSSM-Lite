@@ -1,12 +1,13 @@
 #ifndef OSSM_ADVANCED_PENETRATION_H
 #define OSSM_ADVANCED_PENETRATION_H
 
-namespace advanced_penetration {
+#include "ossm/state/state.h"
 
-    void startAdvancedPenetration();
+namespace advanced_penetration {
 
     void advancedClick();
 
+    void startAdvancedPenetration();
 }
 
 #endif

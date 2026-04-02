@@ -25,6 +25,8 @@ extern SemaphoreHandle_t displayMutex;
 
 void initDisplay();
 
+bool isDisplayAvailable();
+
 void clearIcons();
 void refreshIcons();
 

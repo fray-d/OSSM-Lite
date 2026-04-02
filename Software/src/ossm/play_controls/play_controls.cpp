@@ -104,6 +104,10 @@ static void drawPlayControlsTask(void *pvParameters) {
             shouldUpdateDisplay = true;
             settings.speed = next.speed;
         }
+        if (!isDisplayAvailable()) {
+            vTaskDelay(100);
+            continue;
+        }
 
         settings.speedKnob = next.speedKnob;
         encoderValue = encoder.readEncoder();
