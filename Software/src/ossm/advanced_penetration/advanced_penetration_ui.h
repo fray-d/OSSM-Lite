@@ -76,49 +76,36 @@ StrokeMath calculate(u8_t speed, float accelValue) {
     return stroke;
 }
 
-void drawStroke(u8_t x=10, u8_t y=10, u8_t w=101, u8_t h=54) {
+float bezierMath(float v0, float v1, float v2, float v3, float t){
+    float output = pow(1-t,3) * v0;
+    output += 3 * pow(1-t,2) * t * v1;
+    output += 3 * (1-t) * pow(t,2) * v2;
+    output += pow(t,3) * v3;
+    return output;
+}
+
+void bezCurve(u8_t x0, u8_t x1, u8_t y0, u8_t y1, float r, float t){
+    float diff = (x1-x0) * r;
+    u8_t x = floor(bezierMath(x0, x0 + diff, x1 - diff, x1, t));
+    u8_t y = floor(bezierMath(y0, y0, y1, y1, t));
+    display.drawPixel(x,y);
+}
+
+void drawStroke(u8_t w=101, u8_t h=54) {
     StrokeMath inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(0.6));
     StrokeMath outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(0.6));
     u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
-    float inSlice = inStroke.totalTime / split;
-    float outSlice = outStroke.totalTime / (w-split);
-    u8_t x1 = x - 1;
-    u8_t y1 = 63 - (currentSettings.minDepth.getNormalized() * h);
-    u8_t x2 = x + split;
-    u8_t y2 = 63 - (currentSettings.maxDepth.getNormalized() * h);
-    u8_t x3 = x + w;
-    u8_t lx1 = 0;
-    u8_t ly1 = 0;
-    u8_t lx2 = 0;
-    u8_t ly2 = 0;
-
-    for (int px = 0; px < split; px++){
-        if (px <= inStroke.accelTime / inSlice) {
-            u8_t py = 0.5 * inStroke.accel * pow(inSlice * px,2);
-            py = py / 100.0 * h;
-            lx1 = x1 + px;
-            lx2 = x2 - px;
-            ly1 = y1 - py;
-            ly2 = y2 + py;
-            display.drawPixel(lx1,ly1);
-            display.drawPixel(lx2,ly2);
-        }
+    u8_t x0 = 10;
+    u8_t y0 = display.getHeight() - (currentSettings.minDepth.getNormalized() * h);
+    u8_t x1 = x0 + split;
+    u8_t y1 = display.getHeight() - (currentSettings.maxDepth.getNormalized() * h);
+    u8_t x2 = x0 + w;
+    for (u8_t p = 0; p <= split; p++){
+        bezCurve(x0, x1, y0, y1, inStroke.accelTime/inStroke.totalTime, p/float(split));
     }
-    display.drawLine(lx1,ly1,lx2,ly2);
-
-    for (int px = 0; px < (w-split); px++){
-        if (px <= outStroke.accelTime / outSlice) {
-            u8_t py = 0.5 * outStroke.accel * pow(outSlice * px,2);
-            py = py / 100.0 * h;
-            lx1 = x2 + px;
-            lx2 = x3 - px;
-            ly1 = y2 + py;
-            ly2 = y1 - py;
-            display.drawPixel(lx1,ly1);
-            display.drawPixel(lx2,ly2);
-        }
+    for (u8_t p = 0; p <= (w-split); p++){
+        bezCurve(x1-1, x2, y1, y0, outStroke.accelTime/outStroke.totalTime, p/float(w-split));
     }
-    display.drawLine(lx1,ly1,lx2,ly2);
 }
 
 void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
@@ -226,8 +213,8 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                 }
                 
                 textPosition = 19;
-                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value);
-                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value);
+                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value+1);
+                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value-1);
                 updateControl(currentSettings.inSpeed, 1);
                 updateControl(currentSettings.outSpeed, 1);
                 updateControl(currentSettings.inAcceleration);
