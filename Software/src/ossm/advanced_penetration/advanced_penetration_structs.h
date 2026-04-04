@@ -57,7 +57,7 @@ struct ModifierControl : public Control {
 };
 
 struct Modifier {
-    ModifierControl amplitude = {0, 0, 100, ModifierControls::AMPLITUDE};
+    ModifierControl amplitude = {100, 0, 100, ModifierControls::AMPLITUDE};
     ModifierControl inStep = {1, 1, 25, ModifierControls::IN_STEP};
     ModifierControl inWait = {0, 0, 25, ModifierControls::IN_WAIT};
     ModifierControl outStep = {1, 1, 25, ModifierControls::OUT_STEP};
@@ -66,8 +66,25 @@ struct Modifier {
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
     }
+    ModifierControls getControlForStep(int cycle) {
+        cycle = (cycle + offset.value) % stepCount();
+        if (cycle < inStep.value){
+            return ModifierControls::IN_STEP;
+        } else {
+            cycle -= inStep.value;
+        }
+        if (cycle < inWait.value) {
+            return ModifierControls::IN_WAIT;
+        } else {
+            cycle -= inWait.value;
+        }
+        if (cycle < outStep.value) {
+            return ModifierControls::OUT_STEP;
+        } 
+        return ModifierControls::OUT_WAIT;
+    }
     float getModification(int cycle){
-        float ratio = amplitude.value / 100.0;
+        float ratio = (100 - amplitude.value) / 100.0;
         if (cycle < 0) {
             return 1 - ratio;
         }
@@ -90,7 +107,7 @@ struct Modifier {
         return 1;
     }
     bool active() {
-        return amplitude.value > 0;
+        return amplitude.value < 100;
     }
 };
 

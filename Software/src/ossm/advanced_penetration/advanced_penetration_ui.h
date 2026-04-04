@@ -11,6 +11,10 @@
 namespace advanced_penetration {
 u8_t textPosition = 19;
 
+void selectText(u8_t index) {
+    display.drawFrame(111,10 + 9 * index,17,11);
+}
+
 void centeredText(String controlText) {
     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
     display.drawUTF8(120 - stringWidth/2, textPosition, controlText.c_str());
@@ -49,35 +53,6 @@ void drawModifierControl(ModifierControl& m) {
     }
 }
 
-void selectText(u8_t index) {
-    display.drawFrame(111,10 + 9 * index,17,11);
-}
-
-void drawModifier(BaseControl& a) {
-    if (a.modifier == nullptr) {
-        a.modifier = new Modifier;
-    }
-    if(currentSettings.status == ControlStatus::MODIFIER_MENU){
-        selectText(currentSettings.modifierControl);
-    }
-    drawModifierControl(a.modifier->amplitude);
-    drawModifierControl(a.modifier->inStep);
-    drawModifierControl(a.modifier->inWait);
-    drawModifierControl(a.modifier->outStep);
-    drawModifierControl(a.modifier->outWait);
-    drawModifierControl(a.modifier->offset);
-
-    u8_t steps = a.modifier->stepCount();
-    u8_t barWdith = 101 / steps;
-    u8_t w = barWdith * steps;
-    u8_t x = 10;
-    for (int step = 0; step < steps; step ++) {
-        u8_t value = 54 * a.modifier->getModification(step);
-        display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
-        x += barWdith;
-    }
-}
-
 StrokeMath calculate(u8_t speed, float accelValue) {
     StrokeMath stroke;
     float minAccel = speed / (currentSettings.usableDepth() / float(speed));
@@ -105,37 +80,65 @@ void bezCurve(u8_t x0, u8_t x1, u8_t y0, u8_t y1, float r, float t){
     display.drawPixel(x,y);
 }
 
-void drawStroke(u8_t w=108, u8_t h=54) {
-    StrokeMath inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(0.6));
-    StrokeMath outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(0.6));
-    u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
-    u8_t x0 = 10;
-    u8_t y0 = display.getHeight() - (currentSettings.minDepth.getNormalized() * h);
-    u8_t x1 = x0 + split;
-    u8_t y1 = display.getHeight() - (currentSettings.maxDepth.getNormalized() * h);
-    u8_t x2 = x0 + w;
-    for (u8_t p = 0; p <= split; p++){
+void drawStroke(bool modified = false, u8_t w=108, u8_t h=54) {
+    StrokeMath inStroke, outStroke;
+    u8_t x0, x1, x2, y0, y1, split, spacing;
+    if (modified){
+        inStroke = calculate(currentSettings.inSpeed.getModifiedValue(), currentSettings.inAcceleration.getRampedModifiedValue(0.6));
+        outStroke = calculate(currentSettings.outSpeed.getModifiedValue(), currentSettings.outAcceleration.getRampedModifiedValue(0.6));
+        y0 = display.getHeight() - (currentSettings.minDepth.getNormalizedModifiedValue() * h);
+        y1 = display.getHeight() - (currentSettings.maxDepth.getNormalizedModifiedValue() * h);
+        spacing = 3;
+    } else {
+        inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(0.6));
+        outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(0.6));
+        y0 = display.getHeight() - (currentSettings.minDepth.getNormalized() * h);
+        y1 = display.getHeight() - (currentSettings.maxDepth.getNormalized() * h);
+        spacing = 1;
+    }
+    split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
+    x0 = 10;
+    x1 = x0 + split;
+    x2 = x0 + w;
+    for (u8_t p = 0; p <= split; p+=spacing){
         bezCurve(x0, x1, y0, y1, inStroke.accelTime/inStroke.totalTime, p/float(split));
     }
-    for (u8_t p = 0; p <= (w-split); p++){
+    for (u8_t p = 0; p <= (w-split); p+= spacing){
         bezCurve(x1-1, x2, y1, y0, outStroke.accelTime/outStroke.totalTime, p/float(w-split));
     }
 }
 
-void drawModifiedStroke(u8_t w=108, u8_t h=54) {
-    StrokeMath inStroke = calculate(currentSettings.inSpeed.getModifiedValue(), currentSettings.inAcceleration.getRampedModifiedValue(0.6));
-    StrokeMath outStroke = calculate(currentSettings.outSpeed.getModifiedValue(), currentSettings.outAcceleration.getRampedModifiedValue(0.6));
-    u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
-    u8_t x0 = 10;
-    u8_t y0 = display.getHeight() - (currentSettings.minDepth.getNormalizedModifiedValue() * h);
-    u8_t x1 = x0 + split;
-    u8_t y1 = display.getHeight() - (currentSettings.maxDepth.getNormalizedModifiedValue() * h);
-    u8_t x2 = x0 + w;
-    for (u8_t p = 0; p <= split; p+=3){
-        bezCurve(x0, x1, y0, y1, inStroke.accelTime/inStroke.totalTime, p/float(split));
+void drawModifier(BaseControl& a) {
+    if (a.modifier == nullptr) {
+        a.modifier = new Modifier;
     }
-    for (u8_t p = 0; p <= (w-split); p+=3){
-        bezCurve(x1-1, x2, y1, y0, outStroke.accelTime/outStroke.totalTime, p/float(w-split));
+    if(currentSettings.status == ControlStatus::MODIFIER_MENU){
+        selectText(currentSettings.modifierControl);
+    }
+    drawModifierControl(a.modifier->amplitude);
+    drawModifierControl(a.modifier->inStep);
+    drawModifierControl(a.modifier->inWait);
+    drawModifierControl(a.modifier->outStep);
+    drawModifierControl(a.modifier->outWait);
+    drawModifierControl(a.modifier->offset);
+    if (currentSettings.modifierControl == ModifierControls::AMPLITUDE
+            || currentSettings.modifierControl == ModifierControls::GO_BACK){       
+        drawStroke();
+        drawStroke(true);
+    } else {
+        u8_t steps = a.modifier->stepCount();
+        u8_t barWdith = 101 / steps;
+        u8_t w = barWdith * steps;
+        u8_t x = (101 - w)/2 + 10;
+        for (int step = 0; step < steps; step ++) {
+            u8_t value = 54 * a.modifier->getModification(step);
+            if (a.modifier->getControlForStep(step) == currentSettings.modifierControl){
+                display.drawBox(x, display.getHeight() - value, barWdith + 1, value);
+            } else {
+                display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
+            }
+            x += barWdith;
+        }
     }
 }
 
@@ -153,7 +156,7 @@ void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
     if (currentSettings.baseControl == a.id) {
         setEncoderIfStatus(a, ControlStatus::BASE_VALUE);
         drawStroke();
-        drawModifiedStroke();
+        drawStroke(true);
     }
 
     if (encoder.readEncoder()/3 >= BaseControls::BASE_COUNT && currentSettings.status == ControlStatus::BASE_MENU) {
