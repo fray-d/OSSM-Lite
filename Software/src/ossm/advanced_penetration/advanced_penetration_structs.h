@@ -4,12 +4,12 @@
 
 namespace advanced_penetration {
 
-static const char d1[] PROGMEM = "D+";
-static const char d2[] PROGMEM = "D-";
-static const char s1[] PROGMEM = "S+";
-static const char s2[] PROGMEM = "S-";
-static const char a1[] PROGMEM = "A+";
-static const char a2[] PROGMEM = "A-";
+static const char d1[] PROGMEM = "+D";
+static const char d2[] PROGMEM = "-D";
+static const char s1[] PROGMEM = "+S";
+static const char s2[] PROGMEM = "-S";
+static const char a1[] PROGMEM = "+A";
+static const char a2[] PROGMEM = "-A";
 
 enum ControlStatus {
     BASE_MENU,
@@ -68,6 +68,9 @@ struct Modifier {
     }
     float getModification(int cycle){
         float ratio = amplitude.value / 100.0;
+        if (cycle < 0) {
+            return 1 - ratio;
+        }
         cycle = (cycle + offset.value) % stepCount();
         if (cycle < inStep.value){
             float slice = ratio / inStep.value * (cycle + 1);
@@ -95,21 +98,24 @@ struct BaseControl : Control {
     BaseControls id;
     String name;
     Modifier* modifier;
-    u8_t getModifiedValue(int strokeCount){
+    u8_t getModifiedValue(int strokeCount = -1){
         if (modifier == nullptr) {
             return value;
         }
-        int cycle = (strokeCount / 2) % modifier->stepCount();
+        int8_t cycle = (strokeCount / 2) % modifier->stepCount();
         int8_t difference = value - minValue;
         if (id == BaseControls::DEPTH_2){
             difference = value - maxValue;
         }
+        if (strokeCount < 0) {
+            cycle = -1;
+        }
         return value - difference * (1 - modifier->getModification(cycle));
     }
-    float getNormalizedModifiedValue(int strokeCount) {
+    float getNormalizedModifiedValue(int strokeCount = -1) {
         return getModifiedValue(strokeCount) / 100.0;
     }
-    float getRampedModifiedValue(int strokeCount, float exp = 0.8) {
+    float getRampedModifiedValue(float exp = 0.8, int strokeCount = -1) {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
 };

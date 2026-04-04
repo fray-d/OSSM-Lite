@@ -17,6 +17,12 @@ void centeredText(String controlText) {
     textPosition += 9;
 }
 
+void rightText(String controlText) {
+    uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
+    display.drawUTF8(125 - stringWidth, textPosition, controlText.c_str());
+    textPosition += 9;
+}
+
 void setEncoderIfStatus(Control& c, ControlStatus status){
     if (currentSettings.status == status) {
         display.setFont(u8g2_font_timB08_tn);
@@ -33,8 +39,14 @@ void drawModifierControl(ModifierControl& m) {
     display.setFont(u8g2_font_timR08_tn);
     if (currentSettings.modifierControl == m.id) {
         setEncoderIfStatus(m, ControlStatus::MODIFIER_VALUE);
+        if(currentSettings.status == ControlStatus::MODIFIER_VALUE){
+            ui::drawShape::settingBar(display.getU8g2(),"", m.value, 115, 0, ui::LEFT_ALIGNED, 0, 54, m.minValue, m.maxValue);
+            return;
+        }
     }
-    centeredText(String(m.value));
+    if (currentSettings.status == ControlStatus::MODIFIER_MENU) {
+        centeredText(String(m.value));
+    }
 }
 
 void selectText(u8_t index) {
@@ -45,21 +57,23 @@ void drawModifier(BaseControl& a) {
     if (a.modifier == nullptr) {
         a.modifier = new Modifier;
     }
+    if(currentSettings.status == ControlStatus::MODIFIER_MENU){
+        selectText(currentSettings.modifierControl);
+    }
     drawModifierControl(a.modifier->amplitude);
     drawModifierControl(a.modifier->inStep);
     drawModifierControl(a.modifier->inWait);
     drawModifierControl(a.modifier->outStep);
     drawModifierControl(a.modifier->outWait);
     drawModifierControl(a.modifier->offset);
-    selectText(currentSettings.modifierControl);
 
     u8_t steps = a.modifier->stepCount();
     u8_t barWdith = 101 / steps;
     u8_t w = barWdith * steps;
-    u8_t x = 112 - w;
+    u8_t x = 10;
     for (int step = 0; step < steps; step ++) {
         u8_t value = 54 * a.modifier->getModification(step);
-        display.drawBox(x, display.getHeight() - value, barWdith, value);
+        display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
         x += barWdith;
     }
 }
@@ -91,7 +105,7 @@ void bezCurve(u8_t x0, u8_t x1, u8_t y0, u8_t y1, float r, float t){
     display.drawPixel(x,y);
 }
 
-void drawStroke(u8_t w=101, u8_t h=54) {
+void drawStroke(u8_t w=108, u8_t h=54) {
     StrokeMath inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(0.6));
     StrokeMath outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(0.6));
     u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
@@ -108,6 +122,23 @@ void drawStroke(u8_t w=101, u8_t h=54) {
     }
 }
 
+void drawModifiedStroke(u8_t w=108, u8_t h=54) {
+    StrokeMath inStroke = calculate(currentSettings.inSpeed.getModifiedValue(), currentSettings.inAcceleration.getRampedModifiedValue(0.6));
+    StrokeMath outStroke = calculate(currentSettings.outSpeed.getModifiedValue(), currentSettings.outAcceleration.getRampedModifiedValue(0.6));
+    u8_t split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
+    u8_t x0 = 10;
+    u8_t y0 = display.getHeight() - (currentSettings.minDepth.getNormalizedModifiedValue() * h);
+    u8_t x1 = x0 + split;
+    u8_t y1 = display.getHeight() - (currentSettings.maxDepth.getNormalizedModifiedValue() * h);
+    u8_t x2 = x0 + w;
+    for (u8_t p = 0; p <= split; p+=3){
+        bezCurve(x0, x1, y0, y1, inStroke.accelTime/inStroke.totalTime, p/float(split));
+    }
+    for (u8_t p = 0; p <= (w-split); p+=3){
+        bezCurve(x1-1, x2, y1, y0, outStroke.accelTime/outStroke.totalTime, p/float(w-split));
+    }
+}
+
 void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
     display.setFont(u8g2_font_timR08_tf);
     if (currentSettings.status == ControlStatus::MODIFIER_MENU
@@ -120,18 +151,33 @@ void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
     a.minValue = minVal;
     a.maxValue = maxVal;
     if (currentSettings.baseControl == a.id) {
-        selectText(currentSettings.baseControl);
         setEncoderIfStatus(a, ControlStatus::BASE_VALUE);
         drawStroke();
+        drawModifiedStroke();
     }
+
     if (encoder.readEncoder()/3 >= BaseControls::BASE_COUNT && currentSettings.status == ControlStatus::BASE_MENU) {
-        if (a.modifier != nullptr && a.modifier->active()) {
-            display.setFont(u8g2_font_timB08_tf);
+        display.setFont(u8g2_font_courR08_tf);
+        if (currentSettings.baseControl == a.id) {
+            selectText(currentSettings.baseControl);
         }
-        centeredText(a.name);
+        if (a.modifier != nullptr && a.modifier->active()) {
+            display.setFont(u8g2_font_courB08_tf);
+        }
+        rightText(a.name);
         return;
     }
-    centeredText(String(a.value));
+    if (currentSettings.status == ControlStatus::BASE_MENU) {
+        if (currentSettings.baseControl == a.id) {
+            selectText(currentSettings.baseControl);
+        }
+        centeredText(String(a.value));
+        return;
+    }
+    
+    if (currentSettings.baseControl == a.id) {
+        ui::drawShape::settingBar(display.getU8g2(),"", a.value, 118, 0, ui::LEFT_ALIGNED, 0, 54);
+    }
 }
 
 void advancedClick() {
@@ -186,7 +232,7 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
         u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         u8_t encoderValue = encoder.readEncoder();
         if ( abs(speedValue - currentSettings.speed.value) > 1
-                    //|| speedValue == 0
+                    || (speedValue == 0 && currentSettings.speed.value != 0)
                     || encoderValue != lastEncoder 
                     || currentSettings.status != currentSettings.lastStatus) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
@@ -204,9 +250,6 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                     case ControlStatus::MODIFIER_MENU:
                         item = item % ModifierControls::MODIFIER_COUNT;
                         currentSettings.modifierControl = ModifierControls(item);
-                        break;
-                    case ControlStatus::BASE_VALUE:
-
                         break;
                     default:
                         break;

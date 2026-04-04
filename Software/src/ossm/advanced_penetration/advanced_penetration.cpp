@@ -12,7 +12,7 @@ using namespace sml;
 namespace advanced_penetration {
 
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
-    int strokeCount = 0;
+    u32_t strokeCount = 0;
     while (stateMachine->is("advancedPenetration"_s)
                     || stateMachine->is("advancedPenetration.idle"_s)) {
         if (currentSettings.speed.value == 0.0) {
@@ -41,9 +41,9 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
             u32_t minAccel = speed / (distance / speed);          
             u32_t acceleration = minAccel;
             if (strokeCount % 2 == 0) {
-                acceleration += minAccel * 9 * currentSettings.inAcceleration.getRampedModifiedValue(strokeCount, 0.6);
+                acceleration += minAccel * 9 * currentSettings.inAcceleration.getRampedModifiedValue(0.6, strokeCount);
             } else {
-                acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(strokeCount, 0.6);
+                acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(0.6, strokeCount);
             }
             acceleration = min(acceleration, u32_t(Config::Driver::maxAcceleration * (1_mm)));
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()){
