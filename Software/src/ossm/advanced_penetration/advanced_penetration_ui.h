@@ -15,15 +15,13 @@ void selectText(u8_t index) {
     display.drawFrame(111,10 + 9 * index,17,11);
 }
 
-void centeredText(String controlText) {
+void drawText(String controlText, bool centered = true) {
     uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-    display.drawUTF8(120 - stringWidth/2, textPosition, controlText.c_str());
-    textPosition += 9;
-}
-
-void rightText(String controlText) {
-    uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
-    display.drawUTF8(125 - stringWidth, textPosition, controlText.c_str());
+    if (centered) {
+        display.drawUTF8(120 - stringWidth/2, textPosition, controlText.c_str());
+    } else {
+        display.drawUTF8(125 - stringWidth, textPosition, controlText.c_str());
+    }
     textPosition += 9;
 }
 
@@ -49,11 +47,11 @@ void drawModifierControl(ModifierControl& m) {
         }
     }
     if (currentSettings.status == ControlStatus::MODIFIER_MENU) {
-        centeredText(String(m.value));
+        drawText(String(m.value));
     }
 }
 
-StrokeMath calculate(u8_t speed, float accelValue) {
+StrokeMath calculateStroke(u8_t speed, float accelValue) {
     StrokeMath stroke;
     float minAccel = speed / (currentSettings.usableDepth() / float(speed));
     stroke.accel = minAccel + (minAccel * 9) * accelValue;
@@ -80,22 +78,25 @@ void bezCurve(u8_t x0, u8_t x1, u8_t y0, u8_t y1, float r, float t){
     display.drawPixel(x,y);
 }
 
-void drawStroke(bool modified = false, u8_t w=108, u8_t h=54) {
+void drawStroke(bool modified = false) {
     StrokeMath inStroke, outStroke;
-    u8_t x0, x1, x2, y0, y1, split, spacing;
+    u8_t x0, x1, x2, y0, y1, w, h, split, spacing;
+    float exp = 0.6;
+    h = 54;
     if (modified){
-        inStroke = calculate(currentSettings.inSpeed.getModifiedValue(), currentSettings.inAcceleration.getRampedModifiedValue(0.6));
-        outStroke = calculate(currentSettings.outSpeed.getModifiedValue(), currentSettings.outAcceleration.getRampedModifiedValue(0.6));
+        inStroke = calculateStroke(currentSettings.inSpeed.getModifiedValue(), currentSettings.inAcceleration.getRampedModifiedValue(exp));
+        outStroke = calculateStroke(currentSettings.outSpeed.getModifiedValue(), currentSettings.outAcceleration.getRampedModifiedValue(exp));
         y0 = display.getHeight() - (currentSettings.minDepth.getNormalizedModifiedValue() * h);
         y1 = display.getHeight() - (currentSettings.maxDepth.getNormalizedModifiedValue() * h);
         spacing = 3;
     } else {
-        inStroke = calculate(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(0.6));
-        outStroke = calculate(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(0.6));
+        inStroke = calculateStroke(currentSettings.inSpeed.value, currentSettings.inAcceleration.getRampValue(exp));
+        outStroke = calculateStroke(currentSettings.outSpeed.value, currentSettings.outAcceleration.getRampValue(exp));
         y0 = display.getHeight() - (currentSettings.minDepth.getNormalized() * h);
         y1 = display.getHeight() - (currentSettings.maxDepth.getNormalized() * h);
         spacing = 1;
     }
+    w = 108;
     split = w * (inStroke.totalTime/ (inStroke.totalTime+outStroke.totalTime));
     x0 = 10;
     x1 = x0 + split;
@@ -167,14 +168,14 @@ void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
         if (a.modifier != nullptr && a.modifier->active()) {
             display.setFont(u8g2_font_courB08_tf);
         }
-        rightText(a.name);
+        drawText(a.name, false);
         return;
     }
     if (currentSettings.status == ControlStatus::BASE_MENU) {
         if (currentSettings.baseControl == a.id) {
             selectText(currentSettings.baseControl);
         }
-        centeredText(String(a.value));
+        drawText(String(a.value));
         return;
     }
     
