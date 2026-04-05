@@ -54,6 +54,19 @@ struct Control {
 
 struct ModifierControl : public Control {
     ModifierControls id;
+    String encodeString() {
+        return "\"" + String(id) + "\":" + String(value) + ",";
+    }
+    bool processStringCommand(ModifierControls control, String cmd){
+        if (control == id){
+            u8_t v = cmd.toInt();
+            if (v >= minValue && v <= maxValue) {
+                value = v;
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 struct Modifier {
@@ -109,6 +122,17 @@ struct Modifier {
     bool active() {
         return amplitude.value < 100;
     }
+    String encodeString() {
+        String output = "\"m\":{";
+        output += amplitude.encodeString();
+        output += inStep.encodeString();
+        output += inWait.encodeString();
+        output += outStep.encodeString();
+        output += outWait.encodeString();
+        output += offset.encodeString();
+        output += "},";
+        return output;
+    }
 };
 
 struct BaseControl : Control {
@@ -135,6 +159,41 @@ struct BaseControl : Control {
     float getRampedModifiedValue(float exp = 0.8, int strokeCount = -1) {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
+    String encodeString() {
+        String output = "\"" + String(id) + "\":{";
+        output += "\"v\":" + String(value) + ",";
+        if (modifier != nullptr && modifier->active()) {
+            output += modifier->encodeString();
+        }
+        output += "},";
+        return output;
+    }
+    bool processStringCommand(BaseControls control, String cmd){
+        if (control == id){
+            u8_t i = cmd.indexOf(":");
+            if (i == 255){
+                u8_t v = cmd.toInt();
+                if (v >= minValue && v <= maxValue) {
+                    value = v;
+                    return true;
+                }
+                return false;
+            }
+            if (modifier == nullptr) {
+                modifier = new Modifier;
+            }
+            ModifierControls control = static_cast<ModifierControls>(cmd.substring(0,i).toInt());
+            cmd = cmd.substring(i+1);
+            return modifier->amplitude.processStringCommand(control, cmd)
+                    || modifier->inStep.processStringCommand(control, cmd)
+                    || modifier->inWait.processStringCommand(control, cmd)
+                    || modifier->outStep.processStringCommand(control, cmd)
+                    || modifier->outWait.processStringCommand(control, cmd)
+                    || modifier->offset.processStringCommand(control, cmd);
+            
+        }
+        return false;
+    }
 };
 
 struct Settings {
@@ -153,6 +212,36 @@ struct Settings {
     u8_t usableDepth() {
         return maxDepth.value - minDepth.value;
     };
+    String getState() {
+        String output = "{";
+        output += maxDepth.encodeString();
+        output += minDepth.encodeString();
+        output += inSpeed.encodeString();
+        output += outSpeed.encodeString();
+        output += inAcceleration.encodeString();
+        output += outAcceleration.encodeString();
+        output += speed.encodeString();
+        output += "}";
+        return output;
+    }
+    bool processStringCommand(String cmd) {
+        u8_t i = cmd.indexOf(":");
+        if (i < 1){
+            return false;
+        }
+        BaseControls control = static_cast<BaseControls>(cmd.substring(0,i).toInt());
+        cmd = cmd.substring(i+1);
+        changed = maxDepth.processStringCommand(control, cmd)
+                || minDepth.processStringCommand(control, cmd)
+                || inSpeed.processStringCommand(control, cmd)
+                || outSpeed.processStringCommand(control, cmd)
+                || inAcceleration.processStringCommand(control, cmd)
+                || outAcceleration.processStringCommand(control, cmd)
+                ||speed.processStringCommand(control, cmd);
+        lastStatus = ControlStatus::STATUS_COUNT;
+        return changed;
+    }
+    
 } currentSettings;
 
 struct StrokeMath {

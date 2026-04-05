@@ -12,6 +12,7 @@
 #include "config.hpp"
 #include "gpio.hpp"
 #include "ossm/OSSM.h"
+#include "ossm/advanced_penetration/advanced_penetration.h"
 #include "pairing.hpp"
 #include "patterns.hpp"
 #include "services/led.h"
@@ -25,6 +26,7 @@ NimBLECharacteristic* pStateCharacteristic = nullptr;
 NimBLECharacteristic* pSpeedKnobConfigCharacteristic = nullptr;
 NimBLECharacteristic* pLatencyCompensationConfigCharacteristic = nullptr;
 NimBLECharacteristic* pCommandCharacteristic = nullptr;
+NimBLECharacteristic* pAdvancedCharacteristic = nullptr;
 
 static long lostConnectionTime = 0;
 static int speedOnLostConnection = 0;
@@ -289,6 +291,8 @@ void initNimble() {
 
     pCommandCharacteristic =
         initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
+
+    pAdvancedCharacteristic = advanced_penetration::initAdvancedCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_UUID));
 
     pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
         pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
