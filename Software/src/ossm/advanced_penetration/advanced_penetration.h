@@ -13,7 +13,9 @@ namespace advanced_penetration {
 
     void startAdvancedPenetration();
 
-    NimBLECharacteristic* initAdvancedCharacteristic(NimBLEService* pService, NimBLEUUID uuid);
+    NimBLECharacteristic* initAdvancedCommandCharacteristic(NimBLEService* pService, NimBLEUUID uuid);
+    NimBLECharacteristic* initAdvancedConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid);
+    NimBLECharacteristic* initAdvancedStatusCharacteristic(NimBLEService* pService, NimBLEUUID uuid);
 }
 
 #endif
