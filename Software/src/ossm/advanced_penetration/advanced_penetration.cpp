@@ -13,12 +13,18 @@ using namespace sml;
 
 namespace advanced_penetration {
 
+NimBLECharacteristic* pCharStatus;
+
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     u32_t strokeCount = 0;
-    while (stateMachine->is("advancedPenetration"_s)
-                    || stateMachine->is("advancedPenetration.idle"_s)) {
+    while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s)) {
+        if (currentSettings.changed && pCharStatus != nullptr) {
+            pCharStatus->setValue(currentSettings.getStatus());
+            pCharStatus->notify();
+        }
         if (currentSettings.speed.value == 0.0) {
             stepper->stopMove();
+            currentSettings.changed = false;
             vTaskDelay(100);
             continue;
         }
@@ -81,7 +87,8 @@ void startAdvancedPenetration() {
                             configMAX_PRIORITIES - 1, nullptr,
                             Tasks::operationTaskCore);
 }
-class AdvancedCallbacks : public NimBLECharacteristicCallbacks {
+
+class AdvancedCommandCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         if (!(stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s))) {
             stateMachine->process_event(longPress);
@@ -99,27 +106,36 @@ class AdvancedCallbacks : public NimBLECharacteristicCallbacks {
         }
         pulseForCommunication();
     }
+} advancedCommandCallbacks;
 
+class AdvancedConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        Serial.println("READ");
+        pCharacteristic->setValue(currentSettings.getStatus(true));
     }
+} advancedConfigCallbacks;
 
-    /**
-     *  The value returned in code is the NimBLE host return code.
-     */
-    void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
-        ESP_LOGV("NIMBLE_COMMAND",
-                "Notification/Indication return code: %d, %s", code,
-                NimBLEUtils::returnCodeToString(code));
+class AdvancedStatusCallbacks : public NimBLECharacteristicCallbacks {
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(currentSettings.getStatus());
     }
-} advancedCallbacks;
+} advancedStatusCallbacks;
 
-NimBLECharacteristic* initAdvancedCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, 30);
-
-    pChar->setCallbacks(&advancedCallbacks);
+NimBLECharacteristic* initAdvancedCommandCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);
+    pChar->setCallbacks(&advancedCommandCallbacks);
     return pChar;
+}
+
+NimBLECharacteristic* initAdvancedConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::READ,10000);
+    pChar->setCallbacks(&advancedConfigCallbacks);
+    return pChar;
+}
+
+NimBLECharacteristic* initAdvancedStatusCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    pCharStatus = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY,1000);
+    pCharStatus->setCallbacks(&advancedStatusCallbacks);
+    return pCharStatus;
 }
 
 }

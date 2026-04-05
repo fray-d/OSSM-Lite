@@ -10,6 +10,13 @@ static const char s1[] PROGMEM = "+S";
 static const char s2[] PROGMEM = "-S";
 static const char a1[] PROGMEM = "+A";
 static const char a2[] PROGMEM = "-A";
+static const char ma[] PROGMEM = "MA";
+static const char m1[] PROGMEM = "M1";
+static const char m2[] PROGMEM = "M2";
+static const char m3[] PROGMEM = "M3";
+static const char m4[] PROGMEM = "M4";
+static const char mo[] PROGMEM = "MO";
+static const char sp[] PROGMEM = "SP";
 
 enum ControlStatus {
     BASE_MENU,
@@ -44,6 +51,7 @@ struct Control {
     u8_t value;
     u8_t minValue = 0;
     u8_t maxValue = 100;
+    String name;
     float getNormalized(){
         return value / 100.0;
     }
@@ -54,8 +62,21 @@ struct Control {
 
 struct ModifierControl : public Control {
     ModifierControls id;
-    String encodeString() {
-        return "\"" + String(id) + "\":" + String(value) + ",";
+    String encodeString(bool details = false) {
+        String output = "\"" + String(id) + "\":";
+        if (details) {
+            output += "{";
+            output += "\"id\":" + String(id) + ",";
+            output += "\"name\":\"" + String(name) + "\",";
+            output += "\"minValue\":" + String(minValue) + ",";
+            output += "\"maxValue\":" + String(maxValue) + ",";
+            output += "\"currentValue\":" + String(value) + ",";
+            output += "}";
+        } else {
+            output += String(value);
+        }
+        output +=  + ",";
+        return output;
     }
     bool processStringCommand(ModifierControls control, String cmd){
         if (control == id){
@@ -70,12 +91,12 @@ struct ModifierControl : public Control {
 };
 
 struct Modifier {
-    ModifierControl amplitude = {100, 0, 100, ModifierControls::AMPLITUDE};
-    ModifierControl inStep = {1, 1, 25, ModifierControls::IN_STEP};
-    ModifierControl inWait = {0, 0, 25, ModifierControls::IN_WAIT};
-    ModifierControl outStep = {1, 1, 25, ModifierControls::OUT_STEP};
-    ModifierControl outWait = {0, 0, 25, ModifierControls::OUT_WAIT};
-    ModifierControl offset = {0, 0, 100, ModifierControls::OFFSET};
+    ModifierControl amplitude = {100, 0, 100, ma, ModifierControls::AMPLITUDE};
+    ModifierControl inStep = {1, 1, 25, m1, ModifierControls::IN_STEP};
+    ModifierControl inWait = {0, 0, 25, m2, ModifierControls::IN_WAIT};
+    ModifierControl outStep = {1, 1, 25, m3, ModifierControls::OUT_STEP};
+    ModifierControl outWait = {0, 0, 25, m4, ModifierControls::OUT_WAIT};
+    ModifierControl offset = {0, 0, 100, mo, ModifierControls::OFFSET};
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
     }
@@ -122,14 +143,19 @@ struct Modifier {
     bool active() {
         return amplitude.value < 100;
     }
-    String encodeString() {
-        String output = "\"m\":{";
-        output += amplitude.encodeString();
-        output += inStep.encodeString();
-        output += inWait.encodeString();
-        output += outStep.encodeString();
-        output += outWait.encodeString();
-        output += offset.encodeString();
+    String encodeString(bool details = false) {
+        String output;
+        if (details) {
+            output += "\"modifier\":{";
+        } else {
+            output += "\"m\":{";
+        }
+        output += amplitude.encodeString(details);
+        output += inStep.encodeString(details);
+        output += inWait.encodeString(details);
+        output += outStep.encodeString(details);
+        output += outWait.encodeString(details);
+        output += offset.encodeString(details);
         output += "},";
         return output;
     }
@@ -137,7 +163,6 @@ struct Modifier {
 
 struct BaseControl : Control {
     BaseControls id;
-    String name;
     Modifier* modifier;
     u8_t getModifiedValue(int strokeCount = -1){
         if (modifier == nullptr) {
@@ -159,13 +184,22 @@ struct BaseControl : Control {
     float getRampedModifiedValue(float exp = 0.8, int strokeCount = -1) {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
-    String encodeString() {
+    String encodeString(bool details = false) {
         String output = "\"" + String(id) + "\":{";
-        output += "\"v\":" + String(value) + ",";
+        if (details) {
+            output += "\"id\":" + String(id) + ",";
+            output += "\"name\":\"" + String(name) + "\",";
+            output += "\"minValue\":" + String(minValue) + ",";
+            output += "\"maxValue\":" + String(maxValue) + ",";
+            output += "\"currentValue\":" + String(value) + ",";
+        } else {
+            output += "\"v\":" + String(value) + ",";
+
+        } 
         if (modifier != nullptr && modifier->active()) {
-            output += modifier->encodeString();
+            output += modifier->encodeString(details);
         }
-        output += "},";
+        output +=  + "},";
         return output;
     }
     bool processStringCommand(BaseControls control, String cmd){
@@ -197,13 +231,13 @@ struct BaseControl : Control {
 };
 
 struct Settings {
-    BaseControl speed = {0, 0, 100, BaseControls::BASE_COUNT};
-    BaseControl inSpeed = {100, 1, 100, BaseControls::SPEED_1, s1};
-    BaseControl outSpeed = {100, 1, 100, BaseControls::SPEED_2, s2};
-    BaseControl maxDepth = {10, 0, 100, BaseControls::DEPTH_1, d1};
-    BaseControl minDepth = {0, 0, 100, BaseControls::DEPTH_2, d2};
-    BaseControl inAcceleration = {40, 0, 100, BaseControls::ACCEL_1, a1};
-    BaseControl outAcceleration = {40, 0, 100, BaseControls::ACCEL_2, a2};
+    BaseControl speed = {0, 0, 100, sp, BaseControls::BASE_COUNT};
+    BaseControl inSpeed = {100, 1, 100, s1, BaseControls::SPEED_1};
+    BaseControl outSpeed = {100, 1, 100, s2, BaseControls::SPEED_2};
+    BaseControl maxDepth = {10, 0, 100, d1, BaseControls::DEPTH_1};
+    BaseControl minDepth = {0, 0, 100, d2, BaseControls::DEPTH_2};
+    BaseControl inAcceleration = {40, 0, 100, a1, BaseControls::ACCEL_1};
+    BaseControl outAcceleration = {40, 0, 100, a2, BaseControls::ACCEL_2};
     ControlStatus status = ControlStatus::BASE_MENU;
     ControlStatus lastStatus = ControlStatus::STATUS_COUNT;
     BaseControls baseControl = BaseControls::DEPTH_1;
@@ -212,16 +246,17 @@ struct Settings {
     u8_t usableDepth() {
         return maxDepth.value - minDepth.value;
     };
-    String getState() {
+    String getStatus(bool details = false) {
         String output = "{";
-        output += maxDepth.encodeString();
-        output += minDepth.encodeString();
-        output += inSpeed.encodeString();
-        output += outSpeed.encodeString();
-        output += inAcceleration.encodeString();
-        output += outAcceleration.encodeString();
-        output += speed.encodeString();
+        output += maxDepth.encodeString(details);
+        output += minDepth.encodeString(details);
+        output += inSpeed.encodeString(details);
+        output += outSpeed.encodeString(details);
+        output += inAcceleration.encodeString(details);
+        output += outAcceleration.encodeString(details);
+        output += speed.encodeString(details);
         output += "}";
+        ESP_LOGD("Advanced", "Status: %s", output.c_str());
         return output;
     }
     bool processStringCommand(String cmd) {

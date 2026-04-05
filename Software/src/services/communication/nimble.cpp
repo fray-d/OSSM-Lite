@@ -292,7 +292,9 @@ void initNimble() {
     pCommandCharacteristic =
         initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
 
-    pAdvancedCharacteristic = advanced_penetration::initAdvancedCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_UUID));
+    pAdvancedCharacteristic = advanced_penetration::initAdvancedCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONTROL_UUID));
+    pAdvancedCharacteristic = advanced_penetration::initAdvancedConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONFIG_UUID));
+    pAdvancedCharacteristic = advanced_penetration::initAdvancedStatusCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_STATUS_UUID));
 
     pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
         pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
