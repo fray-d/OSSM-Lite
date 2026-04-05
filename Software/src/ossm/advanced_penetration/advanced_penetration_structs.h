@@ -63,19 +63,14 @@ struct Control {
 struct ModifierControl : public Control {
     ModifierControls id;
     String encodeString(bool details = false) {
-        String output = "\"" + String(id) + "\":";
+        String output;
         if (details) {
-            output += "{";
-            output += "\"id\":" + String(id) + ",";
-            output += "\"name\":\"" + String(name) + "\",";
-            output += "\"minValue\":" + String(minValue) + ",";
-            output += "\"maxValue\":" + String(maxValue) + ",";
-            output += "\"currentValue\":" + String(value) + ",";
-            output += "}";
+            output += name + "(";
+            output += String(minValue) + "/";
+            output += String(maxValue) + ")";
         } else {
             output += String(value);
         }
-        output +=  + ",";
         return output;
     }
     bool processStringCommand(ModifierControls control, String cmd){
@@ -144,19 +139,12 @@ struct Modifier {
         return amplitude.value < 100;
     }
     String encodeString(bool details = false) {
-        String output;
-        if (details) {
-            output += "\"modifier\":{";
-        } else {
-            output += "\"m\":{";
-        }
-        output += amplitude.encodeString(details);
-        output += inStep.encodeString(details);
-        output += inWait.encodeString(details);
-        output += outStep.encodeString(details);
-        output += outWait.encodeString(details);
-        output += offset.encodeString(details);
-        output += "},";
+        String output = ":" + amplitude.encodeString(details);
+        output += ":" + inStep.encodeString(details);
+        output += ":" + inWait.encodeString(details);
+        output += ":" + outStep.encodeString(details);
+        output += ":" + outWait.encodeString(details);
+        output += ":" + offset.encodeString(details);
         return output;
     }
 };
@@ -185,21 +173,23 @@ struct BaseControl : Control {
         return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount),exp), 1 / exp);
     }
     String encodeString(bool details = false) {
-        String output = "\"" + String(id) + "\":{";
+        String output;
         if (details) {
-            output += "\"id\":" + String(id) + ",";
-            output += "\"name\":\"" + String(name) + "\",";
-            output += "\"minValue\":" + String(minValue) + ",";
-            output += "\"maxValue\":" + String(maxValue) + ",";
-            output += "\"currentValue\":" + String(value) + ",";
+            output += name + "(";
+            output += String(minValue) + "/";
+            output += String(maxValue) + ")";
+            if (id == BaseControls::DEPTH_1) {
+                if (modifier == nullptr) {
+                    modifier = new Modifier;
+                }
+                output += modifier->encodeString(true);
+            }
         } else {
-            output += "\"v\":" + String(value) + ",";
-
-        } 
-        if (modifier != nullptr && modifier->active()) {
-            output += modifier->encodeString(details);
+            output += String(value);
+            if (modifier != nullptr && modifier->active()) {
+                output += modifier->encodeString();
+            }
         }
-        output +=  + "},";
         return output;
     }
     bool processStringCommand(BaseControls control, String cmd){
@@ -243,40 +233,56 @@ struct Settings {
     BaseControls baseControl = BaseControls::DEPTH_1;
     ModifierControls modifierControl = ModifierControls::AMPLITUDE;
     bool changed = false;
+    String commandString;
     u8_t usableDepth() {
         return maxDepth.value - minDepth.value;
     };
     String getStatus(bool details = false) {
-        String output = "{";
-        output += maxDepth.encodeString(details);
-        output += minDepth.encodeString(details);
-        output += inSpeed.encodeString(details);
-        output += outSpeed.encodeString(details);
-        output += inAcceleration.encodeString(details);
-        output += outAcceleration.encodeString(details);
+        String output = maxDepth.encodeString(details) + ",";
+        output += minDepth.encodeString(details) + ",";
+        output += inSpeed.encodeString(details) + ",";
+        output += outSpeed.encodeString(details) + ",";
+        output += inAcceleration.encodeString(details) + ",";
+        output += outAcceleration.encodeString(details) + ",";
         output += speed.encodeString(details);
-        output += "}";
         ESP_LOGD("Advanced", "Status: %s", output.c_str());
         return output;
     }
     bool processStringCommand(String cmd) {
-        u8_t i = cmd.indexOf(":");
-        if (i < 1){
+        cmd = commandString + cmd;
+        int i = cmd.lastIndexOf(',');
+        if (i < 0){
+            commandString = "";
             return false;
         }
-        BaseControls control = static_cast<BaseControls>(cmd.substring(0,i).toInt());
-        cmd = cmd.substring(i+1);
-        changed = maxDepth.processStringCommand(control, cmd)
-                || minDepth.processStringCommand(control, cmd)
-                || inSpeed.processStringCommand(control, cmd)
-                || outSpeed.processStringCommand(control, cmd)
-                || inAcceleration.processStringCommand(control, cmd)
-                || outAcceleration.processStringCommand(control, cmd)
-                ||speed.processStringCommand(control, cmd);
+        commandString = cmd.substring(i+1);
+        cmd = cmd.substring(0,i+1);
+
+        i = cmd.indexOf(',');
+        BaseControls control;
+        while (i > 0){
+            String single = cmd.substring(0,i);
+            cmd = cmd.substring(i+1);
+            i = cmd.indexOf(',');
+
+            int j = single.indexOf(':');
+            if (j < 0) {
+                return false;
+            }
+            control = static_cast<BaseControls>(single.substring(0,j).toInt());
+            single = single.substring(j+1);
+            changed = maxDepth.processStringCommand(control, single)
+                    || minDepth.processStringCommand(control, single)
+                    || inSpeed.processStringCommand(control, single)
+                    || outSpeed.processStringCommand(control, single)
+                    || inAcceleration.processStringCommand(control, single)
+                    || outAcceleration.processStringCommand(control, single)
+                    || speed.processStringCommand(control, single);
+
+        }
         lastStatus = ControlStatus::STATUS_COUNT;
         return changed;
     }
-    
 } currentSettings;
 
 struct StrokeMath {
