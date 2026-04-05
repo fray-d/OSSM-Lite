@@ -3,8 +3,10 @@
 #include "advanced_penetration_ui.h"
 #include "constants/Config.h"
 #include "ossm/state/calibration.h"
+#include "ossm/state/menu.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
+#include "services/led.h"
 
 namespace sml = boost::sml;
 using namespace sml;
@@ -79,4 +81,45 @@ void startAdvancedPenetration() {
                             configMAX_PRIORITIES - 1, nullptr,
                             Tasks::operationTaskCore);
 }
+class AdvancedCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        if (!(stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s))) {
+            stateMachine->process_event(longPress);
+            menuState.currentOption = Menu::AdvancedPenetration;
+            if (stateMachine != nullptr) {
+                stateMachine->process_event(ButtonPress{});
+            }
+        } 
+        String cmd = pCharacteristic->getValue();
+        bool saved = currentSettings.processStringCommand(cmd);
+        if (!saved) {
+            ESP_LOGD("Advanced", "Command failed: %s", String(cmd));
+            pCharacteristic->setValue("fail:" + String(cmd.c_str()));
+            return;
+        }
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        Serial.println("READ");
+    }
+
+    /**
+     *  The value returned in code is the NimBLE host return code.
+     */
+    void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
+        ESP_LOGV("NIMBLE_COMMAND",
+                "Notification/Indication return code: %d, %s", code,
+                NimBLEUtils::returnCodeToString(code));
+    }
+} advancedCallbacks;
+
+NimBLECharacteristic* initAdvancedCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, 30);
+
+    pChar->setCallbacks(&advancedCallbacks);
+    return pChar;
+}
+
 }
