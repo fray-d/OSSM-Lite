@@ -190,7 +190,7 @@ void advancedClick() {
     bool loop = true;
     u8_t value = 0;
     if (stateMachine->is("advancedPenetration.presets"_s)) {
-        String preset = String(presetCommands[encoder.readEncoder()/3]);
+        String preset = String(c0) + String(presetCommands[encoder.readEncoder()/3]);
         currentSettings.processStringCommand(preset);
         stateMachine->process_event(Done{});
         currentSettings.status = ControlStatus::BASE_MENU;
@@ -204,11 +204,6 @@ void advancedClick() {
                     currentSettings.status = ControlStatus::BASE_VALUE;
                     loop = false;
                 }
-                break;
-            case ControlStatus::BASE_VALUE:
-                currentSettings.status = ControlStatus::BASE_MENU;
-                value = currentSettings.baseControl * 3;
-                c = BaseControls::BASE_COUNT * 6;
                 break;
             case ControlStatus::MODIFIER_MENU:
                 if (currentSettings.modifierControl == ModifierControls::GO_BACK) {
@@ -226,6 +221,9 @@ void advancedClick() {
                 c = ModifierControls::MODIFIER_COUNT * 3;
                 break;
             default:
+                currentSettings.status = ControlStatus::BASE_MENU;
+                value = currentSettings.baseControl * 3;
+                c = BaseControls::BASE_COUNT * 6;
                 break;
         }
     }
@@ -266,6 +264,7 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                     data.numItems = 10;
                     data.selectedIndex = item;
                     ui::drawMenu(display.getU8g2(), data);
+                    currentSettings.lastStatus = currentSettings.status;
                 } else {
                     switch (currentSettings.status) {
                         case ControlStatus::BASE_MENU:
