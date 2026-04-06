@@ -75,11 +75,8 @@ struct ModifierControl : public Control {
     }
     bool processStringCommand(ModifierControls control, String cmd){
         if (control == id){
-            u8_t v = cmd.toInt();
-            if (v >= minValue && v <= maxValue) {
-                value = v;
-                return true;
-            }
+            value = constrain(cmd.toInt(), minValue, maxValue);
+            return true;
         }
         return false;
     }
@@ -196,12 +193,8 @@ struct BaseControl : Control {
         if (control == id){
             u8_t i = cmd.indexOf(":");
             if (i == 255){
-                u8_t v = cmd.toInt();
-                if (v >= minValue && v <= maxValue) {
-                    value = v;
-                    return true;
-                }
-                return false;
+                value = constrain(cmd.toInt(), minValue, maxValue);
+                return true;
             }
             if (modifier == nullptr) {
                 modifier = new Modifier;
