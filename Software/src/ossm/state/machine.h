@@ -53,6 +53,7 @@ struct OSSMStateMachine {
             "simplePenetration.preflight"_s + done / (resetSettingsSimplePen, drawPlayControls, startSimplePenetration) = "simplePenetration.idle"_s,
             "simplePenetration.preflight"_s + longPress = "menu"_s,
             "simplePenetration.idle"_s + longPress / (emergencyStop, setNotHomed) = "menu"_s,
+            "simplePenetration.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
 
             "advancedPenetration"_s [isNotHomed] = "homing"_s,
             "advancedPenetration"_s [isPreflightSafe] / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
@@ -78,6 +79,9 @@ struct OSSMStateMachine {
             "strokeEngine.pattern"_s + doublePress / drawPlayControls = "strokeEngine.idle"_s,
             "strokeEngine.pattern"_s + longPress / (emergencyStop, setNotHomed) = "menu"_s,
             "strokeEngine.idle"_s + longPress / (emergencyStop, setNotHomed) = "menu"_s,
+            "strokeEngine.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "strokeEngine.pattern"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "strokeEngine.preflight"_s + event<ReturnToMenu> = "menu"_s,
 
             "streaming"_s [isNotHomed] = "homing"_s,
             "streaming"_s [isPreflightSafe] / (resetSettingsStreaming, drawPlayControls, startStreaming) = "streaming.idle"_s,
@@ -85,6 +89,7 @@ struct OSSMStateMachine {
             "streaming.preflight"_s + done / (resetSettingsStreaming, drawPlayControls, startStreaming) = "streaming.idle"_s,
             "streaming.preflight"_s + longPress = "menu"_s,
             "streaming.idle"_s + longPress / (emergencyStop, setNotHomed) = "menu"_s,
+            "streaming.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
             "streaming.idle"_s + buttonPress / incrementControlStreaming = "streaming.idle"_s,
 
             "pairing"_s / checkPairing = "pairing.idle"_s,
