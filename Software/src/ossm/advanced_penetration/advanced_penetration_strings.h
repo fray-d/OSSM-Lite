@@ -26,7 +26,7 @@ namespace advanced_penetration {
     static const char p2[] PROGMEM = "Pounding";
     static const char c2[] PROGMEM = "0:0:100,1:0:100,2:100,2:0:100,3:50,3:0:100,4:40,4:0:100,5:40,5:0:100,";
     static const char p3[] PROGMEM = "Robo";
-    static const char c3[] PROGMEM = "0:0:100,1:0:100,2:100,2:0:100,3:100,3:0:100,4:40,4:0:100,5:40,5:0:100,";
+    static const char c3[] PROGMEM = "0:0:100,1:0:100,2:100,2:0:100,3:100,3:0:100,4:100,4:0:100,5:100,5:0:100,";
     static const char p4[] PROGMEM = "Half'n'half";
     static const char c4[] PROGMEM = "0:0:50,1:0:100,2:100,2:0:100,3:100,3:0:100,4:40,4:0:100,5:40,5:0:100,";
     static const char p5[] PROGMEM = "Deeper";
