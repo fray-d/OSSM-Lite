@@ -17,7 +17,9 @@ NimBLECharacteristic* pCharStatus;
 
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     u32_t strokeCount = 0;
-    while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s)) {
+    while (stateMachine->is("advancedPenetration"_s) 
+                    || stateMachine->is("advancedPenetration.idle"_s)
+                    || stateMachine->is("advancedPenetration.presets"_s)) {
         if (currentSettings.changed && pCharStatus != nullptr) {
             pCharStatus->setValue(currentSettings.getStatus());
             pCharStatus->notify();
@@ -90,7 +92,9 @@ void startAdvancedPenetration() {
 
 class AdvancedCommandCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        if (!(stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s))) {
+        if (!(stateMachine->is("advancedPenetration"_s) 
+                        || stateMachine->is("advancedPenetration.idle"_s)
+                        || stateMachine->is("advancedPenetration.presets"_s))) {
             stateMachine->process_event(longPress);
             menuState.currentOption = Menu::AdvancedPenetration;
             if (stateMachine != nullptr) {

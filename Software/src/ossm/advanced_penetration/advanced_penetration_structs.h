@@ -1,22 +1,8 @@
 #ifndef OSSM_ADVANCED_PENETRATION_STRUCTS_H
 #define OSSM_ADVANCED_PENETRATION_STRUCTS_H
-#include "Progmem.h"
+#include "advanced_penetration_strings.h"
 
 namespace advanced_penetration {
-
-static const char d1[] PROGMEM = "+D";
-static const char d2[] PROGMEM = "-D";
-static const char s1[] PROGMEM = "+S";
-static const char s2[] PROGMEM = "-S";
-static const char a1[] PROGMEM = "+A";
-static const char a2[] PROGMEM = "-A";
-static const char ma[] PROGMEM = "MA";
-static const char m1[] PROGMEM = "M1";
-static const char m2[] PROGMEM = "M2";
-static const char m3[] PROGMEM = "M3";
-static const char m4[] PROGMEM = "M4";
-static const char mo[] PROGMEM = "MO";
-static const char sp[] PROGMEM = "SP";
 
 enum ControlStatus {
     BASE_MENU,
