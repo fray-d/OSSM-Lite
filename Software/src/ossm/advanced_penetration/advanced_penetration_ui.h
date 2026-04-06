@@ -9,6 +9,7 @@
 #include "utils/analog.h"
 
 namespace advanced_penetration {
+
 u8_t textPosition = 19;
 
 void selectText(u8_t index) {
@@ -188,38 +189,45 @@ void advancedClick() {
     u8_t c = 100;
     bool loop = true;
     u8_t value = 0;
-    switch (currentSettings.status) {
-        case ControlStatus::BASE_MENU:
-            if (encoder.readEncoder()/3 >= BaseControls::BASE_COUNT) {
-                currentSettings.status = ControlStatus::MODIFIER_MENU;
-                c = ModifierControls::MODIFIER_COUNT * 3;
-            } else {
-                currentSettings.status = ControlStatus::BASE_VALUE;
-                loop = false;
-            }
-            break;
-        case ControlStatus::BASE_VALUE:
-            currentSettings.status = ControlStatus::BASE_MENU;
-            value = currentSettings.baseControl * 3;
-            c = BaseControls::BASE_COUNT * 6;
-            break;
-        case ControlStatus::MODIFIER_MENU:
-            if (currentSettings.modifierControl == ModifierControls::GO_BACK) {
+    if (stateMachine->is("advancedPenetration.presets"_s)) {
+        String preset = String(presetCommands[encoder.readEncoder()/3]);
+        currentSettings.processStringCommand(preset);
+        stateMachine->process_event(Done{});
+        currentSettings.status = ControlStatus::BASE_MENU;
+    } else {
+        switch (currentSettings.status) {
+            case ControlStatus::BASE_MENU:
+                if (encoder.readEncoder()/3 >= BaseControls::BASE_COUNT) {
+                    currentSettings.status = ControlStatus::MODIFIER_MENU;
+                    c = ModifierControls::MODIFIER_COUNT * 3;
+                } else {
+                    currentSettings.status = ControlStatus::BASE_VALUE;
+                    loop = false;
+                }
+                break;
+            case ControlStatus::BASE_VALUE:
                 currentSettings.status = ControlStatus::BASE_MENU;
-                value = (currentSettings.baseControl + BaseControls::BASE_COUNT) * 3;
+                value = currentSettings.baseControl * 3;
                 c = BaseControls::BASE_COUNT * 6;
-            } else {
-                currentSettings.status = ControlStatus::MODIFIER_VALUE;
-                loop = false;
-            }
-            break;
-        case ControlStatus::MODIFIER_VALUE:
-            currentSettings.status = ControlStatus::MODIFIER_MENU;
-            value = currentSettings.modifierControl * 3;
-            c = ModifierControls::MODIFIER_COUNT * 3;
-            break;
-        default:
-            break;
+                break;
+            case ControlStatus::MODIFIER_MENU:
+                if (currentSettings.modifierControl == ModifierControls::GO_BACK) {
+                    currentSettings.status = ControlStatus::BASE_MENU;
+                    value = (currentSettings.baseControl + BaseControls::BASE_COUNT) * 3;
+                    c = BaseControls::BASE_COUNT * 6;
+                } else {
+                    currentSettings.status = ControlStatus::MODIFIER_VALUE;
+                    loop = false;
+                }
+                break;
+            case ControlStatus::MODIFIER_VALUE:
+                currentSettings.status = ControlStatus::MODIFIER_MENU;
+                value = currentSettings.modifierControl * 3;
+                c = ModifierControls::MODIFIER_COUNT * 3;
+                break;
+            default:
+                break;
+        }
     }
     encoder.setBoundaries(0, c - 1, loop);
     encoder.setEncoderValue(value);
@@ -232,7 +240,11 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
     setHeader(headerText);
 
     while (stateMachine->is("advancedPenetration"_s)
-                    || stateMachine->is("advancedPenetration.idle"_s)) {
+                    || stateMachine->is("advancedPenetration.idle"_s)
+                    || stateMachine->is("advancedPenetration.presets"_s)) {
+        if (stateMachine->is("advancedPenetration.presets"_s) && currentSettings.status != ControlStatus::STATUS_COUNT) {
+            currentSettings.status = ControlStatus::STATUS_COUNT;
+        }
         u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         u8_t encoderValue = encoder.readEncoder();
         if ( abs(speedValue - currentSettings.speed.value) > 1
@@ -246,28 +258,37 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
 
                 lastEncoder = encoderValue;
                 int item = floor(encoderValue / 3);
-                switch (currentSettings.status) {
-                    case ControlStatus::BASE_MENU:
-                        item = item % BaseControls::BASE_COUNT;
-                        currentSettings.baseControl = BaseControls(item);
-                        break;
-                    case ControlStatus::MODIFIER_MENU:
-                        item = item % ModifierControls::MODIFIER_COUNT;
-                        currentSettings.modifierControl = ModifierControls(item);
-                        break;
-                    default:
-                        break;
-                }
-                
-                textPosition = 19;
-                updateControl(currentSettings.maxDepth, currentSettings.minDepth.value+1);
-                updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value-1);
-                updateControl(currentSettings.inSpeed, 1);
-                updateControl(currentSettings.outSpeed, 1);
-                updateControl(currentSettings.inAcceleration);
-                updateControl(currentSettings.outAcceleration);
-                currentSettings.changed = true;
 
+                if (stateMachine->is("advancedPenetration.presets"_s)) {
+                    encoder.setBoundaries(0, 29, true);
+                    ui::MenuData data{};
+                    data.items = presets;
+                    data.numItems = 10;
+                    data.selectedIndex = item;
+                    ui::drawMenu(display.getU8g2(), data);
+                } else {
+                    switch (currentSettings.status) {
+                        case ControlStatus::BASE_MENU:
+                            item = item % BaseControls::BASE_COUNT;
+                            currentSettings.baseControl = BaseControls(item);
+                            break;
+                        case ControlStatus::MODIFIER_MENU:
+                            item = item % ModifierControls::MODIFIER_COUNT;
+                            currentSettings.modifierControl = ModifierControls(item);
+                            break;
+                        default:
+                            break;
+                    }
+                    
+                    textPosition = 19;
+                    updateControl(currentSettings.maxDepth, currentSettings.minDepth.value+1);
+                    updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value-1);
+                    updateControl(currentSettings.inSpeed, 1);
+                    updateControl(currentSettings.outSpeed, 1);
+                    updateControl(currentSettings.inAcceleration);
+                    updateControl(currentSettings.outAcceleration);
+                }
+                currentSettings.changed = true;
                 refreshPage(true);
                 xSemaphoreGive(displayMutex);
             }
