@@ -228,6 +228,7 @@ struct Settings {
         return output;
     }
     bool processStringCommand(String cmd) {
+        bool update = false;
         cmd = commandString + cmd;
         int i = cmd.lastIndexOf(',');
         if (i < 0){
@@ -243,23 +244,22 @@ struct Settings {
             String single = cmd.substring(0,i);
             cmd = cmd.substring(i+1);
             i = cmd.indexOf(',');
-
             int j = single.indexOf(':');
             if (j < 0) {
                 return false;
             }
             control = static_cast<BaseControls>(single.substring(0,j).toInt());
             single = single.substring(j+1);
-            changed = maxDepth.processStringCommand(control, single)
+            update = maxDepth.processStringCommand(control, single)
                     || minDepth.processStringCommand(control, single)
                     || inSpeed.processStringCommand(control, single)
                     || outSpeed.processStringCommand(control, single)
                     || inAcceleration.processStringCommand(control, single)
                     || outAcceleration.processStringCommand(control, single)
                     || speed.processStringCommand(control, single);
-
         }
         lastStatus = ControlStatus::STATUS_COUNT;
+        changed = update;
         return changed;
     }
 } currentSettings;
@@ -271,5 +271,4 @@ struct StrokeMath {
 };
 
 }
-
 #endif
