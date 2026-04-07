@@ -53,10 +53,6 @@
 // ************************************************
 #define CHARACTERISTIC_GPIO_UUID "522b443a-4f53-534d-4000-420badbabe69"
 
-#define CHARACTERISTIC_ADVANCED_STATUS_UUID "522b443a-4f53-534d-9001-420badbabe69"
-#define CHARACTERISTIC_ADVANCED_CONFIG_UUID "522b443a-4f53-534d-9002-420badbabe69"
-#define CHARACTERISTIC_ADVANCED_CONTROL_UUID "522b443a-4f53-534d-9003-420badbabe69"
-
 // ************************************************
 // ****************** ETC *************************
 // ************************************************
