@@ -26,7 +26,6 @@ NimBLECharacteristic* pStateCharacteristic = nullptr;
 NimBLECharacteristic* pSpeedKnobConfigCharacteristic = nullptr;
 NimBLECharacteristic* pLatencyCompensationConfigCharacteristic = nullptr;
 NimBLECharacteristic* pCommandCharacteristic = nullptr;
-NimBLECharacteristic* pAdvancedCharacteristic = nullptr;
 
 static long lostConnectionTime = 0;
 static int speedOnLostConnection = 0;
@@ -292,10 +291,7 @@ void initNimble() {
     pCommandCharacteristic =
         initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
 
-    pAdvancedCharacteristic = advanced_penetration::initAdvancedCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONTROL_UUID));
-    pAdvancedCharacteristic = advanced_penetration::initAdvancedConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONFIG_UUID));
-    pAdvancedCharacteristic = advanced_penetration::initAdvancedStatusCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_ADVANCED_STATUS_UUID));
-
+        advanced_penetration::initNimble();
     pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
         pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
 

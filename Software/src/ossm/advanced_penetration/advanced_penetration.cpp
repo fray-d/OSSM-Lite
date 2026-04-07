@@ -4,6 +4,7 @@
 #include "constants/Config.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/menu.h"
+#include "services/communication/nimble.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
 #include "services/led.h"
@@ -13,16 +14,16 @@ using namespace sml;
 
 namespace advanced_penetration {
 
-NimBLECharacteristic* pCharStatus;
+NimBLECharacteristic* advancedCharacteristic = nullptr;;
 
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
     u32_t strokeCount = 0;
     while (stateMachine->is("advancedPenetration"_s) 
                     || stateMachine->is("advancedPenetration.idle"_s)
                     || stateMachine->is("advancedPenetration.presets"_s)) {
-        if (currentSettings.changed && pCharStatus != nullptr) {
-            pCharStatus->setValue(currentSettings.getStatus());
-            pCharStatus->notify();
+        if (currentSettings.changed && advancedCharacteristic != nullptr) {
+            advancedCharacteristic->setValue(currentSettings.getStatus());
+            advancedCharacteristic->notify();
         }
         if (currentSettings.speed.value == 0.0) {
             stepper->stopMove();
@@ -67,27 +68,6 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
         vTaskDelay(1);
     }
     vTaskDelete(nullptr);
-}
-
-void startAdvancedPenetration() {
-    int stackSize = 10 * configMINIMAL_STACK_SIZE;
-    currentSettings.lastStatus = ControlStatus::STATUS_COUNT;
-    currentSettings.status = ControlStatus::BASE_MENU;
-    encoder.setBoundaries(0,BaseControls::BASE_COUNT * 6 - 1, true);
-    encoder.setEncoderValue(0);
-
-    if(isDisplayAvailable()) {
-        xTaskCreatePinnedToCore(startAdvancedPenetrationUITask,
-                            "startAdvancedPenetrationTask", stackSize, nullptr,
-                            configMAX_PRIORITIES - 1,
-                            &Tasks::runAdvancedPenetrationTaskH,
-                            Tasks::operationTaskCore);
-    }
-
-    xTaskCreatePinnedToCore(startAdvancedPenetrationMotionTask, 
-                            "startAdvancedPenetrationMotionTask", stackSize, nullptr,
-                            configMAX_PRIORITIES - 1, nullptr,
-                            Tasks::operationTaskCore);
 }
 
 class AdvancedCommandCallbacks : public NimBLECharacteristicCallbacks {
@@ -137,9 +117,37 @@ NimBLECharacteristic* initAdvancedConfigCharacteristic(NimBLEService* pService, 
 }
 
 NimBLECharacteristic* initAdvancedStatusCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    pCharStatus = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY,1000);
-    pCharStatus->setCallbacks(&advancedStatusCallbacks);
-    return pCharStatus;
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY,1000);
+    pChar->setCallbacks(&advancedStatusCallbacks);
+    return pChar;
 }
 
+void initNimble() {
+    NimBLEService* advancedService = pServer->createService(ADVANCED_SERVICE_UUID);
+    initAdvancedCommandCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONTROL_UUID));
+    initAdvancedConfigCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONFIG_UUID));
+    advancedCharacteristic = initAdvancedStatusCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_STATUS_UUID));
+    advancedService->start();
+}
+
+void startAdvancedPenetration() {
+    int stackSize = 10 * configMINIMAL_STACK_SIZE;
+    currentSettings.lastStatus = ControlStatus::STATUS_COUNT;
+    currentSettings.status = ControlStatus::BASE_MENU;
+    encoder.setBoundaries(0,BaseControls::BASE_COUNT * 6 - 1, true);
+    encoder.setEncoderValue(0);
+
+    if(isDisplayAvailable()) {
+        xTaskCreatePinnedToCore(startAdvancedPenetrationUITask,
+                            "startAdvancedPenetrationTask", stackSize, nullptr,
+                            configMAX_PRIORITIES - 1,
+                            &Tasks::runAdvancedPenetrationTaskH,
+                            Tasks::operationTaskCore);
+    }
+
+    xTaskCreatePinnedToCore(startAdvancedPenetrationMotionTask, 
+                            "startAdvancedPenetrationMotionTask", stackSize, nullptr,
+                            configMAX_PRIORITIES - 1, nullptr,
+                            Tasks::operationTaskCore);
+}
 }
