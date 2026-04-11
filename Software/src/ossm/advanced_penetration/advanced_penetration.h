@@ -17,7 +17,7 @@ namespace advanced_penetration {
 
     void startAdvancedPenetration();
 
-    void initNimble();
+    NimBLEService* initNimble();
 }
 
 #endif

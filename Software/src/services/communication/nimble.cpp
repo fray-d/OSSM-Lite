@@ -291,7 +291,6 @@ void initNimble() {
     pCommandCharacteristic =
         initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
 
-        advanced_penetration::initNimble();
     pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
         pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
 
@@ -352,11 +351,14 @@ void initNimble() {
     pFTS->start();
 #endif
 
+    NimBLEService* aService = advanced_penetration::initNimble();
+
     // Update advertising to include new services
     NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
     pAdvertising->setName("OSSM");
     pAdvertising->addServiceUUID(pService->getUUID());
     pAdvertising->addServiceUUID(pDeviceInfoService->getUUID());
+    pAdvertising->addServiceUUID(aService->getUUID());
 #ifdef PRETEND_TO_BE_FLESHY_THRUST_SYNC
     pAdvertising->addServiceUUID(pFTS->getUUID());
 #endif
