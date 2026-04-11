@@ -122,12 +122,13 @@ NimBLECharacteristic* initAdvancedStatusCharacteristic(NimBLEService* pService, 
     return pChar;
 }
 
-void initNimble() {
+NimBLEService* initNimble() {
     NimBLEService* advancedService = pServer->createService(ADVANCED_SERVICE_UUID);
     initAdvancedCommandCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONTROL_UUID));
     initAdvancedConfigCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONFIG_UUID));
     advancedCharacteristic = initAdvancedStatusCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_STATUS_UUID));
     advancedService->start();
+    return advancedService;
 }
 
 void startAdvancedPenetration() {
