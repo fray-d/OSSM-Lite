@@ -70,10 +70,10 @@ struct ModifierControl : public Control {
 
 struct Modifier {
     ModifierControl amplitude = {100, 0, 100, ma, ModifierControls::AMPLITUDE};
-    ModifierControl inStep = {1, 1, 25, m1, ModifierControls::IN_STEP};
-    ModifierControl inWait = {0, 0, 25, m2, ModifierControls::IN_WAIT};
-    ModifierControl outStep = {1, 1, 25, m3, ModifierControls::OUT_STEP};
-    ModifierControl outWait = {0, 0, 25, m4, ModifierControls::OUT_WAIT};
+    ModifierControl inStep = {0, 0, 25, m1, ModifierControls::IN_STEP};
+    ModifierControl inWait = {1, 1, 25, m2, ModifierControls::IN_WAIT};
+    ModifierControl outStep = {0, 0, 25, m3, ModifierControls::OUT_STEP};
+    ModifierControl outWait = {1, 1, 25, m4, ModifierControls::OUT_WAIT};
     ModifierControl offset = {0, 0, 100, mo, ModifierControls::OFFSET};
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
@@ -102,7 +102,7 @@ struct Modifier {
         }
         cycle = (cycle + offset.value) % stepCount();
         if (cycle < inStep.value){
-            float slice = ratio / inStep.value * (cycle + 1);
+            float slice = ratio / (inStep.value + 1) * (cycle + 1);
             return 1 - slice;
         } else {
             cycle -= inStep.value;
@@ -113,7 +113,7 @@ struct Modifier {
             cycle -= inWait.value;
         }
         if (cycle < outStep.value) {
-            float slice = ratio / outStep.value * (cycle + 1);
+            float slice = ratio / (outStep.value + 1) * (cycle + 1);
             return 1 - ratio + slice;
         } 
         return 1;
