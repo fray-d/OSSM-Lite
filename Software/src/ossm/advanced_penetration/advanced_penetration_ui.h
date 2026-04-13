@@ -129,18 +129,21 @@ void drawModifier(BaseControl& a) {
         drawStroke(true);
     } else {
         u8_t steps = a.modifier->stepCount();
-        u8_t barWdith = 101 / steps;
-        u8_t w = barWdith * steps;
-        u8_t x = (101 - w)/2 + 10;
-        for (int step = 0; step < steps; step ++) {
-            u8_t value = 54 * a.modifier->getModification(step);
-            if (a.modifier->getControlForStep(step) == currentSettings.modifierControl){
-                display.drawBox(x, display.getHeight() - value, barWdith + 1, value);
-            } else {
-                display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
+        if (steps > 0){
+            u8_t barWdith = 101 / steps;
+            u8_t w = barWdith * steps;
+            u8_t x = (101 - w)/2 + 10;
+            for (int step = 0; step < steps; step ++) {
+                u8_t value = 54 * a.modifier->getModification(step);
+                if (a.modifier->getControlForStep(step) == currentSettings.modifierControl){
+                    display.drawBox(x, display.getHeight() - value, barWdith + 1, value);
+                } else {
+                    display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
+                }
+                x += barWdith;
             }
-            x += barWdith;
         }
+        
     }
 }
 
@@ -258,11 +261,11 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                 int item = floor(encoderValue / 3);
 
                 if (stateMachine->is("advancedPenetration.presets"_s)) {
-                    encoder.setBoundaries(0, 29, true);
                     ui::MenuData data{};
                     data.items = presets;
-                    data.numItems = 10;
+                    data.numItems = sizeof(presets) / sizeof(presets[0]);
                     data.selectedIndex = item;
+                    encoder.setBoundaries(0, data.numItems * 3 - 1, true);
                     ui::drawMenu(display.getU8g2(), data);
                     currentSettings.lastStatus = currentSettings.status;
                 } else {

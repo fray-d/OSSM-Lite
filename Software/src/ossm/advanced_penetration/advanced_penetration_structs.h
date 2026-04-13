@@ -71,28 +71,30 @@ struct ModifierControl : public Control {
 struct Modifier {
     ModifierControl amplitude = {100, 0, 100, ma, ModifierControls::AMPLITUDE};
     ModifierControl inStep = {0, 0, 25, m1, ModifierControls::IN_STEP};
-    ModifierControl inWait = {1, 1, 25, m2, ModifierControls::IN_WAIT};
+    ModifierControl inWait = {1, 0, 25, m2, ModifierControls::IN_WAIT};
     ModifierControl outStep = {0, 0, 25, m3, ModifierControls::OUT_STEP};
-    ModifierControl outWait = {1, 1, 25, m4, ModifierControls::OUT_WAIT};
+    ModifierControl outWait = {1, 0, 25, m4, ModifierControls::OUT_WAIT};
     ModifierControl offset = {0, 0, 100, mo, ModifierControls::OFFSET};
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
     }
     ModifierControls getControlForStep(int cycle) {
-        cycle = (cycle + offset.value) % stepCount();
-        if (cycle < inStep.value){
-            return ModifierControls::IN_STEP;
-        } else {
-            cycle -= inStep.value;
+        if (stepCount() > 0){
+            cycle = (cycle + offset.value) % stepCount();
+            if (cycle < inStep.value){
+                return ModifierControls::IN_STEP;
+            } else {
+                cycle -= inStep.value;
+            }
+            if (cycle < inWait.value) {
+                return ModifierControls::IN_WAIT;
+            } else {
+                cycle -= inWait.value;
+            }
+            if (cycle < outStep.value) {
+                return ModifierControls::OUT_STEP;
+            } 
         }
-        if (cycle < inWait.value) {
-            return ModifierControls::IN_WAIT;
-        } else {
-            cycle -= inWait.value;
-        }
-        if (cycle < outStep.value) {
-            return ModifierControls::OUT_STEP;
-        } 
         return ModifierControls::OUT_WAIT;
     }
     float getModification(int cycle){
@@ -100,26 +102,28 @@ struct Modifier {
         if (cycle < 0) {
             return 1 - ratio;
         }
-        cycle = (cycle + offset.value) % stepCount();
-        if (cycle < inStep.value){
-            float slice = ratio / (inStep.value + 1) * (cycle + 1);
-            return 1 - slice;
-        } else {
-            cycle -= inStep.value;
+        if(stepCount() > 0){
+            cycle = (cycle + offset.value) % stepCount();
+            if (cycle < inStep.value){
+                float slice = ratio / (inStep.value + 1) * (cycle + 1);
+                return 1 - slice;
+            } else {
+                cycle -= inStep.value;
+            }
+            if (cycle < inWait.value) {
+                return 1 - ratio;
+            } else {
+                cycle -= inWait.value;
+            }
+            if (cycle < outStep.value) {
+                float slice = ratio / (outStep.value + 1) * (cycle + 1);
+                return 1 - ratio + slice;
+            } 
         }
-        if (cycle < inWait.value) {
-            return 1 - ratio;
-        } else {
-            cycle -= inWait.value;
-        }
-        if (cycle < outStep.value) {
-            float slice = ratio / (outStep.value + 1) * (cycle + 1);
-            return 1 - ratio + slice;
-        } 
         return 1;
     }
     bool active() {
-        return amplitude.value < 100;
+        return amplitude.value < 100 && stepCount() > 0;
     }
     String encodeString(bool details = false) {
         String output = ":" + amplitude.encodeString(details);
@@ -136,14 +140,14 @@ struct BaseControl : Control {
     BaseControls id;
     Modifier* modifier;
     u8_t getModifiedValue(int strokeCount = -1){
-        if (modifier == nullptr) {
+        if (modifier == nullptr || modifier->stepCount() == 0) {
             return value;
         }
-        int8_t cycle = (strokeCount / 2) % modifier->stepCount();
         int8_t difference = value - minValue;
         if (id == BaseControls::DEPTH_2){
             difference = value - maxValue;
         }
+        int8_t cycle = (strokeCount / 2) % modifier->stepCount();
         if (strokeCount < 0) {
             cycle = -1;
         }
