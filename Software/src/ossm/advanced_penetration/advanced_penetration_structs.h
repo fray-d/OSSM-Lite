@@ -71,9 +71,9 @@ struct ModifierControl : public Control {
 struct Modifier {
     ModifierControl amplitude = {100, 0, 100, ma, ModifierControls::AMPLITUDE};
     ModifierControl inStep = {0, 0, 25, m1, ModifierControls::IN_STEP};
-    ModifierControl inWait = {1, 0, 25, m2, ModifierControls::IN_WAIT};
+    ModifierControl inWait = {1, 1, 25, m2, ModifierControls::IN_WAIT};
     ModifierControl outStep = {0, 0, 25, m3, ModifierControls::OUT_STEP};
-    ModifierControl outWait = {1, 0, 25, m4, ModifierControls::OUT_WAIT};
+    ModifierControl outWait = {1, 1, 25, m4, ModifierControls::OUT_WAIT};
     ModifierControl offset = {0, 0, 100, mo, ModifierControls::OFFSET};
     u8_t stepCount() {
         return inStep.value + inWait.value + outStep.value + outWait.value;
