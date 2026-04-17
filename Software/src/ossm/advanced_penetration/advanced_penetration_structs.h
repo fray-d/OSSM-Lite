@@ -231,6 +231,10 @@ struct Settings {
         ESP_LOGD("Advanced", "Status: %s", output.c_str());
         return output;
     }
+    void setDepthLimits() {
+        maxDepth.minValue = minDepth.value;
+        minDepth.maxValue = maxDepth.value;
+    }
     bool processStringCommand(String cmd) {
         bool update = false;
         cmd = commandString + cmd;
@@ -264,6 +268,7 @@ struct Settings {
         }
         lastStatus = ControlStatus::STATUS_COUNT;
         changed = update;
+        setDepthLimits();
         return changed;
     }
 } currentSettings;

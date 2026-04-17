@@ -63,6 +63,7 @@ struct OSSMStateMachine {
             "advancedPenetration.idle"_s + longPress = "menu"_s,
             "advancedPenetration.idle"_s + buttonPress / advancedClick = "advancedPenetration.idle"_s,
             "advancedPenetration.idle"_s + doublePress = "advancedPenetration.presets"_s,
+            "advancedPenetration.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
             "advancedPenetration.presets"_s + longPress = "menu"_s,
             "advancedPenetration.presets"_s + buttonPress / advancedClick = "advancedPenetration.presets"_s,
             "advancedPenetration.presets"_s + done = "advancedPenetration.idle"_s,

@@ -67,6 +67,7 @@ static void startAdvancedPenetrationMotionTask(void *pvParameters) {
         }
         vTaskDelay(1);
     }
+    currentSettings.speed.value = 0;
     vTaskDelete(nullptr);
 }
 
