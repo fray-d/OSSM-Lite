@@ -76,7 +76,7 @@ class AdvancedCommandCallbacks : public NimBLECharacteristicCallbacks {
         if (!(stateMachine->is("advancedPenetration"_s) 
                         || stateMachine->is("advancedPenetration.idle"_s)
                         || stateMachine->is("advancedPenetration.presets"_s))) {
-            stateMachine->process_event(longPress);
+            stateMachine->process_event(LongPress{});
             menuState.currentOption = Menu::AdvancedPenetration;
             if (stateMachine != nullptr) {
                 stateMachine->process_event(ButtonPress{});
