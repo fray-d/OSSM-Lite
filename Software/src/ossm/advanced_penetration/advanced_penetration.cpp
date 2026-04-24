@@ -139,6 +139,8 @@ void startAdvancedPenetration() {
     encoder.setBoundaries(0,BaseControls::BASE_COUNT * 6 - 1, true);
     encoder.setEncoderValue(0);
 
+    initPresets();
+
     if(isDisplayAvailable()) {
         xTaskCreatePinnedToCore(startAdvancedPenetrationUITask,
                             "startAdvancedPenetrationTask", stackSize, nullptr,

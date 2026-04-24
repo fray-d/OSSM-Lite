@@ -193,8 +193,7 @@ void advancedClick() {
     bool loop = true;
     u8_t value = 0;
     if (stateMachine->is("advancedPenetration.presets"_s)) {
-        String preset = String(c0) + String(presetCommands[encoder.readEncoder()/3]);
-        currentSettings.processStringCommand(preset);
+        currentSettings.processStringCommand(readPreset(encoder.readEncoder()/3));
         stateMachine->process_event(Done{});
         currentSettings.status = ControlStatus::BASE_MENU;
     } else {
@@ -261,11 +260,18 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                 int item = floor(encoderValue / 3);
 
                 if (stateMachine->is("advancedPenetration.presets"_s)) {
+                    const char* convert[presets.size()];
+                    for (u8_t i = 0; i < presets.size(); i++) {
+                        convert[i] = presets[i].c_str();
+                    }
                     ui::MenuData data{};
-                    data.items = presets;
-                    data.numItems = sizeof(presets) / sizeof(presets[0]);
-                    data.selectedIndex = item;
+                    data.items = convert;
+                    data.numItems = presets.size();
                     encoder.setBoundaries(0, data.numItems * 3 - 1, true);
+                    if (item > data.numItems) {
+                        item = data.numItems - 1;
+                    }
+                    data.selectedIndex = item;
                     ui::drawMenu(display.getU8g2(), data);
                     currentSettings.lastStatus = currentSettings.status;
                 } else {
