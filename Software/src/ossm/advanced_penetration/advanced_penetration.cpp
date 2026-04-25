@@ -15,9 +15,10 @@ using namespace sml;
 namespace advanced_penetration {
 
 NimBLECharacteristic* advancedCharacteristic = nullptr;;
+u32_t lastPresetCommand = millis();
 
 static void startAdvancedPenetrationMotionTask(void *pvParameters) {
-    u32_t strokeCount = 0;
+    u32_t strokeCount = 1;
     while (stateMachine->is("advancedPenetration"_s) 
                     || stateMachine->is("advancedPenetration.idle"_s)
                     || stateMachine->is("advancedPenetration.presets"_s)) {
@@ -101,26 +102,32 @@ class AdvancedConfigCallbacks : public NimBLECharacteristicCallbacks {
 
 class AdvancedPresetCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        String cmd = pCharacteristic->getValue();
-        int i = cmd.indexOf(':');
-        String value = cmd.substring(i+1);
-        cmd = cmd.substring(0,i);
-        cmd.toLowerCase();
-        if (cmd == "s"){
-            savePreset(value,currentSettings.getPreset());
-        } else if (cmd == "d") {
-            deletePreset(value);
-        } else if (cmd == "a") {
-            currentSettings.processStringCommand(readPresetValueCommand(value));
+        u32_t currentTime = millis();
+        if (currentTime - lastPresetCommand > 1000) {
+            String cmd = pCharacteristic->getValue();
+            String value = cmd.substring(1);
+            cmd = cmd.substring(0,1);
+            if (cmd == ">"){
+                savePreset(value,currentSettings.getPreset());
+            } else if (cmd == "<") {
+                deletePreset(value);
+            } else if (cmd == ":") {
+                currentSettings.processStringCommand(readPresetValueCommand(value));
+            } else if (cmd == "^") {
+                factoryReset();
+                repopulatePresets();
+            }
+            pCharacteristic->setValue(getPreset("names"));
+            pulseForCommunication();
+        } else {
+            ESP_LOGI("AP", "Skipping commands sent too soon.");
         }
-        pCharacteristic->setValue(getPreset("names"));
-        pulseForCommunication();
+        lastPresetCommand = currentTime;
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         std::string names = getPreset("names");
         pCharacteristic->setValue(getPreset("names"));
-        ESP_LOGI("AP","Writing to preset characteristic: %s", names);
     }
 } advancedPresetCallbacks;
 
