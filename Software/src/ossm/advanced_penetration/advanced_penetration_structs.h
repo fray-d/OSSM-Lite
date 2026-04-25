@@ -59,6 +59,20 @@ struct ModifierControl : public Control {
         }
         return output;
     }
+    String encodePreset(String prefix) {
+        String output;
+        if (id == ModifierControls::AMPLITUDE ||
+            ((id == ModifierControls::IN_STEP ||
+              id == ModifierControls::OUT_STEP) &&
+             value != 1) ||
+            ((id == ModifierControls::IN_WAIT ||
+              id == ModifierControls::OUT_WAIT ||
+              id == ModifierControls::OFFSET) &&
+             value != 0)) {
+            output += prefix + String(id) + ":" + String(value) + ",";
+        }
+        return output;
+    }
     bool processStringCommand(ModifierControls control, String cmd){
         if (control == id){
             value = constrain(cmd.toInt(), minValue, maxValue);
@@ -134,6 +148,15 @@ struct Modifier {
         output += ":" + offset.encodeString(details);
         return output;
     }
+    String encodePreset(String prefix) {
+        String output = amplitude.encodePreset(prefix);
+        output += inStep.encodePreset(prefix);
+        output += inWait.encodePreset(prefix);
+        output += outStep.encodePreset(prefix);
+        output += outWait.encodePreset(prefix);
+        output += offset.encodePreset(prefix);
+        return output;
+    }
 };
 
 struct BaseControl : Control {
@@ -179,6 +202,18 @@ struct BaseControl : Control {
         }
         return output;
     }
+    String encodePreset() {
+        String output;
+        String prefix = String(id) + ":";
+        if (((id == BaseControls::SPEED_1 || id == BaseControls::SPEED_2) && value != 100) ||
+        ((id == BaseControls::ACCEL_1 || id == BaseControls::ACCEL_2) && value !=40)) {
+            output += prefix + String(value) + ",";
+        }
+        if (modifier != nullptr && modifier->active()) {
+            output += modifier->encodePreset(prefix);
+        }
+        return output;
+    }
     bool processStringCommand(BaseControls control, String cmd){
         if (control == id){
             u8_t i = cmd.indexOf(":");
@@ -204,13 +239,13 @@ struct BaseControl : Control {
 };
 
 struct Settings {
-    BaseControl speed = {0, 0, 100, sp, BaseControls::BASE_COUNT};
-    BaseControl inSpeed = {100, 1, 100, s1, BaseControls::SPEED_1};
-    BaseControl outSpeed = {100, 1, 100, s2, BaseControls::SPEED_2};
-    BaseControl maxDepth = {10, 0, 100, d1, BaseControls::DEPTH_1};
-    BaseControl minDepth = {0, 0, 100, d2, BaseControls::DEPTH_2};
-    BaseControl inAcceleration = {40, 0, 100, a1, BaseControls::ACCEL_1};
-    BaseControl outAcceleration = {40, 0, 100, a2, BaseControls::ACCEL_2};
+    BaseControl speed = {0, 0, 100, sp, BaseControls::BASE_COUNT,{}};
+    BaseControl inSpeed = {100, 1, 100, s1, BaseControls::SPEED_1,{}};
+    BaseControl outSpeed = {100, 1, 100, s2, BaseControls::SPEED_2,{}};
+    BaseControl maxDepth = {10, 0, 100, d1, BaseControls::DEPTH_1,{}};
+    BaseControl minDepth = {0, 0, 100, d2, BaseControls::DEPTH_2,{}};
+    BaseControl inAcceleration = {40, 0, 100, a1, BaseControls::ACCEL_1,{}};
+    BaseControl outAcceleration = {40, 0, 100, a2, BaseControls::ACCEL_2,{}};
     ControlStatus status = ControlStatus::BASE_MENU;
     ControlStatus lastStatus = ControlStatus::STATUS_COUNT;
     BaseControls baseControl = BaseControls::DEPTH_1;
@@ -229,6 +264,16 @@ struct Settings {
         output += outAcceleration.encodeString(details) + ",";
         output += speed.encodeString(details);
         ESP_LOGD("Advanced", "Status: %s", output.c_str());
+        return output;
+    }
+    String getPreset(){
+        String output = maxDepth.encodePreset();
+        output += minDepth.encodePreset();
+        output += inSpeed.encodePreset();
+        output += outSpeed.encodePreset();
+        output += inAcceleration.encodePreset();
+        output += outAcceleration.encodePreset();
+        ESP_LOGD("Advanced", "Encode Preset: %s", output.c_str());
         return output;
     }
     void setDepthLimits() {
