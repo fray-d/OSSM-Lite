@@ -50,7 +50,28 @@ namespace advanced_penetration {
 		saveKey("names", names.c_str());
 	}
 
+    bool keyExists(String key) {
+        presetStore.begin("presets", true);
+        bool exists = presetStore.isKey(key.c_str());
+        presetStore.end();
+        ESP_LOGI("AP", "%s exists: %s", key.c_str(), String(exists));
+        return exists;
+    }
+
+	String generateName() {
+		u8_t i = 1;
+		String key = "User Pattern " + String(i);
+		while (keyExists(key)) {
+			i ++;
+			key = "User Pattern " + String(i);
+		}
+		return key;
+	}
+
 	void savePreset(String name, String value) {
+		if (name.length() == 0) {
+			name = generateName();
+		}
 		saveKey(name, value);
 		if (std::find(presets.begin(), presets.end(), name.c_str()) == presets.end()) {
 			presets.push_back(name.c_str());
@@ -66,14 +87,6 @@ namespace advanced_penetration {
 		presets.erase(remove(presets.begin(), presets.end(), name.c_str()), presets.end());
 		saveNames();
         ESP_LOGI("AP", "Deleted preset: %s", name.c_str());
-    }
-
-    bool keyExists(String key) {
-        presetStore.begin("presets", true);
-        bool exists = presetStore.isKey(key.c_str());
-        presetStore.end();
-        ESP_LOGI("AP", "%s exists: %s", key.c_str(), String(exists));
-        return exists;
     }
 
     void factoryReset() {

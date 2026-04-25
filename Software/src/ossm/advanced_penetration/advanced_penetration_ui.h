@@ -34,6 +34,7 @@ void setEncoderIfStatus(Control& c, ControlStatus status){
             encoder.setEncoderValue(c.value - 1);
         }
         c.value = constrain(encoder.readEncoder(), c.minValue, c.maxValue);
+        currentSettings.changed = true;
     }
     currentSettings.lastStatus = currentSettings.status;
 }
@@ -193,7 +194,12 @@ void advancedClick() {
     bool loop = true;
     u8_t value = 0;
     if (stateMachine->is("advancedPenetration.presets"_s)) {
-        currentSettings.processStringCommand(readPresetValueCommand(encoder.readEncoder()/3));
+        u8_t selectedPreset = encoder.readEncoder()/3;
+        if (selectedPreset < presets.size()) {
+            currentSettings.processStringCommand(readPresetValueCommand(encoder.readEncoder()/3));
+        } else {
+            savePreset("",currentSettings.getPreset());
+        }
         stateMachine->process_event(Done{});
         currentSettings.status = ControlStatus::BASE_MENU;
     } else {
@@ -247,10 +253,11 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
         }
         u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         u8_t encoderValue = encoder.readEncoder();
-        if ( abs(speedValue - currentSettings.speed.value) > 1
-                    || (speedValue == 0 && currentSettings.speed.value != 0)
-                    || encoderValue != lastEncoder 
-                    || currentSettings.status != currentSettings.lastStatus) {
+        bool speedChange = abs(speedValue - currentSettings.speed.value) > 1 || (speedValue == 0 && currentSettings.speed.value != 0);
+        if (speedChange) {
+            currentSettings.changed = true;
+        }
+        if (speedChange || encoderValue != lastEncoder || currentSettings.status != currentSettings.lastStatus) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
                 clearPage(true);
                 currentSettings.speed.value = speedValue;
@@ -260,13 +267,14 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                 int item = floor(encoderValue / 3);
 
                 if (stateMachine->is("advancedPenetration.presets"_s)) {
-                    const char* convert[presets.size()];
+                    const char* convert[presets.size() + 1];
                     for (u8_t i = 0; i < presets.size(); i++) {
                         convert[i] = presets[i].c_str();
                     }
+                    convert[presets.size()] = "Save New Preset";
                     ui::MenuData data{};
                     data.items = convert;
-                    data.numItems = presets.size();
+                    data.numItems = presets.size() + 1;
                     encoder.setBoundaries(0, data.numItems * 3 - 1, true);
                     if (item > data.numItems) {
                         item = data.numItems - 1;
@@ -296,7 +304,6 @@ static void startAdvancedPenetrationUITask(void *pvParameters) {
                     updateControl(currentSettings.inAcceleration);
                     updateControl(currentSettings.outAcceleration);
                 }
-                currentSettings.changed = true;
                 refreshPage(true);
                 xSemaphoreGive(displayMutex);
             }
