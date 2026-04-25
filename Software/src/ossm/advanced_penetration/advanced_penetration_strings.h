@@ -139,7 +139,7 @@ namespace advanced_penetration {
 	}
 
     void initPresets() {
-        clearPresets();
+        //clearPresets();
         if (!keyExists("names")) {
             factoryReset();
         }
