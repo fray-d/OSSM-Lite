@@ -99,6 +99,31 @@ class AdvancedConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } advancedConfigCallbacks;
 
+class AdvancedPresetCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        String cmd = pCharacteristic->getValue();
+        int i = cmd.indexOf(':');
+        String value = cmd.substring(i+1);
+        cmd = cmd.substring(0,i);
+        cmd.toLowerCase();
+        if (cmd == "s"){
+            savePreset(value,currentSettings.getPreset());
+        } else if (cmd == "d") {
+            deletePreset(value);
+        } else if (cmd == "a") {
+            currentSettings.processStringCommand(readPresetValueCommand(value));
+        }
+        pCharacteristic->setValue(getPreset("names"));
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        std::string names = getPreset("names");
+        pCharacteristic->setValue(getPreset("names"));
+        ESP_LOGI("AP","Writing to preset characteristic: %s", names);
+    }
+} advancedPresetCallbacks;
+
 class AdvancedStatusCallbacks : public NimBLECharacteristicCallbacks {
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         pCharacteristic->setValue(currentSettings.getStatus());
@@ -123,12 +148,19 @@ NimBLECharacteristic* initAdvancedStatusCharacteristic(NimBLEService* pService, 
     return pChar;
 }
 
+NimBLECharacteristic* initAdvancedPresetCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
+    pChar->setCallbacks(&advancedPresetCallbacks);
+    return pChar;
+}
+
 NimBLEService* initNimble() {
+    initPresets();
     NimBLEService* advancedService = pServer->createService(ADVANCED_SERVICE_UUID);
     initAdvancedCommandCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONTROL_UUID));
     initAdvancedConfigCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_CONFIG_UUID));
     advancedCharacteristic = initAdvancedStatusCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_STATUS_UUID));
-    advancedService->start();
+    initAdvancedPresetCharacteristic(advancedService, NimBLEUUID(CHARACTERISTIC_ADVANCED_PRESETS_UUID));
     return advancedService;
 }
 
@@ -138,8 +170,6 @@ void startAdvancedPenetration() {
     currentSettings.status = ControlStatus::BASE_MENU;
     encoder.setBoundaries(0,BaseControls::BASE_COUNT * 6 - 1, true);
     encoder.setEncoderValue(0);
-
-    initPresets();
 
     if(isDisplayAvailable()) {
         xTaskCreatePinnedToCore(startAdvancedPenetrationUITask,

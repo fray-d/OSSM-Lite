@@ -9,12 +9,20 @@ namespace advanced_penetration {
     std::vector<std::string> presets;
     Preferences presetStore;
 
-    String readPreset(u8_t i) {
+    String readPresetValueCommand(u8_t i) {
         presetStore.begin("presets", true);
         String output = presetStore.getString("reset");
         if (i > 0) {
             output += presetStore.getString(presets[i].c_str());
         }
+        presetStore.end();
+        return output;
+    }
+
+	String readPresetValueCommand(String name) {
+        presetStore.begin("presets", true);
+        String output = presetStore.getString("reset");
+		output += presetStore.getString(name.c_str());
         presetStore.end();
         return output;
     }
@@ -26,17 +34,37 @@ namespace advanced_penetration {
         ESP_LOGI("AP", "Clearing presets");
     }
 
-    void savePreset(String name, String value) {
+    void saveKey(String name, String value) {
         presetStore.begin("presets", false);
         presetStore.putString(name.c_str(), value);
         presetStore.end();
+        ESP_LOGI("AP", "Saving key: %s", name.c_str());
+    }
+
+	void saveNames() {
+		std::string names;
+		for (u8_t i = 0; i < presets.size(); i++) {
+			names += presets[i] + ",";
+		}
+		ESP_LOGI("AP","Saving names: %s", names.c_str());
+		saveKey("names", names.c_str());
+	}
+
+	void savePreset(String name, String value) {
+		saveKey(name, value);
+		if (std::find(presets.begin(), presets.end(), name.c_str()) == presets.end()) {
+			presets.push_back(name.c_str());
+			saveNames();
+		}
         ESP_LOGI("AP", "Saving preset: %s", name.c_str());
     }
 
-    void removePreset(String name) {
+    void deletePreset(String name) {
         presetStore.begin("presets", false);
         presetStore.remove(name.c_str());
         presetStore.end();
+		presets.erase(remove(presets.begin(), presets.end(), name.c_str()), presets.end());
+		saveNames();
         ESP_LOGI("AP", "Deleted preset: %s", name.c_str());
     }
 
@@ -50,34 +78,26 @@ namespace advanced_penetration {
 
     void factoryReset() {
         ESP_LOGI("AP", "Restoring to default presets");
-        savePreset("names",
+        saveKey("names",
                    "Simple,Teasing,Pounding,Robo,Half'n'half,Deeper,Insist,"
                    "Jackhammer,Progressive,Mid,Knot (75%),Knot (50%),");
-        savePreset("reset",
+        saveKey("reset",
                    "0:0:100,0:1:1,0:2:0,0:3:1,0:4:0,0:5:0,1:0:100,1:1:1,1:2:0,1:3:1,"
 				   "1:4:0,1:5:0,2:100,2:0:100,2:1:1,2:2:0,2:3:1,2:4:0,2:5:0,3:100,"
 				   "3:0:100,3:1:1,3:2:0,3:3:1,3:4:0,3:5:0,4:40,4:0:100,4:1:1,4:2:0,"
 				   "4:3:1,4:4:0,4:5:0,5:40,5:0:100,5:1:1,5:2:0,5:3:1,5:4:0,5:5:0,");
-        savePreset("Simple", "");
-        savePreset("Teasing", "2:50,");
-        savePreset("Pounding", "3:50,");
-        savePreset("Robo", "4:100,5:100,");
-        savePreset("Half'n'half", "0:0:50,");
-        savePreset("Deeper", "0:0:15,0:3:10,");
-        savePreset("Insist", "1:0:15,1:1:10,");
-        savePreset("Jackhammer", "0:0:15,0:3:9,1:0:15,1:1:9,3:0:50,3:2:8,5:0,");
-        savePreset("Progressive","0:0:15,0:1:10,0:2:1,0:3:10,1:0:15,1:1:10,1:2:1,1:3:10,1:5:11,");
-        savePreset("Mid", "0:0:15,0:1:10,0:2:1,0:3:10,1:0:15,1:1:10,1:2:1,1:3:10,");
-        savePreset("Knot (75%)", "0:0:75,1:0:25,2:0:25,2:5:1,3:0:2,");
-        savePreset("Knot (50%)", "0:0:50,1:0:50,2:0:25,2:5:1,3:0:2,");
-    }
-
-    void renamePreset(String oldName, String newName) {
-        if (keyExists(oldName)) {
-            savePreset(newName, presetStore.getString(oldName.c_str()));
-            removePreset(oldName);
-        }
-        ESP_LOGI("AP", "Renamed preset: %s > %s", oldName.c_str(), newName.c_str());
+        saveKey("Simple", "");
+        saveKey("Teasing", "2:50,");
+        saveKey("Pounding", "3:50,");
+        saveKey("Robo", "4:100,5:100,");
+        saveKey("Half'n'half", "0:0:50,");
+        saveKey("Deeper", "0:0:15,0:3:10,");
+        saveKey("Insist", "1:0:15,1:1:10,");
+        saveKey("Jackhammer", "0:0:15,0:3:9,1:0:15,1:1:9,3:0:50,3:2:8,5:0,");
+        saveKey("Progressive","0:0:15,0:1:10,0:2:1,0:3:10,1:0:15,1:1:10,1:2:1,1:3:10,1:5:11,");
+        saveKey("Mid", "0:0:15,0:1:10,0:2:1,0:3:10,1:0:15,1:1:10,1:2:1,1:3:10,");
+        saveKey("Knot (75%)", "0:0:75,1:0:25,2:0:25,2:5:1,3:0:2,");
+        saveKey("Knot (50%)", "0:0:50,1:0:50,2:0:25,2:5:1,3:0:2,");
     }
 
     std::string getPreset(String key) {
@@ -88,6 +108,7 @@ namespace advanced_penetration {
     }
 
     void repopulatePresets() {
+		presets.clear();
         std::string presetNames = getPreset("names");
         int16_t j = presetNames.find(",");
         while (j > 0) {
@@ -109,8 +130,8 @@ namespace advanced_penetration {
         if (!keyExists("names")) {
             factoryReset();
         }
-		repopulatePresets();
 		updateSpace();
+		repopulatePresets();
     }
 
     static const char d1[] PROGMEM = "+D";

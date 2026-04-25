@@ -193,7 +193,7 @@ void advancedClick() {
     bool loop = true;
     u8_t value = 0;
     if (stateMachine->is("advancedPenetration.presets"_s)) {
-        currentSettings.processStringCommand(readPreset(encoder.readEncoder()/3));
+        currentSettings.processStringCommand(readPresetValueCommand(encoder.readEncoder()/3));
         stateMachine->process_event(Done{});
         currentSettings.status = ControlStatus::BASE_MENU;
     } else {
