@@ -90,6 +90,7 @@ namespace advanced_penetration {
     }
 
     void factoryReset() {
+		clearPresets();
         ESP_LOGI("AP", "Restoring to default presets");
         saveKey("names",
                    "Simple,Teasing,Pounding,Robo,Half'n'half,Deeper,Insist,"
