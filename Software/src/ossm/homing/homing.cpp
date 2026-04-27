@@ -35,15 +35,6 @@ namespace homing {
     static void startHomingTask(void *pvParameters) {
         TickType_t xTaskStartTime = xTaskGetTickCount();
 
-#ifdef AJ_DEVELOPMENT_HARDWARE
-        stepper->setCurrentPosition(0);
-        stepper->forceStopAndNewPosition(0);
-        stateMachine->process_event(Done{});
-        vTaskDelete(nullptr);
-        return;
-#endif
-
-        // Stroke Engine and Simple Penetration treat this differently.
         stepper->enableOutputs();
         stepper->setDirectionPin(Pins::Driver::motorDirectionPin, false);
         int16_t sign = stateMachine->is("homing.backward"_s) ? 1 : -1;
@@ -85,11 +76,13 @@ namespace homing {
             ESP_LOGD("Homing", "Current over limit: %f", current);
             stepper->stopMove();
 
+            stepper->setSpeedInHz(250_mm);
             int32_t currentPosition = stepper->getCurrentPosition();
             stepper->moveTo(currentPosition - sign * Config::Driver::homingOffsetMn, true);
 
             if (!second && stateMachine->is("homing.backward"_s)) {
                 second = true;
+                stepper->setSpeedInHz(25_mm);
                 stepper->moveTo(targetPositionInSteps, false);
                 continue;
             }
@@ -105,7 +98,6 @@ namespace homing {
                 stepper->forceStopAndNewPosition(0);
             }
 
-            stepper->setSpeedInHz(250_mm);
             stepper->moveTo(0, true);
 
             // Clear homing active flag for LED indication

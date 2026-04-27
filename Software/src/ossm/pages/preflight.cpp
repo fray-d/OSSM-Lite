@@ -34,12 +34,8 @@ static void drawPreflightTask(void *pvParameters) {
     showHeaderIcons = true;
 
     do {
-#ifdef AJ_DEVELOPMENT_HARDWARE
-        speedPercentage = 0;
-#else
         speedPercentage =
             getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
-#endif
         if (speedPercentage < Config::Advanced::commandDeadZonePercentage) {
             stateMachine->process_event(Done{});
             break;

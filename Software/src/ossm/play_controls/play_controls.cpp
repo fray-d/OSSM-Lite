@@ -80,12 +80,9 @@ static void drawPlayControlsTask(void *pvParameters) {
     while (isInCorrectState()) {
         shouldUpdateDisplay = false;
 
-#ifdef AJ_DEVELOPMENT_HARDWARE
-        next.speedKnob = 0;
-#else
         next.speedKnob =
             getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
-#endif
+
         if (abs(next.speedKnob - settings.speedKnob) > 2 &&
             next.speedKnob < settings.speed) {
             ::resetLastSpeedCommandWasFromBLE();

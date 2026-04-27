@@ -18,11 +18,7 @@ struct OSSMStateMachine {
 
         return make_transition_table(
         // clang-format off
-#ifdef AJ_DEVELOPMENT_HARDWARE
-            *"idle"_s + done = "menu"_s,
-#else
             *"idle"_s + done / drawHello = "homing"_s,
-#endif
 
             "homing"_s / startHoming = "homing.backward"_s,
             "homing.backward"_s + error = "error"_s,
