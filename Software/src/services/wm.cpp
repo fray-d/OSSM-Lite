@@ -17,13 +17,11 @@ void initWM() {
         ESP_LOGI("WM", "WiFi credentials saved to NVS");
     });
 
-#if defined(WIFI_SSID) && defined(WIFI_PASSWORD)
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-#else
-    if (wifiPrefs.begin("wifi", true)) {
+    wifiPrefs.begin("wifi", true);
+    if (wifiPrefs.isKey("ssid")) {
         WiFi.begin();
     }
-#endif
+    wifiPrefs.end();
 
     ESP_LOGI("WM", "WiFi initialization complete, status: %d", WiFi.status());
 }
