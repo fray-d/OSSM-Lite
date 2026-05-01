@@ -3,6 +3,7 @@
 #include "Strings.h"
 #include "constants/Config.h"
 #include "constants/Pins.h"
+#include "homing_logic.h"
 #include "ossm/Events.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/error.h"
@@ -46,7 +47,9 @@ namespace homing {
 
         auto isInCorrectState = []() {
             // Add any states that you want to support here.
-            return stateMachine->is("homing"_s) || stateMachine->is("homing.forward"_s) || stateMachine->is("homing.backward"_s);
+            return stateMachine->is("homing"_s) ||
+                   stateMachine->is("homing.forward"_s) ||
+                   stateMachine->is("homing.backward"_s);
         };
 
         bool second = false;
@@ -54,7 +57,7 @@ namespace homing {
             TickType_t xCurrentTickCount = xTaskGetTickCount();
             TickType_t xTicksPassed = xCurrentTickCount - xTaskStartTime;
             uint32_t msPassed = xTicksPassed * portTICK_PERIOD_MS;
-            if (msPassed > 40000) {
+            if (homing_logic::isHomingTimedOut(msPassed, 40000)) {
                 ESP_LOGE("Homing", "Homing took too long. Check power and restart");
                 errorState.message = ui::strings::homingTookTooLong;
 
@@ -66,7 +69,8 @@ namespace homing {
             float current = getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 50}) - calibration.currentSensorOffset;
 
             ESP_LOGV("Homing", "Current: %f", current);
-            bool isCurrentOverLimit = current > Config::Driver::sensorlessCurrentLimit;
+            bool isCurrentOverLimit = homing_logic::isCurrentOverLimit(
+                current, 0, Config::Driver::sensorlessCurrentLimit);
 
             if (!isCurrentOverLimit) {
                 vTaskDelay(10);  // Increased from 1ms to 10ms to reduce CPU load
@@ -80,16 +84,19 @@ namespace homing {
             int32_t currentPosition = stepper->getCurrentPosition();
             stepper->moveTo(currentPosition - sign * Config::Driver::homingOffsetMn, true);
 
-            if (!second && stateMachine->is("homing.backward"_s)) {
+            // measure and save the current position
+            calibration.measuredStrokeSteps =
+                homing_logic::calculateMeasuredStroke(
+                    stepper->getCurrentPosition(),
+                    calibration.measuredStrokeSteps,
+                    Config::Driver::maxStrokeSteps);
+
+            if (!second && stateMachine->is("homing.backward"_s) && isStrokeTooShort()) {
                 second = true;
                 stepper->setSpeedInHz(25_mm);
                 stepper->moveTo(targetPositionInSteps, false);
                 continue;
             }
-
-            // measure and save the current position
-            calibration.measuredStrokeSteps = max(float(abs(stepper->getCurrentPosition())), calibration.measuredStrokeSteps);
-            calibration.measuredStrokeSteps = min(Config::Driver::maxStrokeSteps, calibration.measuredStrokeSteps);
 
             ESP_LOGI("Homing", "Steps: %f", calibration.measuredStrokeSteps);
 
@@ -98,6 +105,7 @@ namespace homing {
                 stepper->forceStopAndNewPosition(0);
             }
 
+            stepper->setSpeedInHz(250_mm);
             stepper->moveTo(0, true);
 
             // Clear homing active flag for LED indication
@@ -112,7 +120,9 @@ namespace homing {
 
     void startHoming() {
         int stackSize = 10 * configMINIMAL_STACK_SIZE;
-        xTaskCreatePinnedToCore(startHomingTask, "startHomingTask", stackSize, nullptr, configMAX_PRIORITIES - 1, &Tasks::runHomingTaskH,
+        xTaskCreatePinnedToCore(startHomingTask, "startHomingTask", stackSize,
+                                nullptr, configMAX_PRIORITIES - 1,
+                                &Tasks::runHomingTaskH,
                                 Tasks::operationTaskCore);
     }
 
