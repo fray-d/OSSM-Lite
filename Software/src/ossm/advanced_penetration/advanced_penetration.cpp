@@ -16,7 +16,6 @@ using namespace sml;
 namespace advanced_penetration {
 
     NimBLECharacteristic* statusNotifier = nullptr;
-    ;
 
     static void startAdvancedPenetrationMotionTask(void* pvParameters) {
         u32_t strokeCount = 1;
@@ -32,41 +31,42 @@ namespace advanced_penetration {
                 vTaskDelay(100);
                 continue;
             }
+            vTaskDelay(1);
+            if (!currentSettings.changed && stepper->isRunning()) {
+                continue;
+            }
             if (!stepper->isRunning()) {
                 strokeCount++;
             }
-            if (currentSettings.changed || !stepper->isRunning()) {
-                currentSettings.changed = false;
-                float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue();
-                int32_t targetPosition = -calibration.measuredStrokeSteps;
-                if (strokeCount % 2 == 0) {
-                    speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
-                    targetPosition = targetPosition * currentSettings.maxDepth.getNormalizedModifiedValue(strokeCount);
-                } else {
-                    speed = speed * currentSettings.outSpeed.getNormalizedModifiedValue(strokeCount);
-                    targetPosition = targetPosition * currentSettings.minDepth.getNormalizedModifiedValue(strokeCount);
-                }
-                stepper->setSpeedInHz(speed);
-                stepper->applySpeedAcceleration();
-
-                u32_t distance = abs(targetPosition - stepper->getCurrentPosition());
-                u32_t minAccel = speed / (distance / speed);
-                u32_t acceleration = minAccel;
-                if (strokeCount % 2 == 0) {
-                    acceleration += minAccel * 9 * currentSettings.inAcceleration.getRampedModifiedValue(0.6, strokeCount);
-                } else {
-                    acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(0.6, strokeCount);
-                }
-                acceleration = min(acceleration, u32_t(Config::Driver::maxAcceleration * (1_mm)));
-                if (acceleration > stepper->getAcceleration() || !stepper->isRunning()) {
-                    stepper->setAcceleration(acceleration);
-                    stepper->applySpeedAcceleration();
-                }
-                if (!stepper->isRunning()) {
-                    stepper->moveTo(targetPosition, false);
-                }
+            currentSettings.changed = false;
+            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue();
+            int32_t targetPosition = -calibration.measuredStrokeSteps;
+            if (strokeCount % 2 == 0) {
+                speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
+                targetPosition = targetPosition * currentSettings.maxDepth.getNormalizedModifiedValue(strokeCount);
+            } else {
+                speed = speed * currentSettings.outSpeed.getNormalizedModifiedValue(strokeCount);
+                targetPosition = targetPosition * currentSettings.minDepth.getNormalizedModifiedValue(strokeCount);
             }
-            vTaskDelay(1);
+            stepper->setSpeedInHz(speed);
+            stepper->applySpeedAcceleration();
+
+            u32_t distance = abs(targetPosition - stepper->getCurrentPosition());
+            u32_t minAccel = speed / (distance / speed);
+            u32_t acceleration = minAccel;
+            if (strokeCount % 2 == 0) {
+                acceleration += minAccel * 9 * currentSettings.inAcceleration.getRampedModifiedValue(0.6, strokeCount);
+            } else {
+                acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(0.6, strokeCount);
+            }
+            acceleration = min(acceleration, u32_t(Config::Driver::maxAcceleration * (1_mm)));
+            if (acceleration > stepper->getAcceleration() || !stepper->isRunning()) {
+                stepper->setAcceleration(acceleration);
+                stepper->applySpeedAcceleration();
+            }
+            if (!stepper->isRunning()) {
+                stepper->moveTo(targetPosition, false);
+            }
         }
         currentSettings.speed.value = 0;
         vTaskDelete(nullptr);
