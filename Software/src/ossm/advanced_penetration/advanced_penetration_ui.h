@@ -109,6 +109,25 @@ namespace advanced_penetration {
         }
     }
 
+    void drawBars(BaseControl& a){
+        u8_t steps = a.modifier->stepCount();
+        if (steps == 0) {
+            return;
+        }
+        u8_t barWdith = 101 / steps;
+        u8_t w = barWdith * steps;
+        u8_t x = (101 - w) / 2 + 10;
+        for (int step = 0; step < steps; step++) {
+            u8_t value = 54 * a.modifier->getModification(step);
+            if (a.modifier->getControlForStep(step) == currentSettings.modifierControl) {
+                display.drawBox(x, display.getHeight() - value, barWdith + 1, value);
+            } else {
+                display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
+            }
+            x += barWdith;
+        }
+    }
+
     void drawModifier(BaseControl& a) {
         if (a.modifier == nullptr) {
             a.modifier = new Modifier;
@@ -127,21 +146,7 @@ namespace advanced_penetration {
             drawStroke();
             drawStroke(true);
         } else {
-            u8_t steps = a.modifier->stepCount();
-            if (steps > 0) {
-                u8_t barWdith = 101 / steps;
-                u8_t w = barWdith * steps;
-                u8_t x = (101 - w) / 2 + 10;
-                for (int step = 0; step < steps; step++) {
-                    u8_t value = 54 * a.modifier->getModification(step);
-                    if (a.modifier->getControlForStep(step) == currentSettings.modifierControl) {
-                        display.drawBox(x, display.getHeight() - value, barWdith + 1, value);
-                    } else {
-                        display.drawFrame(x, display.getHeight() - value, barWdith + 1, value);
-                    }
-                    x += barWdith;
-                }
-            }
+            drawBars(a);
         }
     }
 
@@ -185,54 +190,117 @@ namespace advanced_penetration {
         }
     }
 
+    void handlePreset() {
+        u8_t selectedPreset = encoder.readEncoder() / 3;
+        if (selectedPreset < presets.size()) {
+            currentSettings.processStringCommand(readPresetValueCommand(encoder.readEncoder() / 3));
+        } else {
+            savePreset("", currentSettings.getPreset());
+        }
+        stateMachine->process_event(Done{});
+        currentSettings.status = ControlStatus::BASE_MENU;
+    }
+
     void advancedClick() {
         u8_t c = 100;
         bool loop = true;
         u8_t value = 0;
         if (stateMachine->is("advancedPenetration.presets"_s)) {
-            u8_t selectedPreset = encoder.readEncoder() / 3;
-            if (selectedPreset < presets.size()) {
-                currentSettings.processStringCommand(readPresetValueCommand(encoder.readEncoder() / 3));
-            } else {
-                savePreset("", currentSettings.getPreset());
-            }
-            stateMachine->process_event(Done{});
-            currentSettings.status = ControlStatus::BASE_MENU;
-        } else {
-            switch (currentSettings.status) {
-                case ControlStatus::BASE_MENU:
-                    if (encoder.readEncoder() / 3 >= BaseControls::BASE_COUNT) {
-                        currentSettings.status = ControlStatus::MODIFIER_MENU;
-                        c = ModifierControls::MODIFIER_COUNT * 3;
-                    } else {
-                        currentSettings.status = ControlStatus::BASE_VALUE;
-                        loop = false;
-                    }
-                    break;
-                case ControlStatus::MODIFIER_MENU:
-                    if (currentSettings.modifierControl == ModifierControls::GO_BACK) {
-                        currentSettings.status = ControlStatus::BASE_MENU;
-                        value = (currentSettings.baseControl + BaseControls::BASE_COUNT) * 3;
-                        c = BaseControls::BASE_COUNT * 6;
-                    } else {
-                        currentSettings.status = ControlStatus::MODIFIER_VALUE;
-                        loop = false;
-                    }
-                    break;
-                case ControlStatus::MODIFIER_VALUE:
+            handlePreset();
+            return;
+        } 
+        switch (currentSettings.status) {
+            case ControlStatus::BASE_MENU:
+                if (encoder.readEncoder() / 3 >= BaseControls::BASE_COUNT) {
                     currentSettings.status = ControlStatus::MODIFIER_MENU;
-                    value = currentSettings.modifierControl * 3;
                     c = ModifierControls::MODIFIER_COUNT * 3;
-                    break;
-                default:
+                } else {
+                    currentSettings.status = ControlStatus::BASE_VALUE;
+                    loop = false;
+                }
+                break;
+            case ControlStatus::MODIFIER_MENU:
+                if (currentSettings.modifierControl == ModifierControls::GO_BACK) {
                     currentSettings.status = ControlStatus::BASE_MENU;
-                    value = currentSettings.baseControl * 3;
+                    value = (currentSettings.baseControl + BaseControls::BASE_COUNT) * 3;
                     c = BaseControls::BASE_COUNT * 6;
-                    break;
-            }
+                } else {
+                    currentSettings.status = ControlStatus::MODIFIER_VALUE;
+                    loop = false;
+                }
+                break;
+            case ControlStatus::MODIFIER_VALUE:
+                currentSettings.status = ControlStatus::MODIFIER_MENU;
+                value = currentSettings.modifierControl * 3;
+                c = ModifierControls::MODIFIER_COUNT * 3;
+                break;
+            default:
+                currentSettings.status = ControlStatus::BASE_MENU;
+                value = currentSettings.baseControl * 3;
+                c = BaseControls::BASE_COUNT * 6;
+                break;
         }
         encoder.setBoundaries(0, c - 1, loop);
         encoder.setEncoderValue(value);
+    }
+
+    void drawPresetMenu(u8_t item) {
+        const char* convert[presets.size() + 1];
+        for (u8_t i = 0; i < presets.size(); i++) {
+            convert[i] = presets[i].c_str();
+        }
+        convert[presets.size()] = "Save New Preset";
+        ui::MenuData data{};
+        data.items = convert;
+        data.numItems = presets.size() + 1;
+        encoder.setBoundaries(0, data.numItems * 3 - 1, true);
+        if (item > data.numItems) {
+            item = data.numItems - 1;
+        }
+        data.selectedIndex = item;
+        ui::drawMenu(display.getU8g2(), data);
+        currentSettings.lastStatus = currentSettings.status;
+    }
+
+    void drawMainUI(u8_t item) {
+        switch (currentSettings.status) {
+            case ControlStatus::BASE_MENU:
+                item = item % BaseControls::BASE_COUNT;
+                currentSettings.baseControl = BaseControls(item);
+                break;
+            case ControlStatus::MODIFIER_MENU:
+                item = item % ModifierControls::MODIFIER_COUNT;
+                currentSettings.modifierControl = ModifierControls(item);
+                break;
+            default:
+                break;
+        }
+
+        textPosition = 19;
+        updateControl(currentSettings.maxDepth, currentSettings.minDepth.value + 1);
+        updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value - 1);
+        updateControl(currentSettings.inSpeed, 1);
+        updateControl(currentSettings.outSpeed, 1);
+        updateControl(currentSettings.inAcceleration);
+        updateControl(currentSettings.outAcceleration);
+    }
+
+    void handleDrawPage(u8_t speedValue, u8_t encoderValue) {
+        if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
+            clearPage(true);
+            currentSettings.speed.value = speedValue;
+            ui::drawShape::settingBar(display.getU8g2(), "",
+                                      currentSettings.speed.value, 0, 0,
+                                      ui::LEFT_ALIGNED, 0, 54);
+
+            if (stateMachine->is("advancedPenetration.presets"_s)) {
+                drawPresetMenu(floor(encoderValue / 3));
+            } else {
+                drawMainUI(floor(encoderValue / 3));
+            }
+            refreshPage(true);
+            xSemaphoreGive(displayMutex);
+        }
     }
 
     static void startAdvancedPenetrationUITask(void* pvParameters) {
@@ -253,55 +321,8 @@ namespace advanced_penetration {
                 currentSettings.changed = true;
             }
             if (speedChange || encoderValue != lastEncoder || currentSettings.status != currentSettings.lastStatus) {
-                if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
-                    clearPage(true);
-                    currentSettings.speed.value = speedValue;
-                    ui::drawShape::settingBar(display.getU8g2(), "", currentSettings.speed.value, 0, 0, ui::LEFT_ALIGNED, 0, 54);
-
-                    lastEncoder = encoderValue;
-                    int item = floor(encoderValue / 3);
-
-                    if (stateMachine->is("advancedPenetration.presets"_s)) {
-                        const char* convert[presets.size() + 1];
-                        for (u8_t i = 0; i < presets.size(); i++) {
-                            convert[i] = presets[i].c_str();
-                        }
-                        convert[presets.size()] = "Save New Preset";
-                        ui::MenuData data{};
-                        data.items = convert;
-                        data.numItems = presets.size() + 1;
-                        encoder.setBoundaries(0, data.numItems * 3 - 1, true);
-                        if (item > data.numItems) {
-                            item = data.numItems - 1;
-                        }
-                        data.selectedIndex = item;
-                        ui::drawMenu(display.getU8g2(), data);
-                        currentSettings.lastStatus = currentSettings.status;
-                    } else {
-                        switch (currentSettings.status) {
-                            case ControlStatus::BASE_MENU:
-                                item = item % BaseControls::BASE_COUNT;
-                                currentSettings.baseControl = BaseControls(item);
-                                break;
-                            case ControlStatus::MODIFIER_MENU:
-                                item = item % ModifierControls::MODIFIER_COUNT;
-                                currentSettings.modifierControl = ModifierControls(item);
-                                break;
-                            default:
-                                break;
-                        }
-
-                        textPosition = 19;
-                        updateControl(currentSettings.maxDepth, currentSettings.minDepth.value + 1);
-                        updateControl(currentSettings.minDepth, 0, currentSettings.maxDepth.value - 1);
-                        updateControl(currentSettings.inSpeed, 1);
-                        updateControl(currentSettings.outSpeed, 1);
-                        updateControl(currentSettings.inAcceleration);
-                        updateControl(currentSettings.outAcceleration);
-                    }
-                    refreshPage(true);
-                    xSemaphoreGive(displayMutex);
-                }
+                handleDrawPage(speedValue, encoderValue);
+                lastEncoder = encoderValue;
             }
             vTaskDelay(100);
         }
