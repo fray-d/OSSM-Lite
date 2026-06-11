@@ -49,7 +49,7 @@ class OSSM {
     unsigned long sessionStartTime = 0;
     int sessionStrokeCount = 0;
     double sessionDistanceMeters = 0;
-    PlayControls playControl = PlayControls::STROKE;
+    PlayControls playControl = PlayControls::MAX_POSITION;
     bool isHomed = false;
 
     // Calibration accessors (deprecated - use calibration.* globals)

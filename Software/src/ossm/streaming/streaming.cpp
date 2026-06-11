@@ -85,13 +85,12 @@ static void startStreamingTask(void *pvParameters) {
             best = std::chrono::steady_clock::now();
         }
         lastPositionTime = targetPositionTime;
-        //Grab the minimal value between depth and stroke, use as max stroke length.
-        int32_t maxStroke = streaming_logic::calculateMaxStroke(
-            settings.stroke, settings.depth,
-            calibration.measuredStrokeSteps);
-        //Set 100% at max depth and constrain speeds based on user inputs.
-        int32_t depth = streaming_logic::calculateDepthOffset(
-            calibration.measuredStrokeSteps, maxStroke, settings.depth);
+        // Map min/max percentages to stepper coordinates:
+        // maxStroke = range of motion; depth = offset of shallowest point from home
+        int32_t maxStroke = std::abs(
+            (settings.maxPosition - settings.minPosition) / 100.0f * calibration.measuredStrokeSteps);
+        int32_t depth = std::abs(
+            settings.minPosition / 100.0f * calibration.measuredStrokeSteps);
         uint32_t speedLimit = maxSpeed * (settings.speed/100.0);
         uint32_t accelLimit = maxAccel * (settings.sensation/100.0);
         // skip movement if speeds are 0

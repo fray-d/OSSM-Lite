@@ -12,7 +12,7 @@ struct SessionState {
     unsigned long startTime = 0;
     int strokeCount = 0;
     double distanceMeters = 0;
-    PlayControls playControl = PlayControls::STROKE;
+    PlayControls playControl = PlayControls::MAX_POSITION;
 };
 
 extern SessionState session;

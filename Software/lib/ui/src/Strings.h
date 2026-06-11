@@ -46,6 +46,7 @@ namespace ui {
         static const char buffer[] PROGMEM = "Buffer";
         static const char accel[] PROGMEM = "Accel";
         static const char max[] PROGMEM = "Max";
+        static const char min[] PROGMEM = "Min";
 
         // ============================================================
         // Warnings / errors

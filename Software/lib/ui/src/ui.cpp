@@ -264,29 +264,29 @@ namespace ui {
                           data.speedLabel ? data.speedLabel : strings::speed);
         }
 
-        const char* strokeLabel =
-            data.strokeLabel ? data.strokeLabel : strings::stroke;
+        const char* minLabel =
+            data.minLabel ? data.minLabel : strings::min;
 
         if (data.isStrokeEngine) {
             switch (data.activeControl) {
-                case PlayControl::STROKE:
+                case PlayControl::MIN_POSITION:
                     drawShape::settingBarSmall(u8g2, data.sensation, 125);
-                    drawShape::settingBarSmall(u8g2, data.depth, 120);
-                    drawShape::settingBar(u8g2, strokeLabel, data.stroke, 118,
+                    drawShape::settingBarSmall(u8g2, data.maxPosition, 120);
+                    drawShape::settingBar(u8g2, minLabel, data.minPosition, 118,
                                           0, RIGHT_ALIGNED);
                     break;
                 case PlayControl::SENSATION:
                     drawShape::settingBar(u8g2, strings::sensation,
                                           data.sensation, 128, 0, RIGHT_ALIGNED,
                                           10);
-                    drawShape::settingBarSmall(u8g2, data.depth, 113);
-                    drawShape::settingBarSmall(u8g2, data.stroke, 108);
+                    drawShape::settingBarSmall(u8g2, data.maxPosition, 113);
+                    drawShape::settingBarSmall(u8g2, data.minPosition, 108);
                     break;
-                case PlayControl::DEPTH:
+                case PlayControl::MAX_POSITION:
                     drawShape::settingBarSmall(u8g2, data.sensation, 125);
-                    drawShape::settingBar(u8g2, strings::depth, data.depth, 123,
+                    drawShape::settingBar(u8g2, strings::max, data.maxPosition, 123,
                                           0, RIGHT_ALIGNED, 5);
-                    drawShape::settingBarSmall(u8g2, data.stroke, 108);
+                    drawShape::settingBarSmall(u8g2, data.minPosition, 108);
                     break;
                 default:
                     break;
@@ -297,14 +297,14 @@ namespace ui {
                     drawShape::settingBar(u8g2, strings::buffer, data.buffer,
                                           128, 0, RIGHT_ALIGNED, 15);
                     drawShape::settingBarSmall(u8g2, data.sensation, 113);
-                    drawShape::settingBarSmall(u8g2, data.depth, 108);
-                    drawShape::settingBarSmall(u8g2, data.stroke, 103);
+                    drawShape::settingBarSmall(u8g2, data.maxPosition, 108);
+                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
                     break;
-                case PlayControl::STROKE:
+                case PlayControl::MIN_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
-                    drawShape::settingBarSmall(u8g2, data.depth, 115);
-                    drawShape::settingBar(u8g2, strokeLabel, data.stroke, 113,
+                    drawShape::settingBarSmall(u8g2, data.maxPosition, 115);
+                    drawShape::settingBar(u8g2, minLabel, data.minPosition, 113,
                                           0, RIGHT_ALIGNED);
                     break;
                 case PlayControl::SENSATION: {
@@ -315,20 +315,20 @@ namespace ui {
                     const char* accelLabel = strings::accel;
                     int sw = u8g2_GetUTF8Width(u8g2, accelLabel);
                     u8g2_DrawUTF8(u8g2, 99 - sw, 36, accelLabel);
-                    drawShape::settingBarSmall(u8g2, data.depth, 108);
-                    drawShape::settingBarSmall(u8g2, data.stroke, 103);
+                    drawShape::settingBarSmall(u8g2, data.maxPosition, 108);
+                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
                     break;
                 }
-                case PlayControl::DEPTH:
+                case PlayControl::MAX_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
-                    drawShape::settingBar(u8g2, strings::depth, data.depth, 118,
+                    drawShape::settingBar(u8g2, strings::max, data.maxPosition, 118,
                                           0, RIGHT_ALIGNED, 5);
-                    drawShape::settingBarSmall(u8g2, data.stroke, 103);
+                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
                     break;
             }
         } else {
-            drawShape::settingBar(u8g2, strokeLabel, data.stroke, 118, 0,
+            drawShape::settingBar(u8g2, minLabel, data.minPosition, 118, 0,
                                   RIGHT_ALIGNED);
         }
 

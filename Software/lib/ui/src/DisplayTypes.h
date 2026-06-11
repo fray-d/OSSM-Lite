@@ -5,13 +5,13 @@
 
 namespace ui {
 
-enum class PlayControl { STROKE, DEPTH, SENSATION, BUFFER };
+enum class PlayControl { MAX_POSITION = 0, MIN_POSITION = 1, SENSATION = 2, BUFFER = 3 };
 
 struct PlayControlsData {
     float speed;
-    float stroke;
+    float minPosition;
     float sensation;
-    float depth;
+    float maxPosition;
     float buffer;
     PlayControl activeControl;
     int strokeCount;
@@ -22,7 +22,7 @@ struct PlayControlsData {
     bool isStreaming;
     const char* headerText;
     const char* speedLabel;
-    const char* strokeLabel;
+    const char* minLabel;
     const char* distanceStr;
     const char* timeStr;
 };

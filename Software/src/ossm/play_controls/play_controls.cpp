@@ -25,12 +25,12 @@ namespace play_controls {
 
 static ui::PlayControl toUiPlayControl(PlayControls pc) {
     switch (pc) {
-        case PlayControls::STROKE:    return ui::PlayControl::STROKE;
-        case PlayControls::SENSATION: return ui::PlayControl::SENSATION;
-        case PlayControls::DEPTH:     return ui::PlayControl::DEPTH;
-        case PlayControls::BUFFER:    return ui::PlayControl::BUFFER;
+        case PlayControls::MIN_POSITION: return ui::PlayControl::MIN_POSITION;
+        case PlayControls::SENSATION:    return ui::PlayControl::SENSATION;
+        case PlayControls::MAX_POSITION: return ui::PlayControl::MAX_POSITION;
+        case PlayControls::BUFFER:       return ui::PlayControl::BUFFER;
     }
-    return ui::PlayControl::STROKE;
+    return ui::PlayControl::MAX_POSITION;
 }
 
 static void drawPlayControlsTask(void *pvParameters) {
@@ -38,14 +38,14 @@ static void drawPlayControlsTask(void *pvParameters) {
     encoder.setBoundaries(0, 100, false);
 
     switch (session.playControl) {
-        case PlayControls::STROKE:
-            encoder.setEncoderValue(settings.stroke);
+        case PlayControls::MIN_POSITION:
+            encoder.setEncoderValue(settings.minPosition);
             break;
         case PlayControls::SENSATION:
             encoder.setEncoderValue(settings.sensation);
             break;
-        case PlayControls::DEPTH:
-            encoder.setEncoderValue(settings.depth);
+        case PlayControls::MAX_POSITION:
+            encoder.setEncoderValue(settings.maxPosition);
             break;
         case PlayControls::BUFFER:
             encoder.setEncoderValue(settings.buffer);
@@ -109,11 +109,11 @@ static void drawPlayControlsTask(void *pvParameters) {
         encoderValue = encoder.readEncoder();
 
         switch (session.playControl) {
-            case PlayControls::STROKE:
-                next.stroke = encoderValue;
+            case PlayControls::MIN_POSITION:
+                next.minPosition = encoderValue;
                 shouldUpdateDisplay =
-                    shouldUpdateDisplay || next.stroke - settings.stroke >= 1;
-                settings.stroke = next.stroke;
+                    shouldUpdateDisplay || next.minPosition - settings.minPosition >= 1;
+                settings.minPosition = next.minPosition;
                 break;
             case PlayControls::SENSATION:
                 next.sensation = encoderValue;
@@ -121,11 +121,11 @@ static void drawPlayControlsTask(void *pvParameters) {
                                       next.sensation - settings.sensation >= 1;
                 settings.sensation = next.sensation;
                 break;
-            case PlayControls::DEPTH:
-                next.depth = encoderValue;
+            case PlayControls::MAX_POSITION:
+                next.maxPosition = encoderValue;
                 shouldUpdateDisplay =
-                    shouldUpdateDisplay || next.depth - settings.depth >= 1;
-                settings.depth = next.depth;
+                    shouldUpdateDisplay || next.maxPosition - settings.maxPosition >= 1;
+                settings.maxPosition = next.maxPosition;
                 break;
             case PlayControls::BUFFER:
                 next.buffer = encoderValue;
@@ -167,9 +167,9 @@ static void drawPlayControlsTask(void *pvParameters) {
 
             ui::PlayControlsData data{};
             data.speed = next.speed;
-            data.stroke = settings.stroke;
+            data.minPosition = settings.minPosition;
             data.sensation = settings.sensation;
-            data.depth = settings.depth;
+            data.maxPosition = settings.maxPosition;
             data.buffer = settings.buffer;
             data.activeControl = toUiPlayControl(session.playControl);
             data.strokeCount = session.strokeCount;
@@ -180,7 +180,7 @@ static void drawPlayControlsTask(void *pvParameters) {
             data.isStreaming = isStreaming;
             data.headerText = headerText;
             data.speedLabel = ui::strings::speed;
-            data.strokeLabel = ui::strings::stroke;
+            data.minLabel = ui::strings::min;
             data.distanceStr =
                 (!isStrokeEngine && !isStreaming) ? distStr.c_str() : nullptr;
             data.timeStr = !isStreaming ? timeStr.c_str() : nullptr;
