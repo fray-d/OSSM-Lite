@@ -43,7 +43,7 @@ jobs:
             Software/.pio/build/production/bootloader.bin
           retention-days: 7
 
-  release:
+  deploy:
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -58,22 +58,19 @@ jobs:
           name: firmware-bin
           path: ./firmware
 
-      - name: Delete existing release if present
-        run: gh release delete min-max-stroke-latest --yes || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
+      - name: Copy firmware into docs/
         run: |
-          gh release create min-max-stroke-latest \
-            --title "min-max-stroke (latest)" \
-            --notes "Latest firmware build from the \`min-max-stroke\` branch. Flash via: ${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/docs/index.html" \
-            --prerelease \
-            ./firmware/firmware.bin \
-            ./firmware/partitions.bin \
-            ./firmware/bootloader.bin
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          cp ./firmware/firmware.bin docs/firmware.bin
+          cp ./firmware/partitions.bin docs/partitions.bin
+          cp ./firmware/bootloader.bin docs/bootloader.bin
+
+      - name: Commit and push firmware to docs/
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/firmware.bin docs/partitions.bin docs/bootloader.bin
+          git commit -m "Update firmware binaries [skip ci]" || echo "No changes to commit"
+          git push
 
       - name: Create GitHub Deployment
         id: create_deployment
@@ -98,7 +95,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const deploymentId = ${{ steps.create_deployment.outputs.result }}.id;
-            const flashUrl = '${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/docs/index.html';
+            const flashUrl = 'https://aperturetest.github.io/OSSM-hardware/';
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,

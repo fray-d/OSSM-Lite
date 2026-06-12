@@ -6,11 +6,11 @@
       "improv": false,
       "parts": [
         {
-          "path": "https://github.com/aperturetest/OSSM-hardware/releases/download/min-max-stroke-latest/bootloader.bin",
+          "path": "https://aperturetest.github.io/OSSM-hardware/bootloader.bin",
           "offset": 4096
         },
         {
-          "path": "https://github.com/aperturetest/OSSM-hardware/releases/download/min-max-stroke-latest/partitions.bin",
+          "path": "https://aperturetest.github.io/OSSM-hardware/partitions.bin",
           "offset": 32768
         },
         {
@@ -18,7 +18,7 @@
           "offset": 57344
         },
         {
-          "path": "https://github.com/aperturetest/OSSM-hardware/releases/download/min-max-stroke-latest/firmware.bin",
+          "path": "https://aperturetest.github.io/OSSM-hardware/firmware.bin",
           "offset": 65536
         }
       ]
