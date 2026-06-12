@@ -4,35 +4,12 @@ on:
   push:
     branches:
       - min-max-stroke
+    paths:
+      - 'Software/**'
   workflow_dispatch:
 
 jobs:
-  check_changes:
-    runs-on: ubuntu-latest
-    outputs:
-      changes_detected: ${{ steps.check_changes.outputs.changes_detected }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check for changes in Software directory
-        id: check_changes
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "Manual trigger — building unconditionally"
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          elif git diff --name-only HEAD~1 HEAD | grep -q "^Software/"; then
-            echo "Changes detected in Software directory"
-            echo "changes_detected=true" >> $GITHUB_OUTPUT
-          else
-            echo "No changes in Software directory, skipping build"
-            echo "changes_detected=false" >> $GITHUB_OUTPUT
-          fi
-
   build:
-    needs: check_changes
-    if: needs.check_changes.outputs.changes_detected == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,8 +44,7 @@ jobs:
           retention-days: 7
 
   release:
-    needs: [check_changes, build]
-    if: needs.check_changes.outputs.changes_detected == 'true'
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
