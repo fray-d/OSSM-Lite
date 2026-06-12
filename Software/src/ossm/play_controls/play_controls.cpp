@@ -111,6 +111,10 @@ static void drawPlayControlsTask(void *pvParameters) {
         switch (session.playControl) {
             case PlayControls::MIN_POSITION:
                 next.minPosition = encoderValue;
+                if (next.minPosition > settings.maxPosition) {
+                    next.minPosition = settings.maxPosition;
+                    encoder.setEncoderValue(next.minPosition);
+                }
                 shouldUpdateDisplay =
                     shouldUpdateDisplay || next.minPosition - settings.minPosition >= 1;
                 settings.minPosition = next.minPosition;
@@ -123,6 +127,10 @@ static void drawPlayControlsTask(void *pvParameters) {
                 break;
             case PlayControls::MAX_POSITION:
                 next.maxPosition = encoderValue;
+                if (next.maxPosition < settings.minPosition) {
+                    next.maxPosition = settings.minPosition;
+                    encoder.setEncoderValue(next.maxPosition);
+                }
                 shouldUpdateDisplay =
                     shouldUpdateDisplay || next.maxPosition - settings.maxPosition >= 1;
                 settings.maxPosition = next.maxPosition;

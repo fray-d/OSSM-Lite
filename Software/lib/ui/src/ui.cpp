@@ -268,28 +268,17 @@ namespace ui {
             data.minLabel ? data.minLabel : strings::min;
 
         if (data.isStrokeEngine) {
-            switch (data.activeControl) {
-                case PlayControl::MIN_POSITION:
-                    drawShape::settingBarSmall(u8g2, data.sensation, 125);
-                    drawShape::settingBarSmall(u8g2, data.maxPosition, 120);
-                    drawShape::settingBar(u8g2, minLabel, data.minPosition, 118,
-                                          0, RIGHT_ALIGNED);
-                    break;
-                case PlayControl::SENSATION:
-                    drawShape::settingBar(u8g2, strings::sensation,
-                                          data.sensation, 128, 0, RIGHT_ALIGNED,
-                                          10);
-                    drawShape::settingBarSmall(u8g2, data.maxPosition, 113);
-                    drawShape::settingBarSmall(u8g2, data.minPosition, 108);
-                    break;
-                case PlayControl::MAX_POSITION:
-                    drawShape::settingBarSmall(u8g2, data.sensation, 125);
-                    drawShape::settingBar(u8g2, strings::max, data.maxPosition, 123,
-                                          0, RIGHT_ALIGNED, 5);
-                    drawShape::settingBarSmall(u8g2, data.minPosition, 108);
-                    break;
-                default:
-                    break;
+            if (data.activeControl == PlayControl::SENSATION) {
+                drawShape::settingBar(u8g2, strings::sensation, data.sensation,
+                                      128, 0, RIGHT_ALIGNED, 10);
+                drawShape::rangeBarSmall(u8g2, data.minPosition, data.maxPosition, 113);
+            } else {
+                bool maxActive = (data.activeControl == PlayControl::MAX_POSITION);
+                const char* rangeLabel = maxActive ? strings::max : minLabel;
+                drawShape::settingBarSmall(u8g2, data.sensation, 125);
+                drawShape::rangeBar(u8g2, rangeLabel, data.minPosition,
+                                    data.maxPosition, maxActive, 120, 0,
+                                    RIGHT_ALIGNED);
             }
         } else if (data.isStreaming) {
             switch (data.activeControl) {
