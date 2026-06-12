@@ -77,11 +77,10 @@ static void startSimplePenetrationTask(void *pvParameters) {
         bool nextDirection = !calibration.isForward;
         calibration.isForward = nextDirection;
 
-        // Stroke between minPosition (retracted) and maxPosition (deep)
         if (calibration.isForward) {
             targetPosition = -std::abs((settings.maxPosition / 100.0f) * calibration.measuredStrokeSteps);
         } else {
-            targetPosition = -std::abs((settings.minPosition / 100.0f) * calibration.measuredStrokeSteps);
+            targetPosition = 0;  // SP always returns to home; min is always 0
         }
 
         ESP_LOGV("SimplePenetration", "target: %d,\tspeed: %f,\tacc: %f",
@@ -89,7 +88,7 @@ static void startSimplePenetrationTask(void *pvParameters) {
 
         stepper->moveTo(targetPosition, false);
 
-        float strokeRange = settings.maxPosition - settings.minPosition;
+        float strokeRange = settings.maxPosition;  // min is always home (0) in SP
         if (settings.speed > Config::Advanced::commandDeadZonePercentage &&
             strokeRange > Config::Advanced::commandDeadZonePercentage) {
             fullStrokeCount++;

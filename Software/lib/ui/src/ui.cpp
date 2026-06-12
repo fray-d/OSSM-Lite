@@ -328,7 +328,7 @@ namespace ui {
                     break;
             }
         } else {
-            drawShape::settingBar(u8g2, minLabel, data.minPosition, 118, 0,
+            drawShape::settingBar(u8g2, strings::depth, data.maxPosition, 118, 0,
                                   RIGHT_ALIGNED);
         }
 
