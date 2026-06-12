@@ -58,40 +58,6 @@ jobs:
           name: firmware-bin
           path: ./firmware
 
-      - name: Generate manifest.json
-        run: |
-          REPO_URL="${{ github.server_url }}/${{ github.repository }}"
-          TAG="min-max-stroke-latest"
-          cat > ./firmware/manifest.json <<EOF
-          {
-            "name": "OSSM (min-max-stroke)",
-            "builds": [
-              {
-                "chipFamily": "ESP32",
-                "improv": false,
-                "parts": [
-                  {
-                    "path": "${REPO_URL}/releases/download/${TAG}/bootloader.bin",
-                    "offset": 4096
-                  },
-                  {
-                    "path": "${REPO_URL}/releases/download/${TAG}/partitions.bin",
-                    "offset": 32768
-                  },
-                  {
-                    "path": "https://acjajruwevyyatztbkdf.supabase.co/storage/v1/object/public/ossm-firmware/boot_app0.bin",
-                    "offset": 57344
-                  },
-                  {
-                    "path": "${REPO_URL}/releases/download/${TAG}/firmware.bin",
-                    "offset": 65536
-                  }
-                ]
-              }
-            ]
-          }
-          EOF
-
       - name: Delete existing release if present
         run: gh release delete min-max-stroke-latest --yes || true
         env:
@@ -105,8 +71,7 @@ jobs:
             --prerelease \
             ./firmware/firmware.bin \
             ./firmware/partitions.bin \
-            ./firmware/bootloader.bin \
-            ./firmware/manifest.json
+            ./firmware/bootloader.bin
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
