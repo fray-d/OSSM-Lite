@@ -2,6 +2,7 @@
 #define UI_DRAW_EXTENSIONS_H
 
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <initializer_list>
 
@@ -225,11 +226,17 @@ static void rangeBar(u8g2_t* u8g2, const char* label, float minVal, float maxVal
     u8g2_DrawPixel(u8g2, tip - 2, arrowCenterY + 2);
 
     if (label) {
+        int arrowGap = 8;  // keep label clear of the arrow
         int textStartX = (alignment == LEFT_ALIGNED)
             ? x + w + padding
-            : x - (int)u8g2_GetUTF8Width(u8g2, label) - padding - w;
+            : x - (int)u8g2_GetUTF8Width(u8g2, label) - padding - w - arrowGap;
         u8g2_SetFont(u8g2, Font::bold);
         u8g2_DrawUTF8(u8g2, textStartX, barTopY + lh1, label);
+
+        char valueBuf[8];
+        snprintf(valueBuf, sizeof(valueBuf), "%.0f%%", maxActive ? maxVal : minVal);
+        u8g2_SetFont(u8g2, Font::base);
+        u8g2_DrawUTF8(u8g2, textStartX, barTopY + lh1 + 10, valueBuf);
     }
 }
 
