@@ -1,3 +1,15 @@
+> **Branch: `min-max-stroke`** — This branch replaces the `depth`/`stroke` on the wired remote with a more intuitive `max`/`min` position model.
+>
+> **What changed:**
+> - `set:max:X` — sets the deepest position (0–100%). Replaces `set:depth:X`.
+> - `set:min:X` — sets the shallowest position (0–100%). Replaces `set:stroke:X`.
+> - Stroke engine now moves between `minPosition` (retracted) and `maxPosition` (extended).
+> - Simple Penetration is unchanged: one depth control, always returns to 0.
+>
+> **Backwards compatible:** `set:depth` and `set:stroke` still work as legacy aliases for clients like Possum. BLE API is unchanged.
+
+---
+
 # OSSM - Open Source Sex Machine
 
 **Maintained by [Research and Desire](https://researchanddesire.com), supported by the community.**
