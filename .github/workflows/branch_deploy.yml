@@ -121,7 +121,7 @@ jobs:
         run: |
           gh release create min-max-stroke-latest \
             --title "min-max-stroke (latest)" \
-            --notes "Latest firmware build from the \`min-max-stroke\` branch. Flash via: ${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/flash/index.html" \
+            --notes "Latest firmware build from the \`min-max-stroke\` branch. Flash via: ${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/docs/index.html" \
             --prerelease \
             ./firmware/firmware.bin \
             ./firmware/partitions.bin \
@@ -153,7 +153,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const deploymentId = ${{ steps.create_deployment.outputs.result }}.id;
-            const flashUrl = '${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/flash/index.html';
+            const flashUrl = '${{ github.server_url }}/${{ github.repository }}/blob/min-max-stroke/docs/index.html';
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
