@@ -37,8 +37,8 @@ namespace homing {
         TickType_t xTaskStartTime = xTaskGetTickCount();
 
         stepper->enableOutputs();
-        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, false);
-        int16_t sign = stateMachine->is("homing.backward"_s) ? 1 : -1;
+        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, true);
+        int16_t sign = stateMachine->is("homing.backward"_s) ? -1 : 1;
 
         int32_t targetPositionInSteps = round(sign * Config::Driver::maxStrokeSteps);
 
