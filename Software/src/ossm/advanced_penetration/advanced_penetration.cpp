@@ -40,7 +40,7 @@ namespace advanced_penetration {
             }
             currentSettings.changed = false;
             float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue();
-            int32_t targetPosition = -calibration.measuredStrokeSteps;
+            int32_t targetPosition = calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
                 targetPosition = targetPosition * currentSettings.maxDepth.getNormalizedModifiedValue(strokeCount);

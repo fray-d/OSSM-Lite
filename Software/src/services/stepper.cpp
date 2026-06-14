@@ -1,4 +1,5 @@
 #include "stepper.h"
+#include "services/UserConfig.h"
 
 FastAccelStepperEngine stepperEngine = FastAccelStepperEngine();
 FastAccelStepper *stepper = nullptr;
@@ -7,11 +8,7 @@ void initStepper() {
     stepperEngine.init();
     stepper = stepperEngine.stepperConnectToPin(Pins::Driver::motorStepPin);
     if (stepper) {
-        // Path X: standardize on invertDirection=true (matches StrokeEngineHelper.h
-        // and eliminates the runtime polarity flip that contaminated cross-mode
-        // transitions). After this: counter increases as the rod extends, valid
-        // working range is [0, +measuredStrokeSteps].
-        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, true);
+        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, UserConfig::getDirection());
         stepper->setEnablePin(Pins::Driver::motorEnablePin, true);
         stepper->setAutoEnable(false);
     }

@@ -11,6 +11,7 @@
 #include "services/led.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
+#include "services/UserConfig.h"
 #include "utils/analog.h"
 
 namespace sml = boost::sml;
@@ -37,7 +38,7 @@ namespace homing {
         TickType_t xTaskStartTime = xTaskGetTickCount();
 
         stepper->enableOutputs();
-        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, true);
+        stepper->setDirectionPin(Pins::Driver::motorDirectionPin, UserConfig::getDirection());
         int16_t sign = stateMachine->is("homing.backward"_s) ? -1 : 1;
 
         int32_t targetPositionInSteps = round(sign * Config::Driver::maxStrokeSteps);
