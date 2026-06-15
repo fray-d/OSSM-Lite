@@ -1,5 +1,6 @@
 #include "simple_penetration.h"
 
+#include <cmath>
 #include "simple_pen_logic.h"
 #include "constants/Config.h"
 #include "ossm/state/calibration.h"
@@ -76,25 +77,25 @@ static void startSimplePenetrationTask(void *pvParameters) {
         bool nextDirection = !calibration.isForward;
         calibration.isForward = nextDirection;
 
-        targetPosition = simple_pen_logic::calculateTarget(
-            calibration.isForward, settings.stroke,
-            calibration.measuredStrokeSteps);
+        if (calibration.isForward) {
+            targetPosition = -std::abs((settings.maxPosition / 100.0f) * calibration.measuredStrokeSteps);
+        } else {
+            targetPosition = 0;  // SP always returns to home; min is always 0
+        }
 
-        ESP_LOGV("SimplePenetration", "target: %f,\tspeed: %f,\tacc: %f",
+        ESP_LOGV("SimplePenetration", "target: %d,\tspeed: %f,\tacc: %f",
                  targetPosition, speed, acceleration);
 
         stepper->moveTo(targetPosition, false);
 
+        float strokeRange = settings.maxPosition;  // min is always home (0) in SP
         if (settings.speed > Config::Advanced::commandDeadZonePercentage &&
-            settings.stroke >
-                (long)Config::Advanced::commandDeadZonePercentage) {
+            strokeRange > Config::Advanced::commandDeadZonePercentage) {
             fullStrokeCount++;
             session.strokeCount = floor(fullStrokeCount / 2);
 
-            // This calculation assumes that at the end of every stroke you have
-            // a whole positive distance, equal to maximum target position.
             session.distanceMeters +=
-                (((float)settings.stroke / 100.0) *
+                ((strokeRange / 100.0f) *
                  calibration.measuredStrokeSteps / (1_mm)) /
                 1000.0;
         }

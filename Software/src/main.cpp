@@ -105,3 +105,4 @@ void __attribute__((weak)) setup() {
 };
 
 void __attribute__((weak)) loop() { vTaskDelete(nullptr); };
+

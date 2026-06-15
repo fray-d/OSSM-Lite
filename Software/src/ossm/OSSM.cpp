@@ -20,9 +20,9 @@ OSSM *ossm = nullptr;
 
 // Static member definition, with first pattern.
 SettingPercents OSSM::setting = {.speed = 0,
-                                 .stroke = 50,
+                                 .minPosition = 0,
                                  .sensation = 50,
-                                 .depth = 10,
+                                 .maxPosition = 20,
                                  .buffer = 100,
                                  .pattern = StrokePatterns(0)};
 
@@ -73,15 +73,28 @@ void OSSM::ble_click(String commandString) {
             // command
             settings.speedBLE = command.value;
             break;
-        case Commands::setStroke:
-            session.playControl = PlayControls::STROKE;
+        case Commands::setMaxPosition:
+            session.playControl = PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
-            settings.stroke = command.value;
+            settings.maxPosition = command.value;
+            break;
+        case Commands::setMinPosition:
+            session.playControl = PlayControls::MIN_POSITION;
+            encoder.setEncoderValue(command.value);
+            settings.minPosition = command.value;
             break;
         case Commands::setDepth:
-            session.playControl = PlayControls::DEPTH;
+            // Legacy alias: set:depth:X → setMaxPosition
+            session.playControl = PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
-            settings.depth = command.value;
+            settings.maxPosition = command.value;
+            break;
+        case Commands::setStroke:
+            // Legacy alias: set:stroke:X → minPosition = maxPosition - value
+            settings.minPosition = settings.maxPosition - command.value;
+            settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
+            session.playControl = PlayControls::MIN_POSITION;
+            encoder.setEncoderValue(settings.minPosition);
             break;
         case Commands::setSensation:
             session.playControl = PlayControls::SENSATION;
@@ -118,9 +131,9 @@ String OSSM::getStateFingerprint() {
 
     String output = currentState + ":";
     output += String((int)settings.speed) + ":";
-    output += String((int)settings.stroke) + ":";
+    output += String((int)settings.minPosition) + ":";
     output += String((int)settings.sensation) + ":";
-    output += String((int)settings.depth) + ":";
+    output += String((int)settings.maxPosition) + ":";
     output += String(static_cast<int>(settings.pattern)) + ":";
     output += sessionId;
     return output;
@@ -167,9 +180,9 @@ String OSSM::getCurrentState() {
     return "{\"timestamp\":" + String((unsigned long)millis()) +
            ",\"state\":\"" + currentState +
            "\",\"speed\":" + String((int)settings.speed) +
-           ",\"stroke\":" + String((int)settings.stroke) +
+           ",\"minPosition\":" + String((int)settings.minPosition) +
+           ",\"maxPosition\":" + String((int)settings.maxPosition) +
            ",\"sensation\":" + String((int)settings.sensation) +
-           ",\"depth\":" + String((int)settings.depth) +
            ",\"buffer\":" + String((int)settings.buffer) +
            ",\"pattern\":" + String(static_cast<int>(settings.pattern)) +
            ",\"position\":" + String(positionMm, 2) +

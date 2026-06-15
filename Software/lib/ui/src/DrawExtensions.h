@@ -2,6 +2,7 @@
 #define UI_DRAW_EXTENSIONS_H
 
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <initializer_list>
 
@@ -180,6 +181,88 @@ static void settingBarSmall(u8g2_t* u8g2, float value, int x = 0, int y = 0, int
     int lineH = boxHeight > 0 ? clampInt(h - boxHeight - 2, 0, h) : h;
     u8g2_DrawVLine(u8g2, x + mid, barTopY, lineH);
     u8g2_DrawBox(u8g2, x, barFillY, w, boxHeight);
+}
+
+// Vertical bar showing a range [minVal, maxVal] within 0-100%.
+// The filled (white) region represents the active stroke range.
+// The active boundary (max = top, min = bottom) is drawn 2px thick in black.
+static void rangeBar(u8g2_t* u8g2, const char* label, float minVal, float maxVal,
+                     bool maxActive, int x = 0, int y = 0,
+                     Alignment alignment = LEFT_ALIGNED) {
+    int w = 10;
+    int h = 50;
+    int padding = 4;
+    int lh1 = 10;
+
+    auto clamp = [](float v, float lo, float hi) {
+        return v < lo ? lo : (v > hi ? hi : v);
+    };
+    minVal = clamp(minVal, 0.0f, 100.0f);
+    maxVal = clamp(maxVal, minVal, 100.0f);
+
+    int barStartX  = (alignment == LEFT_ALIGNED) ? x : x - w;
+    int barBottomY = u8g2_GetDisplayHeight(u8g2) - y;
+    int barTopY    = barBottomY - h;
+
+    int fillTopY    = barBottomY - (int)ceil(h * maxVal / 100.0f);
+    int fillBottomY = barBottomY - (int)ceil(h * minVal / 100.0f);
+    int fillHeight  = fillBottomY - fillTopY;
+
+    if (fillHeight > 0) {
+        u8g2_DrawBox(u8g2, barStartX, fillTopY, w, fillHeight);
+    }
+
+    u8g2_DrawFrame(u8g2, barStartX, barTopY, w, h);
+
+    // Right-pointing triangle arrow just outside (left of) the bar at the active boundary
+    int arrowCenterY = maxActive ? fillTopY : (fillBottomY - 1);
+    int tip = barStartX - 2;
+    u8g2_DrawPixel(u8g2, tip - 2, arrowCenterY - 2);
+    u8g2_DrawHLine(u8g2, tip - 2, arrowCenterY - 1, 2);
+    u8g2_DrawHLine(u8g2, tip - 2, arrowCenterY,     3);
+    u8g2_DrawHLine(u8g2, tip - 2, arrowCenterY + 1, 2);
+    u8g2_DrawPixel(u8g2, tip - 2, arrowCenterY + 2);
+
+    if (label) {
+        int arrowGap = 8;  // keep label clear of the arrow
+        int textStartX = (alignment == LEFT_ALIGNED)
+            ? x + w + padding
+            : x - (int)u8g2_GetUTF8Width(u8g2, label) - padding - w - arrowGap;
+        u8g2_SetFont(u8g2, Font::bold);
+        u8g2_DrawUTF8(u8g2, textStartX, barTopY + lh1, label);
+
+        char valueBuf[8];
+        snprintf(valueBuf, sizeof(valueBuf), "%.0f%%", maxActive ? maxVal : minVal);
+        u8g2_SetFont(u8g2, Font::base);
+        u8g2_DrawUTF8(u8g2, textStartX, barTopY + lh1 + 10, valueBuf);
+    }
+}
+
+// Small version of rangeBar — 3px wide, no label or boundary indicator.
+// Shows the [minVal, maxVal] fill with a thin center line for context.
+static void rangeBarSmall(u8g2_t* u8g2, float minVal, float maxVal,
+                           int x = 0, int y = 0) {
+    int w = 3;
+    int mid = 1;
+    int h = 50;
+
+    auto clamp = [](float v, float lo, float hi) {
+        return v < lo ? lo : (v > hi ? hi : v);
+    };
+    minVal = clamp(minVal, 0.0f, 100.0f);
+    maxVal = clamp(maxVal, minVal, 100.0f);
+
+    int barBottomY = u8g2_GetDisplayHeight(u8g2) - y;
+    int barTopY    = barBottomY - h;
+
+    int fillTopY   = barBottomY - (int)ceil(h * maxVal / 100.0f);
+    int fillBottomY = barBottomY - (int)ceil(h * minVal / 100.0f);
+    int fillHeight = fillBottomY - fillTopY;
+
+    u8g2_DrawVLine(u8g2, x + mid, barTopY, h);
+    if (fillHeight > 0) {
+        u8g2_DrawBox(u8g2, x, fillTopY, w, fillHeight);
+    }
 }
 
 static void lines(u8g2_t* u8g2, std::initializer_list<Point> points) {

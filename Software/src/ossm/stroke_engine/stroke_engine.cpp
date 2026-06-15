@@ -36,8 +36,10 @@ static void startStrokeEngineTask(void *pvParameters) {
 
     Stroker.setSensation(calculateSensation(settings.sensation), true);
 
-    Stroker.setDepth(0.01f * settings.depth * abs(measuredStrokeMm), true);
-    Stroker.setStroke(0.01f * settings.stroke * abs(measuredStrokeMm), true);
+    // Translate min/max percentages into StrokeEngine depth+stroke:
+    // depth = max position; stroke length = max - min
+    Stroker.setDepth(0.01f * settings.maxPosition * abs(measuredStrokeMm), true);
+    Stroker.setStroke(0.01f * (settings.maxPosition - settings.minPosition) * abs(measuredStrokeMm), true);
 
     auto isInCorrectState = []() {
         // Add any states that you want to support here.
@@ -64,19 +66,16 @@ static void startStrokeEngineTask(void *pvParameters) {
             lastSetting.speed = settings.speed;
         }
 
-        if (lastSetting.stroke != settings.stroke) {
-            float newStroke = 0.01f * settings.stroke * abs(measuredStrokeMm);
-            ESP_LOGD("UTILS", "change stroke: %f %f", settings.stroke,
-                     newStroke);
-            Stroker.setStroke(newStroke, true);
-            lastSetting.stroke = settings.stroke;
-        }
-
-        if (lastSetting.depth != settings.depth) {
-            float newDepth = 0.01f * settings.depth * abs(measuredStrokeMm);
-            ESP_LOGD("UTILS", "change depth: %f %f", settings.depth, newDepth);
+        if (lastSetting.minPosition != settings.minPosition ||
+            lastSetting.maxPosition != settings.maxPosition) {
+            float newDepth = 0.01f * settings.maxPosition * abs(measuredStrokeMm);
+            float newStroke = 0.01f * (settings.maxPosition - settings.minPosition) * abs(measuredStrokeMm);
+            ESP_LOGD("UTILS", "change range: min=%f max=%f depth=%f stroke=%f",
+                     settings.minPosition, settings.maxPosition, newDepth, newStroke);
             Stroker.setDepth(newDepth, false);
-            lastSetting.depth = settings.depth;
+            Stroker.setStroke(newStroke, true);
+            lastSetting.minPosition = settings.minPosition;
+            lastSetting.maxPosition = settings.maxPosition;
         }
 
         if (lastSetting.sensation != settings.sensation) {

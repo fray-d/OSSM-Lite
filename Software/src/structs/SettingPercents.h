@@ -5,9 +5,9 @@
 
 struct SettingPercents {
     float speed;
-    float stroke;
+    float minPosition;
     float sensation;
-    float depth;
+    float maxPosition;
     float buffer;
     StrokePatterns pattern;
     float speedKnob;

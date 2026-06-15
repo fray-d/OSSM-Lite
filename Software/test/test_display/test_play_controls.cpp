@@ -12,11 +12,11 @@ void test_drawPreflight(void) {
 void test_drawPlayControls_simple(void) {
     ui::PlayControlsData data{};
     data.speed = 65.0f;
-    data.stroke = 80.0f;
+    data.minPosition = 10.0f;
     data.sensation = 50.0f;
-    data.depth = 70.0f;
+    data.maxPosition = 80.0f;
     data.buffer = 0;
-    data.activeControl = ui::PlayControl::STROKE;
+    data.activeControl = ui::PlayControl::MAX_POSITION;
     data.strokeCount = 142;
     data.distanceMeters = 3.5f;
     data.elapsedMs = 125000;
@@ -25,7 +25,7 @@ void test_drawPlayControls_simple(void) {
     data.isStreaming = false;
     data.headerText = "Simple Penetration";
     data.speedLabel = "Speed";
-    data.strokeLabel = "Stroke";
+    data.minLabel = "Min";
     data.distanceStr = "3.5 m";
     data.timeStr = "02:05";
 
@@ -38,9 +38,9 @@ void test_drawPlayControls_simple(void) {
 void test_drawPlayControls_strokeEngine(void) {
     ui::PlayControlsData data{};
     data.speed = 45.0f;
-    data.stroke = 60.0f;
+    data.minPosition = 10.0f;
     data.sensation = 75.0f;
-    data.depth = 90.0f;
+    data.maxPosition = 90.0f;
     data.buffer = 0;
     data.activeControl = ui::PlayControl::SENSATION;
     data.strokeCount = 0;
@@ -51,7 +51,7 @@ void test_drawPlayControls_strokeEngine(void) {
     data.isStreaming = false;
     data.headerText = "Teasing Pounding";
     data.speedLabel = "Speed";
-    data.strokeLabel = "Stroke";
+    data.minLabel = "Min";
     data.distanceStr = nullptr;
     data.timeStr = "00:30";
 
@@ -65,9 +65,9 @@ void test_drawPlayControls_strokeEngine(void) {
 void test_drawPlayControls_streaming(void) {
     ui::PlayControlsData data{};
     data.speed = 50.0f;
-    data.stroke = 70.0f;
+    data.minPosition = 10.0f;
     data.sensation = 40.0f;
-    data.depth = 60.0f;
+    data.maxPosition = 70.0f;
     data.buffer = 80.0f;
     data.activeControl = ui::PlayControl::BUFFER;
     data.strokeCount = 0;
@@ -78,7 +78,7 @@ void test_drawPlayControls_streaming(void) {
     data.isStreaming = true;
     data.headerText = "Streaming";
     data.speedLabel = "Speed";
-    data.strokeLabel = "Stroke";
+    data.minLabel = "Min";
     data.distanceStr = nullptr;
     data.timeStr = nullptr;
 

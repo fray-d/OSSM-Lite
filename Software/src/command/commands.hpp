@@ -21,14 +21,18 @@ enum class Commands {
     goToStreaming,
     goToMenu,
 
-    // SET VALUES
-    setDepth,
+    // SET VALUES (current)
+    setMaxPosition,
+    setMinPosition,
     setSensation,
     setPattern,
     setSpeed,
-    setStroke,
     setWifi,
     setBuffer,
+
+    // SET VALUES (legacy aliases — kept for backwards-compatible BLE clients)
+    setDepth,   // alias for setMaxPosition
+    setStroke,  // converts: minPosition = maxPosition - value
 
     // STREAMING
     streamPosition,
@@ -66,16 +70,20 @@ inline CommandValue setCommandValue(const String& str) {
         return {Commands::ignore, 0, 0};
     }
 
-    if (command == "depth") {
-        return {Commands::setDepth, value, 0};
+    if (command == "max") {
+        return {Commands::setMaxPosition, value, 0};
+    } else if (command == "min") {
+        return {Commands::setMinPosition, value, 0};
+    } else if (command == "depth") {
+        return {Commands::setDepth, value, 0};  // legacy alias for set:max
+    } else if (command == "stroke") {
+        return {Commands::setStroke, value, 0};  // legacy: minPosition = maxPosition - value
     } else if (command == "sensation") {
         return {Commands::setSensation, value, 0};
     } else if (command == "pattern") {
         return {Commands::setPattern, value, 0};
     } else if (command == "speed") {
         return {Commands::setSpeed, value, 0};
-    } else if (command == "stroke") {
-        return {Commands::setStroke, value, 0};
     } else if (command == "buffer") {
         return {Commands::setBuffer, value, 0};
     } else {

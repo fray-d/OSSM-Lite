@@ -58,15 +58,15 @@ void ossmResetSettingsStrokeEngine() {
 
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
-    settings.stroke = 50;
-    settings.depth = 10;
+    settings.minPosition = 0;
+    settings.maxPosition = 20;
     settings.sensation = 50;
-    session.playControl = PlayControls::DEPTH;
+    session.playControl = PlayControls::MAX_POSITION;
 
     // Prepare the encoder
     encoder.setBoundaries(0, 100, false);
     encoder.setAcceleration(10);
-    encoder.setEncoderValue(settings.depth);
+    encoder.setEncoderValue(settings.maxPosition);
 }
 
 void ossmResetSettingsSimplePen() {
@@ -74,15 +74,15 @@ void ossmResetSettingsSimplePen() {
 
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
-    settings.stroke = 0;
-    settings.depth = 50;
+    settings.minPosition = 0;
+    settings.maxPosition = 0;
     settings.sensation = 50;
-    session.playControl = PlayControls::STROKE;
+    session.playControl = PlayControls::MAX_POSITION;
 
     // Prepare the encoder
     encoder.setBoundaries(0, 100, false);
     encoder.setAcceleration(10);
-    encoder.setEncoderValue(settings.stroke);
+    encoder.setEncoderValue(settings.maxPosition);
 
     // record session start time rounded to the nearest second
     session.startTime = millis();
@@ -95,16 +95,16 @@ void ossmResetSettingsStreaming() {
 
     settings.speed = 0;
     settings.speedBLE = std::nullopt;
-    settings.stroke = 50;
-    settings.depth = 50;
+    settings.minPosition = 0;
+    settings.maxPosition = 50;
     settings.sensation = 50;
     settings.buffer = 100;
-    session.playControl = PlayControls::DEPTH;
+    session.playControl = PlayControls::MAX_POSITION;
 
     // Prepare the encoder
     encoder.setBoundaries(0, 100, false);
     encoder.setAcceleration(10);
-    encoder.setEncoderValue(settings.depth);
+    encoder.setEncoderValue(settings.maxPosition);
 }
 
 void ossmAdvancedClick() {
@@ -114,11 +114,11 @@ void ossmAdvancedClick() {
 void ossmIncrementControlStrokeEngine() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 3);
     switch (session.playControl) {
-        case PlayControls::STROKE:
-            encoder.setEncoderValue(settings.stroke);
+        case PlayControls::MIN_POSITION:
+            encoder.setEncoderValue(settings.minPosition);
             break;
-        case PlayControls::DEPTH:
-            encoder.setEncoderValue(settings.depth);
+        case PlayControls::MAX_POSITION:
+            encoder.setEncoderValue(settings.maxPosition);
             break;
         case PlayControls::SENSATION:
             encoder.setEncoderValue(settings.sensation);
@@ -131,11 +131,11 @@ void ossmIncrementControlStrokeEngine() {
 void ossmIncrementControlStreaming() {
     session.playControl = static_cast<PlayControls>((session.playControl + 1) % 4);
     switch (session.playControl) {
-        case PlayControls::STROKE:
-            encoder.setEncoderValue(settings.stroke);
+        case PlayControls::MIN_POSITION:
+            encoder.setEncoderValue(settings.minPosition);
             break;
-        case PlayControls::DEPTH:
-            encoder.setEncoderValue(settings.depth);
+        case PlayControls::MAX_POSITION:
+            encoder.setEncoderValue(settings.maxPosition);
             break;
         case PlayControls::SENSATION:
             encoder.setEncoderValue(settings.sensation);
