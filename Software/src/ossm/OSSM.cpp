@@ -73,6 +73,8 @@ void OSSM::ble_click(String commandString) {
             // command
             settings.speedBLE = command.value;
             break;
+        case Commands::setDepth:
+            // Intentionally fall through as Legacy alias: set:depth:X → setMaxPosition
         case Commands::setMaxPosition:
             session.playControl = PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
@@ -83,15 +85,9 @@ void OSSM::ble_click(String commandString) {
             encoder.setEncoderValue(command.value);
             settings.minPosition = command.value;
             break;
-        case Commands::setDepth:
-            // Legacy alias: set:depth:X → setMaxPosition
-            session.playControl = PlayControls::MAX_POSITION;
-            encoder.setEncoderValue(command.value);
-            settings.maxPosition = command.value;
-            break;
         case Commands::setStroke:
             // Legacy alias: set:stroke:X → minPosition = maxPosition - value
-            settings.minPosition = settings.maxPosition - command.value;
+            settings.minPosition = settings.maxPosition - (command.value / 100.0f) * settings.maxPosition;
             settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
             session.playControl = PlayControls::MIN_POSITION;
             encoder.setEncoderValue(settings.minPosition);
