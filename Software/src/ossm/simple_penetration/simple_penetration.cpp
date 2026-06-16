@@ -76,12 +76,7 @@ static void startSimplePenetrationTask(void *pvParameters) {
 
         bool nextDirection = !calibration.isForward;
         calibration.isForward = nextDirection;
-
-        if (calibration.isForward) {
-            targetPosition = -std::abs((settings.maxPosition / 100.0f) * calibration.measuredStrokeSteps);
-        } else {
-            targetPosition = 0;  // SP always returns to home; min is always 0
-        }
+        targetPosition = simple_pen_logic::calculateTarget(calibration.isForward, settings.maxPosition, calibration.measuredStrokeSteps);
 
         ESP_LOGV("SimplePenetration", "target: %d,\tspeed: %f,\tacc: %f",
                  targetPosition, speed, acceleration);
