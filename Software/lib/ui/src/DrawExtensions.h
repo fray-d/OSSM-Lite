@@ -226,7 +226,7 @@ static void rangeBar(u8g2_t* u8g2, const char* label, float minVal, float maxVal
     u8g2_DrawPixel(u8g2, tip - 2, arrowCenterY + 2);
 
     if (label) {
-        int arrowGap = 8;  // keep label clear of the arrow
+        int arrowGap = 3;  // keep label clear of the arrow
         int textStartX = (alignment == LEFT_ALIGNED)
             ? x + w + padding
             : x - (int)u8g2_GetUTF8Width(u8g2, label) - padding - w - arrowGap;
@@ -238,6 +238,35 @@ static void rangeBar(u8g2_t* u8g2, const char* label, float minVal, float maxVal
         u8g2_SetFont(u8g2, Font::base);
         u8g2_DrawUTF8(u8g2, textStartX, barTopY + lh1 + 10, valueBuf);
     }
+
+    int firstQuartile = barTopY + h * 3 / 4;
+    int half = barTopY + h / 2;
+    int thirdQuartile = barTopY + h / 4;
+
+    if (maxVal > 75 && minVal < 75) {
+        u8g2_SetDrawColor(u8g2, 0);
+    } else {
+        u8g2_SetDrawColor(u8g2, 1);
+    }
+    u8g2_DrawPixel(u8g2, barStartX + 3, thirdQuartile);
+    u8g2_DrawPixel(u8g2, barStartX + 6, thirdQuartile);
+
+    if (maxVal > 50 && minVal < 50) {
+        u8g2_SetDrawColor(u8g2, 0);
+    } else {
+        u8g2_SetDrawColor(u8g2, 1);
+    }
+    u8g2_DrawPixel(u8g2, barStartX + 3, half);
+    u8g2_DrawPixel(u8g2, barStartX + 6, half);
+
+    if (maxVal > 25 && minVal < 25) {
+        u8g2_SetDrawColor(u8g2, 0);
+    } else {
+        u8g2_SetDrawColor(u8g2, 1);
+    }
+    u8g2_DrawPixel(u8g2, barStartX + 3, firstQuartile);
+    u8g2_DrawPixel(u8g2, barStartX + 6, firstQuartile);
+    u8g2_SetDrawColor(u8g2, 1);
 }
 
 // Small version of rangeBar — 3px wide, no label or boundary indicator.
