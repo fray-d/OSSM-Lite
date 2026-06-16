@@ -270,14 +270,14 @@ namespace ui {
         if (data.isStrokeEngine) {
             if (data.activeControl == PlayControl::SENSATION) {
                 drawShape::settingBar(u8g2, strings::sensation, data.sensation,
-                                      128, 0, RIGHT_ALIGNED, 10);
+                                      128, 0, RIGHT_ALIGNED, 7);
                 drawShape::rangeBarSmall(u8g2, data.minPosition, data.maxPosition, 113);
             } else {
                 bool maxActive = (data.activeControl == PlayControl::MAX_POSITION);
                 const char* rangeLabel = maxActive ? strings::max : minLabel;
                 drawShape::settingBarSmall(u8g2, data.sensation, 125);
                 drawShape::rangeBar(u8g2, rangeLabel, data.minPosition,
-                                    data.maxPosition, maxActive, 120, 0,
+                                    data.maxPosition, maxActive, 123, 0,
                                     RIGHT_ALIGNED);
             }
         } else if (data.isStreaming) {
