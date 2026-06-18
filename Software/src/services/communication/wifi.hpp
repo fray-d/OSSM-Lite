@@ -88,15 +88,18 @@ class WiFiConfigCallbacks : public NimBLECharacteristicCallbacks {
 
 inline NimBLECharacteristic* initWiFiConfigCharacteristic(NimBLEService* pService,
                                                     NimBLEUUID uuid) {
-    NimBLECharacteristic* pWiFiConfigChar = pService->createCharacteristic(
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
 
-    pWiFiConfigChar->setCallbacks(&wifiConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Wifi configuration and status");
+
+    pChar->setCallbacks(&wifiConfigCallbacks);
     
     // Set initial value to current WiFi status
-    pWiFiConfigChar->setValue(getWiFiStatus());
+    pChar->setValue(getWiFiStatus());
 
-    return pWiFiConfigChar;
+    return pChar;
 }
 
 #endif  // OSSM_COMMUNICATION_WIFI_HPP

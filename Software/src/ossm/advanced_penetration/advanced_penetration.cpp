@@ -138,8 +138,10 @@ namespace advanced_penetration {
     } apStatusCB;
 
     NimBLECharacteristic* initCharacteristic(NimBLEService* pService, std::string uuid, uint32_t properties,
-                                             NimBLECharacteristicCallbacks* callbacks) {
+                                             NimBLECharacteristicCallbacks* callbacks, String description) {
         NimBLECharacteristic* pChar = pService->createCharacteristic(NimBLEUUID(uuid), properties);
+        NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+        pDesc->setValue(description);
         pChar->setCallbacks(callbacks);
         return pChar;
     }
@@ -148,11 +150,11 @@ namespace advanced_penetration {
         initPresets();
         NimBLEService* as = pServer->createService(ADVANCED_SERVICE_UUID);
         initCharacteristic(as, CHARACTERISTIC_ADVANCED_CONTROL_UUID,
-                           NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, &apComandCB);
-        initCharacteristic(as, CHARACTERISTIC_ADVANCED_CONFIG_UUID, NIMBLE_PROPERTY::READ, &apConfigCB);
-        initCharacteristic(as, CHARACTERISTIC_ADVANCED_PRESETS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, &apPresetCB);
+                           NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, &apComandCB,"Advanced Controls");
+        initCharacteristic(as, CHARACTERISTIC_ADVANCED_CONFIG_UUID, NIMBLE_PROPERTY::READ, &apConfigCB, "Advanced Configuration");
+        initCharacteristic(as, CHARACTERISTIC_ADVANCED_PRESETS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, &apPresetCB, "Advanced Preset List");
         statusNotifier =
-            initCharacteristic(as, CHARACTERISTIC_ADVANCED_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, &apStatusCB);
+            initCharacteristic(as, CHARACTERISTIC_ADVANCED_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, &apStatusCB, "Advanced Status");
         return as;
     }
 

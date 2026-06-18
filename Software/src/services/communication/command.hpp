@@ -50,6 +50,8 @@ inline NimBLECharacteristic* initCommandCharacteristic(NimBLEService* pService,
     // Command characteristic (writable, readable)
     NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Input commands to the device.");
 
     // Store the characteristic pointer globally
 

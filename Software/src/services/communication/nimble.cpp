@@ -290,58 +290,51 @@ void initNimble() {
     // Create Service
     NimBLEService* pService = pServer->createService(SERVICE_UUID);
 
-    pCommandCharacteristic =
-        initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
+    pCommandCharacteristic = initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
 
     pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
-        pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
+                        pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
 
     pLatencyCompensationConfigCharacteristic = initLatencyCompensationConfigCharacteristic(
-        pService, NimBLEUUID(CHARACTERISTIC_LATENCY_COMPENSATION_CONFIG_UUID));
+                        pService, NimBLEUUID(CHARACTERISTIC_LATENCY_COMPENSATION_CONFIG_UUID));
 
-    initWiFiConfigCharacteristic(pService,
-                                 NimBLEUUID(CHARACTERISTIC_WIFI_CONFIG_UUID));
+    initWiFiConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_WIFI_CONFIG_UUID));
 
-    initRenameConfigCharacteristic(pService,
-                                 NimBLEUUID(CHARACTERISTIC_RENAME_CONFIG_UUID));
+    initRenameConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_RENAME_CONFIG_UUID));
 
-    initDirectionConfigCharacteristic(pService,
-                                 NimBLEUUID(CHARACTERISTIC_DIRECTION_CONFIG_UUID));
+    initDirectionConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_DIRECTION_CONFIG_UUID));
 
-    pStateCharacteristic = initStateCharacteristic(
-        pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
+    pStateCharacteristic = initStateCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
 
-    initPatternsCharacteristic(pService,
-                               NimBLEUUID(CHARACTERISTIC_PATTERNS_UUID));
-    initPatternDataCharacteristic(
-        pService, NimBLEUUID(CHARACTERISTIC_GET_PATTERN_DATA_UUID));
+    initPatternsCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_PATTERNS_UUID));
+    initPatternDataCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_GET_PATTERN_DATA_UUID));
 
     // GPIO write/read characteristic
     initGPIOCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_GPIO_UUID));
 
     // Pairing characteristic — BLE one-click pairing from the dashboard
-    initPairingCharacteristic(pService,
-                              NimBLEUUID(CHARACTERISTIC_PAIRING_UUID));
+    initPairingCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_PAIRING_UUID));
 
     // Start the services
     pService->start();
 
     // Add Device Information Service
-    NimBLEService* pDeviceInfoService =
-        pServer->createService(DEVICE_INFO_SERVICE_UUID);
+    NimBLEService* pDeviceInfoService = pServer->createService(DEVICE_INFO_SERVICE_UUID);
 
     // Add Manufacturer Name characteristic
     NimBLECharacteristic* pManufacturerName =
         pDeviceInfoService->createCharacteristic(MANUFACTURER_NAME_UUID,
                                                  NIMBLE_PROPERTY::READ);
-    static const char manufacturer[] PROGMEM = "Research And Desire";
-    pManufacturerName->setValue(String(FPSTR(manufacturer)));
 
-    // Add System ID characteristic
-    NimBLECharacteristic* pSystemId = pDeviceInfoService->createCharacteristic(
-        SYSTEM_ID_UUID, NIMBLE_PROPERTY::READ);
-    uint8_t systemId[] = {0x88, 0x1A, 0x14, 0xFF, 0xFE, 0x34, 0x29, 0x63};
-    pSystemId->setValue(systemId, 8);
+    pManufacturerName->setValue("KinkyMakers");
+
+    // Add Model 
+    NimBLECharacteristic* pModel = pDeviceInfoService->createCharacteristic(MODEL_UUID, NIMBLE_PROPERTY::READ);
+    pModel->setValue("OSSM");
+
+    // Add Firmware Version
+    NimBLECharacteristic* pVersion = pDeviceInfoService->createCharacteristic(FIRMWARE_VERSION_UUID, NIMBLE_PROPERTY::READ);
+    pVersion->setValue(VERSION);
 
     // Start the device info service
     pDeviceInfoService->start();
@@ -350,12 +343,14 @@ void initNimble() {
     // if this is true, then we'll start a service for the FTS
     NimBLEService* pFTS = pServer->createService(
         NimBLEUUID("0000ffe0-0000-1000-8000-00805f9b34fb"));
-    NimBLECharacteristic* pFTSCharacteristic = pFTS->createCharacteristic(
+    NimBLECharacteristic* pChar = pFTS->createCharacteristic(
         NimBLEUUID("0000ffe1-0000-1000-8000-00805f9b34fb"),
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
             NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE |
             NIMBLE_PROPERTY::WRITE_NR);
-    pFTSCharacteristic->setCallbacks(&ftsCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Fleshy thrust sync commands");
+    pChar->setCallbacks(&ftsCallbacks);
     pFTS->start();
 #endif
 

@@ -105,10 +105,12 @@ class PairingCallbacks : public NimBLECharacteristicCallbacks {
 
 inline NimBLECharacteristic* initPairingCharacteristic(NimBLEService* pService,
                                                  NimBLEUUID uuid) {
-    NimBLECharacteristic* pPairingChar = pService->createCharacteristic(
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE);
-    pPairingChar->setCallbacks(&pairingCallbacks);
-    return pPairingChar;
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Pairing");
+    pChar->setCallbacks(&pairingCallbacks);
+    return pChar;
 }
 
 #endif  // OSSM_COMMUNICATION_PAIRING_HPP

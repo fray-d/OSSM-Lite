@@ -60,18 +60,21 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
 
 inline NimBLECharacteristic* initSpeedKnobConfigCharacteristic(NimBLEService* pService,
                                                         NimBLEUUID uuid) {
-    NimBLECharacteristic* pSpeedKnobConfigChar = pService->createCharacteristic(
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
+        
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Use wired controller knob as speed limit.");
 
-    pSpeedKnobConfigChar->setCallbacks(&speedKnobConfigCallbacks);
+    pChar->setCallbacks(&speedKnobConfigCallbacks);
     // Use PROGMEM strings for initial value
     static const char true_str[] PROGMEM = "true";
     static const char false_str[] PROGMEM = "false";
-    pSpeedKnobConfigChar->setValue(USE_SPEED_KNOB_AS_LIMIT
+    pChar->setValue(USE_SPEED_KNOB_AS_LIMIT
                                        ? String(FPSTR(true_str))
                                        : String(FPSTR(false_str)));
 
-    return pSpeedKnobConfigChar;
+    return pChar;
 }
 
 /** Handler class for latency compensation config characteristic */
@@ -124,20 +127,21 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
     }
 } inline latencyCompensationConfigCallbacks;
 
-inline NimBLECharacteristic* initLatencyCompensationConfigCharacteristic(NimBLEService* pService,
-                                                        NimBLEUUID uuid) {
-    NimBLECharacteristic* pLatencyCompensationConfigChar = pService->createCharacteristic(
+inline NimBLECharacteristic* initLatencyCompensationConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Enable latency compensation for streaming mode.");
 
-    pLatencyCompensationConfigChar->setCallbacks(&latencyCompensationConfigCallbacks);
+    pChar->setCallbacks(&latencyCompensationConfigCallbacks);
     // Use PROGMEM strings for initial value
     static const char true_str[] PROGMEM = "true";
     static const char false_str[] PROGMEM = "false";
-    pLatencyCompensationConfigChar->setValue(USE_LATENCY_COMPENSATION
+    pChar->setValue(USE_LATENCY_COMPENSATION
                                        ? String(FPSTR(true_str))
                                        : String(FPSTR(false_str)));
 
-    return pLatencyCompensationConfigChar;
+    return pChar;
 }
 
 class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
@@ -162,13 +166,15 @@ class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
 } inline renameConfigCallbacks;
 
 inline NimBLECharacteristic* initRenameConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pRenameConfigChar = pService->createCharacteristic(
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
 
-    pRenameConfigChar->setCallbacks(&renameConfigCallbacks);
-    pRenameConfigChar->setValue(UserConfig::getDeviceName());
+    pChar->setCallbacks(&renameConfigCallbacks);
+    pChar->setValue(UserConfig::getDeviceName());
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Name of the device. Changing will cause reboot.");
 
-    return pRenameConfigChar;
+    return pChar;
 }
 
 class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
@@ -200,13 +206,15 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
 
 inline NimBLECharacteristic* initDirectionConfigCharacteristic(
     NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pDirectionConfigChar = pService->createCharacteristic(
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
 
-    pDirectionConfigChar->setCallbacks(&directionConfigCallbacks);
-    pDirectionConfigChar->setValue(UserConfig::getDirection());
+    pChar->setCallbacks(&directionConfigCallbacks);
+    pChar->setValue(UserConfig::getDirection());
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Reverse rail direction. Changing will cause reboot.");
 
-    return pDirectionConfigChar;
+    return pChar;
 }
 
 #endif  // OSSM_CONFIG_HPP

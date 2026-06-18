@@ -61,7 +61,8 @@
 // ****************** ETC *************************
 // ************************************************
 #define MANUFACTURER_NAME_UUID "2A29"    // Standard UUID for manufacturer name
-#define SYSTEM_ID_UUID "2A23"            // Standard UUID for system ID
+#define FIRMWARE_VERSION_UUID "2A26"    // Standard UUID for manufacturer name
+#define MODEL_UUID "2A24"            // Standard UUID for model
 #define DEVICE_INFO_SERVICE_UUID "180A"  // Device Information Service
 
 extern NimBLEServer* pServer;
