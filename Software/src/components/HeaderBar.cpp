@@ -194,8 +194,27 @@ void drawBleIcon() {
     }
 }
 
+[[noreturn]] void nonHeaderBarTask(void* pvParameters) {
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    ESP_LOGI(HEADERBAR_TAG, "LED task started");
+
+    while (true) {
+        updateLEDForMachineStatus();
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+}
+
 void initHeaderBar() {
-    if(!isDisplayAvailable()) return;
+    if(!isDisplayAvailable()){
+        xTaskCreatePinnedToCore(nonHeaderBarTask, "nonHeaderBar",
+                        4 * configMINIMAL_STACK_SIZE,
+                        nullptr,
+                        tskIDLE_PRIORITY + 1,
+                        &headerBarTaskHandle,
+                        0);
+        return;
+    }
     ESP_LOGI(HEADERBAR_TAG, "Initializing header bar task");
 
     BaseType_t result =
