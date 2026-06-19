@@ -32,11 +32,4 @@ inline bool isHomingTimedOut(uint32_t elapsedMs, uint32_t timeoutMs) {
     return elapsedMs > timeoutMs;
 }
 
-/// Check if the measured stroke is too short for safe operation.
-/// homing.cpp lines 147-148 (homing::isStrokeTooShort)
-inline bool isStrokeTooShortLogic(float measuredStrokeSteps,
-                                  float minStrokeLengthMm) {
-    return measuredStrokeSteps <= minStrokeLengthMm;
-}
-
 }  // namespace homing_logic

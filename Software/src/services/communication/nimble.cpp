@@ -306,6 +306,14 @@ void initNimble() {
 
     pStateCharacteristic = initStateCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
 
+    initHomingTypeConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_HOMING_TYPE_CONFIG_UUID));
+    
+    initRailLengthConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_RAIL_LENGTH_CONFIG_UUID));
+
+    initReHomeConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_HOME_BETWEEN_MODES_CONFIG_UUID));
+
+    pStateCharacteristic = initStateCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
+
     initPatternsCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_PATTERNS_UUID));
     initPatternDataCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_GET_PATTERN_DATA_UUID));
 

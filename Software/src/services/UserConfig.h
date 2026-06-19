@@ -22,5 +22,16 @@ namespace UserConfig {
     bool getDirection();
     void setDirection(bool value);
 
+    enum HomingType {None, Default, SingleSided, DoubleTap};
+
+    HomingType getHomingType();
+    void setHomingType(HomingType value);
+
+    float getRailLength();
+    void setRailLength(float value);
+
+    bool getReHome();
+    void setReHome(bool value);
+
 }
 #endif  // OSSM_SOFTWARE_USERCONFIG_H

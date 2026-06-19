@@ -83,23 +83,6 @@ void test_isHomingTimedOut_timed_out(void) {
     TEST_ASSERT_TRUE(homing_logic::isHomingTimedOut(41000, 40000));
 }
 
-// ─── isStrokeTooShortLogic ───
-
-void test_isStrokeTooShort_above_min(void) {
-    // measured=100, min=50 → false (100 > 50)
-    TEST_ASSERT_FALSE(homing_logic::isStrokeTooShortLogic(100.0f, 50.0f));
-}
-
-void test_isStrokeTooShort_below_min(void) {
-    // measured=30, min=50 → true (30 <= 50)
-    TEST_ASSERT_TRUE(homing_logic::isStrokeTooShortLogic(30.0f, 50.0f));
-}
-
-void test_isStrokeTooShort_equal_to_min(void) {
-    // measured=50, min=50 → true (50 <= 50, equal)
-    TEST_ASSERT_TRUE(homing_logic::isStrokeTooShortLogic(50.0f, 50.0f));
-}
-
 int main(int argc, char **argv) {
     UNITY_BEGIN();
 
@@ -115,10 +98,6 @@ int main(int argc, char **argv) {
 
     RUN_TEST(test_isHomingTimedOut_not_timed_out);
     RUN_TEST(test_isHomingTimedOut_timed_out);
-
-    RUN_TEST(test_isStrokeTooShort_above_min);
-    RUN_TEST(test_isStrokeTooShort_below_min);
-    RUN_TEST(test_isStrokeTooShort_equal_to_min);
 
     return UNITY_END();
 }

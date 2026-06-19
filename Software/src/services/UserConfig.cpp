@@ -38,4 +38,57 @@ namespace UserConfig {
         ESP_LOGI("USER CONFIG", "Direction write: %d", value);
         ESP.restart();
     }
+
+    HomingType getHomingType() {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", true);
+        HomingType output = static_cast<HomingType>(userConfig.getInt("HomingType",1));
+        userConfig.end();
+        ESP_LOGI("USER CONFIG","Homing type read: %d", output);
+        return output;
+    }
+
+    void setHomingType(HomingType value) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", false);
+        userConfig.putInt("HomingType", value);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "Homing type write: %d", value);
+        ESP.restart();
+    }
+
+    float getRailLength() {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", true);
+        float output = userConfig.getFloat("RailLength",180.0);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG","Rail length read: %f", output);
+        return output;
+    }
+
+    void setRailLength(float value) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", false);
+        userConfig.putFloat("RailLength", value);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "Rail length write: %d", value);
+        ESP.restart();
+    }
+
+    bool getReHome() {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", true);
+        bool output = userConfig.getBool("ReHome",true);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "Home between moodes read: %d", output);
+        return output;
+    }
+
+    void setReHome(bool value) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", false);
+        userConfig.putBool("ReHome", value);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "Home between modes write: %d", value);
+    }
 }

@@ -31,6 +31,12 @@
     "522b443a-4f53-534d-1040-420badbabe69"
 #define CHARACTERISTIC_DIRECTION_CONFIG_UUID \
     "522b443a-4f53-534d-1050-420badbabe69"
+#define CHARACTERISTIC_HOMING_TYPE_CONFIG_UUID \
+    "522b443a-4f53-534d-1060-420badbabe69"
+#define CHARACTERISTIC_RAIL_LENGTH_CONFIG_UUID \
+    "522b443a-4f53-534d-1070-420badbabe69"
+#define CHARACTERISTIC_HOME_BETWEEN_MODES_CONFIG_UUID \
+    "522b443a-4f53-534d-1080-420badbabe69"
 // **********************************************************
 // State Characteristics
 // - Range: 2000-2FFF

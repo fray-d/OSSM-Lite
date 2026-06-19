@@ -29,7 +29,7 @@ void test_logo_km(void) {
 
 void test_logo_measuring_stroke(void) {
     std::string measuringTitle =
-        std::string(ui::strings::measuringStroke) + "         ";
+        std::string(ui::strings::measuringRail) + "         ";
     ui::LogoData measuring{measuringTitle.c_str(), ui::logos::KMLogo, 50,
                            50, 40, 14};
     ui::drawLogo(&u8g2, measuring);

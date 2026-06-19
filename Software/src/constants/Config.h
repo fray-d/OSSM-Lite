@@ -63,7 +63,7 @@ namespace Config {
         constexpr float minStrokeLengthMm = 50.0_mm;
 
         // Applied offset after homing process.
-        constexpr float homingOffsetMn = 10_mm;
+        constexpr float homingOffsetMm = 10_mm;
     }
 
     /**

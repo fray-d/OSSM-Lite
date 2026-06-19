@@ -206,7 +206,9 @@ void ossmSetHomed() {
 }
 
 void ossmSetNotHomed() {
-    calibration.isHomed = false;
+    if(UserConfig::getReHome()) {
+        calibration.isHomed = false;
+    }
 }
 
 void ossmResetWiFi() {

@@ -67,7 +67,7 @@ namespace ui {
             "State: %u not implemented.";
         static const char youShouldNotBeHere[] PROGMEM =
             "You should not be here.";
-        static const char measuringStroke[] PROGMEM = "Measuring Stroke";
+        static const char measuringRail[] PROGMEM = "Measuring Rail";
         static const char noDescription[] PROGMEM =
             "No description available";
 

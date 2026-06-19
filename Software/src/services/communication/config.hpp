@@ -8,6 +8,15 @@
 #include "Arduino.h"
 #include "services/UserConfig.h"
 
+void setBoolValue(bool value, NimBLECharacteristic* pCharacteristic) {
+    // Use PROGMEM strings for read values
+    static const char true_str[] PROGMEM = "true";
+    static const char false_str[] PROGMEM = "false";
+
+    String output = value ? String(FPSTR(true_str)) : String(FPSTR(false_str));
+    pCharacteristic->setValue(output);
+}
+
 /** Handler class for speed knob config characteristic */
 class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic,
@@ -40,14 +49,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
 
     void onRead(NimBLECharacteristic* pCharacteristic,
                 NimBLEConnInfo& connInfo) override {
-        // Use PROGMEM strings for read values
-        static const char true_str[] PROGMEM = "true";
-        static const char false_str[] PROGMEM = "false";
-
-        String value = USE_SPEED_KNOB_AS_LIMIT ? String(FPSTR(true_str))
-                                               : String(FPSTR(false_str));
-        ESP_LOGD(NIMBLE_TAG, "Speed knob config read: %s", value.c_str());
-        pCharacteristic->setValue(value);
+        setBoolValue(USE_SPEED_KNOB_AS_LIMIT, pCharacteristic);
     }
 
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
@@ -67,12 +69,8 @@ inline NimBLECharacteristic* initSpeedKnobConfigCharacteristic(NimBLEService* pS
     pDesc->setValue("Use wired controller knob as speed limit.");
 
     pChar->setCallbacks(&speedKnobConfigCallbacks);
-    // Use PROGMEM strings for initial value
-    static const char true_str[] PROGMEM = "true";
-    static const char false_str[] PROGMEM = "false";
-    pChar->setValue(USE_SPEED_KNOB_AS_LIMIT
-                                       ? String(FPSTR(true_str))
-                                       : String(FPSTR(false_str)));
+
+    setBoolValue(USE_SPEED_KNOB_AS_LIMIT, pChar);
 
     return pChar;
 }
@@ -109,14 +107,7 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
 
     void onRead(NimBLECharacteristic* pCharacteristic,
                 NimBLEConnInfo& connInfo) override {
-        // Use PROGMEM strings for read values
-        static const char true_str[] PROGMEM = "true";
-        static const char false_str[] PROGMEM = "false";
-
-        String value = USE_LATENCY_COMPENSATION ? String(FPSTR(true_str))
-                                               : String(FPSTR(false_str));
-        ESP_LOGD(NIMBLE_TAG, "Latency compensation config read: %s", value.c_str());
-        pCharacteristic->setValue(value);
+        setBoolValue(USE_LATENCY_COMPENSATION, pCharacteristic);
     }
 
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
@@ -134,12 +125,8 @@ inline NimBLECharacteristic* initLatencyCompensationConfigCharacteristic(NimBLES
     pDesc->setValue("Enable latency compensation for streaming mode.");
 
     pChar->setCallbacks(&latencyCompensationConfigCallbacks);
-    // Use PROGMEM strings for initial value
-    static const char true_str[] PROGMEM = "true";
-    static const char false_str[] PROGMEM = "false";
-    pChar->setValue(USE_LATENCY_COMPENSATION
-                                       ? String(FPSTR(true_str))
-                                       : String(FPSTR(false_str)));
+
+    setBoolValue(USE_LATENCY_COMPENSATION, pChar);
 
     return pChar;
 }
@@ -167,7 +154,7 @@ class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
 
 inline NimBLECharacteristic* initRenameConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
     NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
 
     pChar->setCallbacks(&renameConfigCallbacks);
     pChar->setValue(UserConfig::getDeviceName());
@@ -193,26 +180,99 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        // Use PROGMEM strings for read values
-        static const char true_str[] PROGMEM = "true";
-        static const char false_str[] PROGMEM = "false";
-
-        String value = UserConfig::getDirection() ? String(FPSTR(true_str))
-                                                : String(FPSTR(false_str));
-        ESP_LOGD(NIMBLE_TAG, "Direction config read: %s", value.c_str());
-        pCharacteristic->setValue(value);
+        setBoolValue(UserConfig::getDirection(), pCharacteristic);
     }
 } inline directionConfigCallbacks;
 
 inline NimBLECharacteristic* initDirectionConfigCharacteristic(
     NimBLEService* pService, NimBLEUUID uuid) {
     NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
 
     pChar->setCallbacks(&directionConfigCallbacks);
-    pChar->setValue(UserConfig::getDirection());
+    setBoolValue(UserConfig::getDirection(), pChar);
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Reverse rail direction. Changing will cause reboot.");
+
+    return pChar;
+}
+
+class HomingTypeConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        std::string value = pCharacteristic->getValue();
+        UserConfig::HomingType type = static_cast<UserConfig::HomingType>(std::stoi(value)); 
+        UserConfig::setHomingType(type);
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getHomingType()));
+    }
+} inline homingTypeConfigCallbacks;
+
+inline NimBLECharacteristic* initHomingTypeConfigCharacteristic(
+    NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+
+    pChar->setCallbacks(&homingTypeConfigCallbacks);
+    pChar->setValue(UserConfig::getHomingType());
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Homing Type: 0=None, 1=Default, 2=Single Sided, 3=Double Tap");
+    return pChar;
+}
+
+class RailLengthConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setRailLength(value);
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getRailLength()));
+    }
+} inline railLengthConfigCallbacks;
+
+inline NimBLECharacteristic* initRailLengthConfigCharacteristic(
+    NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+
+    pChar->setCallbacks(&railLengthConfigCallbacks);
+    pChar->setValue(UserConfig::getRailLength());
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Rail length. Used for single sided and disabled homing.");
+    return pChar;
+}
+
+class ReHomeConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        std::string value = pCharacteristic->getValue();
+        String configValue = String(value.c_str());
+        configValue.toLowerCase();
+        if (configValue == "true" || configValue == "1" || configValue == "t") {
+            UserConfig::setReHome(true);
+        } else if (configValue == "false" || configValue == "0" || configValue == "f") {
+            UserConfig::setReHome(false);
+        } else {
+            ESP_LOGW(NIMBLE_TAG, "Invalid home between modes config value: %s",configValue.c_str());
+            pCharacteristic->setValue("error:invalid_value");
+        }
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        setBoolValue(UserConfig::getReHome(), pCharacteristic);
+    }
+} inline ReHomeConfigCallbacks;
+
+inline NimBLECharacteristic* initReHomeConfigCharacteristic(
+    NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(
+        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+
+    pChar->setCallbacks(&ReHomeConfigCallbacks);
+    setBoolValue(UserConfig::getReHome(), pChar);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Rehome the device between modes.");
 
     return pChar;
 }
