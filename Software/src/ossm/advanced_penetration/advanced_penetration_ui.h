@@ -287,7 +287,8 @@ namespace advanced_penetration {
 
     void handleDrawPage(u8_t speedValue, u8_t encoderValue) {
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
-            clearPage(true);
+            clearPage(true, true);
+            ui::setHeader(display.getU8g2(),ui::strings::advancedPenetration);
             currentSettings.speed.value = speedValue;
             ui::drawShape::settingBar(display.getU8g2(), "",
                                       currentSettings.speed.value, 0, 0,
@@ -298,7 +299,7 @@ namespace advanced_penetration {
             } else {
                 drawMainUI(floor(encoderValue / 3));
             }
-            refreshPage(true);
+            refreshPage(true, true);
             xSemaphoreGive(displayMutex);
         }
     }
@@ -306,8 +307,6 @@ namespace advanced_penetration {
     static void startAdvancedPenetrationUITask(void* pvParameters) {
         encoder.setAcceleration(0);
         u8_t lastEncoder = 0;
-        String headerText = ui::strings::advancedPenetration;
-        setHeader(headerText);
 
         while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
                stateMachine->is("advancedPenetration.presets"_s)) {
