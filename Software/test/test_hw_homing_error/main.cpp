@@ -171,7 +171,7 @@ void setup() {
                             2 * configMINIMAL_STACK_SIZE, nullptr,
                             configMAX_PRIORITIES - 1, &disableMotorTaskH, 1);
 
-    // Init state machine — fires Done{} → idle → homing → homing.forward
+    // Init state machine — fires Done{} → idle → homing → measure.run
     // The homing task runs on core 0, but can't move the motor because
     // keepMotorDisabledTask overrides enableOutputs() every 10 ms.
     // After 40 s the homing task times out and fires Error{} naturally.

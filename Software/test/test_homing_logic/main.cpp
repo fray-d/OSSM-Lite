@@ -56,15 +56,15 @@ void test_calculateMeasuredStroke_clamped_to_max(void) {
 // ─── calculatePostHomingPosition (Path X positive-going convention) ───
 
 void test_calculatePostHomingPosition_positive_sign(void) {
-    // sign=+1 (homing.forward, just zeroed at extended hard stop):
+    // sign=+1 (measure.run, just zeroed at extended hard stop):
     //   goTo = -1*5000 = -5000. Not > 0, so unchanged = -5000.
-    //   Drives across full range to retracted side where homing.backward detects.
+    //   Drives across full range to retracted side where homing.run detects.
     int32_t result = homing_logic::calculatePostHomingPosition(1, 5000.0f, 0.5f);
     TEST_ASSERT_EQUAL_INT32(-5000, result);
 }
 
 void test_calculatePostHomingPosition_negative_sign(void) {
-    // sign=-1 (homing.backward, just zeroed at retracted hard stop):
+    // sign=-1 (homing.run, just zeroed at retracted hard stop):
     //   goTo = -(-1)*5000 = +5000. > 0, so * 0.5 = 2500.
     //   Parks rod at mid-extension when afterHomingPosition=0.5.
     int32_t result = homing_logic::calculatePostHomingPosition(-1, 5000.0f, 0.5f);

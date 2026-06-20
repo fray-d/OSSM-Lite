@@ -54,7 +54,6 @@ namespace UserConfig {
         userConfig.putInt("HomingType", value);
         userConfig.end();
         ESP_LOGI("USER CONFIG", "Homing type write: %d", value);
-        ESP.restart();
     }
 
     float getRailLength() {
@@ -72,7 +71,9 @@ namespace UserConfig {
         userConfig.putFloat("RailLength", value);
         userConfig.end();
         ESP_LOGI("USER CONFIG", "Rail length write: %d", value);
-        ESP.restart();
+        if (getHomingType() == HomingType::None || getHomingType() == HomingType::SingleSided) {
+            ESP.restart(); //Only restart if needed
+        }
     }
 
     bool getReHome() {

@@ -54,7 +54,7 @@ namespace homing {
             stepper->setCurrentPosition(-1 * Config::Driver::homingOffsetMm);
         }
 
-        if (isNone || (isSingle && stateMachine->is("homing.forward"_s) )) {
+        if (isNone || (isSingle && stateMachine->is("measure.run"_s) )) {
             calibration.measuredStrokeSteps = Config::Driver::stepsPerMM * UserConfig::getRailLength();
             stateMachine->process_event(Done{});
             vTaskDelete(nullptr);
@@ -68,7 +68,7 @@ namespace homing {
         }
 
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
-            if (stateMachine->is("homing.backward"_s)) {
+            if (stateMachine->is("homing.run"_s)) {
                 ui::LogoData logo{ui::strings::homing, ui::logos::KMLogo, 50, 50, 60, 14, VERSION};
                 ui::drawLogo(display.getU8g2(), logo);
             } else {
@@ -79,7 +79,7 @@ namespace homing {
             xSemaphoreGive(displayMutex);
         }
 
-        int16_t sign = stateMachine->is("homing.backward"_s) ? -1 : 1;
+        int16_t sign = stateMachine->is("homing.run"_s) ? -1 : 1;
         int32_t targetPositionInSteps = round(sign * Config::Driver::maxStrokeSteps);
 
         ESP_LOGD("Homing", "Target position in steps: %d", targetPositionInSteps);
@@ -88,8 +88,8 @@ namespace homing {
         auto isInCorrectState = []() {
             // Add any states that you want to support here.
             return stateMachine->is("homing"_s) ||
-                   stateMachine->is("homing.forward"_s) ||
-                   stateMachine->is("homing.backward"_s);
+                   stateMachine->is("measure.run"_s) ||
+                   stateMachine->is("homing.run"_s);
         };
 
         bool second = true;
@@ -134,7 +134,7 @@ namespace homing {
                     calibration.measuredStrokeSteps,
                     Config::Driver::maxStrokeSteps);
 
-            if (!second && stateMachine->is("homing.backward"_s) &&
+            if (!second && stateMachine->is("homing.run"_s) &&
                         abs(stepper->getCurrentPosition()) < Config::Driver::minStrokeLengthMm) {
                 second = true;
                 stepper->setSpeedInHz(25_mm);
@@ -144,13 +144,13 @@ namespace homing {
 
             ESP_LOGI("Homing", "Steps: %f", calibration.measuredStrokeSteps);
 
-            if (stateMachine->is("homing.backward"_s)) {
+            if (stateMachine->is("homing.run"_s)) {
                 stepper->forceStopAndNewPosition(0);
             }
 
             stepper->setSpeedInHz(250_mm);
             stepper->moveTo(0, true);
-            if (!isSingle && stateMachine->is("homing.backward"_s) && calibration.isFirstHomed) {
+            if (!isSingle && stateMachine->is("homing.run"_s) && calibration.isFirstHomed) {
                 stepper->moveTo(calibration.measuredStrokeSteps, true);
             }
 
