@@ -148,19 +148,19 @@ namespace advanced_penetration {
         repopulatePresets();
     }
 
-    static const char d1[] PROGMEM = "+D";
-    static const char d2[] PROGMEM = "-D";
-    static const char s1[] PROGMEM = "+S";
-    static const char s2[] PROGMEM = "-S";
-    static const char a1[] PROGMEM = "+A";
-    static const char a2[] PROGMEM = "-A";
-    static const char ma[] PROGMEM = "MA";
-    static const char m1[] PROGMEM = "M1";
-    static const char m2[] PROGMEM = "M2";
-    static const char m3[] PROGMEM = "M3";
-    static const char m4[] PROGMEM = "M4";
-    static const char mo[] PROGMEM = "MO";
-    static const char sp[] PROGMEM = "SP";
+    static const char d1[] PROGMEM = "Max Depth";
+    static const char d2[] PROGMEM = "Min Depth";
+    static const char s1[] PROGMEM = "In Speed";
+    static const char s2[] PROGMEM = "Out Speed";
+    static const char a1[] PROGMEM = "In Accel";
+    static const char a2[] PROGMEM = "Out Accel";
+    static const char ma[] PROGMEM = "Amplitude";
+    static const char m1[] PROGMEM = "Steps to Min";
+    static const char m2[] PROGMEM = "Steps at Min";
+    static const char m3[] PROGMEM = "Steps to Max";
+    static const char m4[] PROGMEM = "Steps at Max";
+    static const char mo[] PROGMEM = "Offset";
+    static const char sp[] PROGMEM = "Speed";
 }
 
 #endif

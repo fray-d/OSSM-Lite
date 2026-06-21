@@ -158,12 +158,12 @@ void drawBleIcon() {
         lastShowState = showHeaderIcons;
 
         if (!showHeaderIcons) {
-            if (stateChanged) {
-                if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
+            if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
+                if (stateChanged) {
                     clearIcons();
-                    refreshIcons();
-                    xSemaphoreGive(displayMutex);
                 }
+                refreshIcons();
+                xSemaphoreGive(displayMutex);
             }
             updateLEDForMachineStatus();
             vTaskDelay(100 / portTICK_PERIOD_MS);

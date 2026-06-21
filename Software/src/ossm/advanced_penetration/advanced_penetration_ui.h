@@ -3,6 +3,7 @@
 
 #include "Progmem.h"
 #include "advanced_penetration_structs.h"
+#include "components/HeaderBar.h"
 #include "services/display.h"
 #include "services/encoder.h"
 #include "ui.h"
@@ -12,12 +13,24 @@ namespace advanced_penetration {
 
     u8_t textPosition = 19;
 
-    void selectText(u8_t index) { display.drawFrame(111, 10 + 9 * index, 17, 11); }
+    void selectText(u8_t index) { 
+        display.drawFrame(111, 10 + 9 * index, 17, 11);
+    }
+
+    void drawRightHeader(String text) {
+        display.setFont(ui::Font::header);
+        uint16_t stringWidth = display.getUTF8Width(text.c_str());
+        display.drawUTF8(127 - stringWidth, 8, text.c_str());
+    }
 
     void drawText(String controlText, bool centered = true) {
         uint16_t stringWidth = display.getUTF8Width(controlText.c_str());
         if (centered) {
-            display.drawUTF8(120 - stringWidth / 2, textPosition, controlText.c_str());
+            if (controlText == "100") {
+                display.drawUTF8(119 - stringWidth / 2, textPosition, controlText.c_str());
+            } else {
+                display.drawUTF8(120 - stringWidth / 2, textPosition, controlText.c_str());
+            }
         } else {
             display.drawUTF8(125 - stringWidth, textPosition, controlText.c_str());
         }
@@ -26,7 +39,7 @@ namespace advanced_penetration {
 
     void setEncoderIfStatus(Control& c, ControlStatus status) {
         if (currentSettings.status == status) {
-            display.setFont(u8g2_font_timB08_tn);
+            display.setFont(ui::Font::header);
             if (currentSettings.lastStatus != currentSettings.status) {
                 encoder.setBoundaries(c.minValue, c.maxValue, false);
                 encoder.setEncoderValue(c.value - 1);
@@ -38,8 +51,9 @@ namespace advanced_penetration {
     }
 
     void drawModifierControl(ModifierControl& m) {
-        display.setFont(u8g2_font_timR08_tn);
+        display.setFont(ui::Font::header);
         if (currentSettings.modifierControl == m.id) {
+            drawRightHeader(m.name);
             setEncoderIfStatus(m, ControlStatus::MODIFIER_VALUE);
             if (currentSettings.status == ControlStatus::MODIFIER_VALUE) {
                 ui::drawShape::settingBar(display.getU8g2(), "", m.value, 115, 0, ui::LEFT_ALIGNED, 0, 54, m.minValue, m.maxValue);
@@ -132,26 +146,40 @@ namespace advanced_penetration {
         if (a.modifier == nullptr) {
             a.modifier = new Modifier;
         }
-        if (currentSettings.status == ControlStatus::MODIFIER_MENU) {
-            selectText(currentSettings.modifierControl);
+        if (a.modifier->amplitude.value == 100) {
+            if (int(currentSettings.modifierControl) % 2 == 0) {
+                currentSettings.modifierControl = ModifierControls::AMPLITUDE;
+            } else {
+                currentSettings.modifierControl = ModifierControls::GO_BACK;
+            }
         }
         drawModifierControl(a.modifier->amplitude);
-        drawModifierControl(a.modifier->inStep);
-        drawModifierControl(a.modifier->inWait);
-        drawModifierControl(a.modifier->outStep);
-        drawModifierControl(a.modifier->outWait);
-        drawModifierControl(a.modifier->offset);
-        if (currentSettings.modifierControl == ModifierControls::AMPLITUDE ||
-            currentSettings.modifierControl == ModifierControls::GO_BACK) {
-            drawStroke();
-            drawStroke(true);
-        } else {
-            drawBars(a);
+        if (a.modifier->amplitude.value < 100) {
+            drawModifierControl(a.modifier->inStep);
+            drawModifierControl(a.modifier->inWait);
+            drawModifierControl(a.modifier->outStep);
+            drawModifierControl(a.modifier->outWait);
+            drawModifierControl(a.modifier->offset);
+        }
+        switch (currentSettings.modifierControl) {
+            case ModifierControls::GO_BACK:
+                drawRightHeader("Go Back");
+                display.drawFrame(88, 0, 40, 11);
+                //intentionally fall through
+            case ModifierControls::AMPLITUDE:
+                drawStroke();
+                drawStroke(true);
+                break;
+            default:
+                drawBars(a);
+        }
+        if (currentSettings.status == ControlStatus::MODIFIER_MENU) {
+            selectText(currentSettings.modifierControl);
         }
     }
 
     void updateControl(BaseControl& a, u8_t minVal = 0, u8_t maxVal = 100) {
-        display.setFont(u8g2_font_timR08_tf);
+        display.setFont(ui::Font::header);
         if (currentSettings.status == ControlStatus::MODIFIER_MENU || currentSettings.status == ControlStatus::MODIFIER_VALUE) {
             if (currentSettings.baseControl == a.id) {
                 drawModifier(a);
@@ -167,19 +195,22 @@ namespace advanced_penetration {
         }
 
         if (encoder.readEncoder() / 3 >= BaseControls::BASE_COUNT && currentSettings.status == ControlStatus::BASE_MENU) {
-            display.setFont(u8g2_font_courR08_tf);
+            display.setFont(ui::Font::header);
+
+            if (a.modifier != nullptr && a.modifier->active()) {
+                drawText(String(a.modifier->amplitude.value));
+            } else {
+                drawText("Off");
+            }
             if (currentSettings.baseControl == a.id) {
                 selectText(currentSettings.baseControl);
-            }
-            if (a.modifier != nullptr && a.modifier->active()) {
-                display.setFont(u8g2_font_courB08_tf);
-            }
-            drawText(a.name, false);
-            return;
+                drawRightHeader(a.name + " Mod");
+            }            return;
         }
         if (currentSettings.status == ControlStatus::BASE_MENU) {
             if (currentSettings.baseControl == a.id) {
                 selectText(currentSettings.baseControl);
+                drawRightHeader(a.name);
             }
             drawText(String(a.value));
             return;
@@ -187,6 +218,7 @@ namespace advanced_penetration {
 
         if (currentSettings.baseControl == a.id) {
             ui::drawShape::settingBar(display.getU8g2(), "", a.value, 118, 0, ui::LEFT_ALIGNED, 0, 54);
+            drawRightHeader(a.name);
         }
     }
 
@@ -214,6 +246,7 @@ namespace advanced_penetration {
                 if (encoder.readEncoder() / 3 >= BaseControls::BASE_COUNT) {
                     currentSettings.status = ControlStatus::MODIFIER_MENU;
                     c = ModifierControls::MODIFIER_COUNT * 3;
+                    value = (ModifierControls::MODIFIER_COUNT - 1) * 3;
                 } else {
                     currentSettings.status = ControlStatus::BASE_VALUE;
                     loop = false;
@@ -287,8 +320,8 @@ namespace advanced_penetration {
 
     void handleDrawPage(u8_t speedValue, u8_t encoderValue) {
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
-            clearPage(true, true);
-            ui::setHeader(display.getU8g2(),ui::strings::advancedPenetration);
+            ui::clearPage(display.getU8g2(), true, true);
+            ui::setHeader(display.getU8g2(),sp);
             currentSettings.speed.value = speedValue;
             ui::drawShape::settingBar(display.getU8g2(), "",
                                       currentSettings.speed.value, 0, 0,
@@ -307,6 +340,7 @@ namespace advanced_penetration {
     static void startAdvancedPenetrationUITask(void* pvParameters) {
         encoder.setAcceleration(0);
         u8_t lastEncoder = 0;
+        showHeaderIcons = false;
 
         while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
                stateMachine->is("advancedPenetration.presets"_s)) {

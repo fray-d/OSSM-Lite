@@ -34,11 +34,9 @@ namespace ui {
     }
 
     void setHeader(u8g2_t* u8g2, const char* text) {
-        std::string upper(text);
-        for (auto& c : upper) c = toupper(c);
         clearHeader(u8g2);
         u8g2_SetFont(u8g2, Font::header);
-        u8g2_DrawStr(u8g2, 0, HEADER_HEIGHT, upper.c_str());
+        u8g2_DrawStr(u8g2, 0, HEADER_HEIGHT, text);
         u8g2_SetMaxClipWindow(u8g2);
     }
 
