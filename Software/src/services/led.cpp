@@ -120,7 +120,6 @@ static bool rainbowActive = false;
 static bool fadeActive = false;
 static bool connectedDimmed = false;  // New flag for dimmed connected state
 static uint8_t fadeValue = 255;
-static unsigned long lastPulseTime = 0;
 static int pulseCount = 0;
 static bool pulseState = false;
 

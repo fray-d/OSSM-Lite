@@ -13,6 +13,7 @@
 #include "ossm/pages/update.h"
 #include "ossm/state/state.h"
 #include "structs/Version.h"
+#include "Strings.h"
 
 // NOTE: logs in updateTask are ESP_LOGW so they are visible in the production
 // build (CORE_DEBUG_LEVEL=2 strips ESP_LOGI/D). The free-heap values are the
@@ -22,38 +23,38 @@
 // validation (never setInsecure — that masks TLS-memory issues in prod).
 // Returns the HTTP status code, or -1 on transport failure; the response body
 // is written to *out when provided.
-static int otaHttpGet(const String &url, String *out, int timeoutMs) {
-    esp_http_client_config_t config = {};
-    config.url = url.c_str();
-    config.timeout_ms = timeoutMs;
-    config.crt_bundle_attach = esp_crt_bundle_attach;
+// static int otaHttpGet(const String &url, String *out, int timeoutMs) {
+//     esp_http_client_config_t config = {};
+//     config.url = url.c_str();
+//     config.timeout_ms = timeoutMs;
+//     config.crt_bundle_attach = esp_crt_bundle_attach;
 
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    if (client == nullptr) {
-        return -1;
-    }
+//     esp_http_client_handle_t client = esp_http_client_init(&config);
+//     if (client == nullptr) {
+//         return -1;
+//     }
 
-    int status = -1;
-    if (esp_http_client_open(client, 0) == ESP_OK) {
-        esp_http_client_fetch_headers(client);
-        status = esp_http_client_get_status_code(client);
+//     int status = -1;
+//     if (esp_http_client_open(client, 0) == ESP_OK) {
+//         esp_http_client_fetch_headers(client);
+//         status = esp_http_client_get_status_code(client);
 
-        if (out != nullptr) {
-            out->clear();
-            char buffer[256];
-            int read = 0;
-            while ((read = esp_http_client_read(client, buffer,
-                                                sizeof(buffer) - 1)) > 0) {
-                buffer[read] = '\0';
-                *out += buffer;
-            }
-        }
-        esp_http_client_close(client);
-    }
+//         if (out != nullptr) {
+//             out->clear();
+//             char buffer[256];
+//             int read = 0;
+//             while ((read = esp_http_client_read(client, buffer,
+//                                                 sizeof(buffer) - 1)) > 0) {
+//                 buffer[read] = '\0';
+//                 *out += buffer;
+//             }
+//         }
+//         esp_http_client_close(client);
+//     }
 
-    esp_http_client_cleanup(client);
-    return status;
-}
+//     esp_http_client_cleanup(client);
+//     return status;
+// }
 
 // Fetch the published version for the production channel. Returns currentVersion
 // on any failure (incl. a TLS allocation failure under low heap) so a flaky
@@ -83,15 +84,15 @@ static int otaHttpGet(const String &url, String *out, int timeoutMs) {
 // }
 
 // Strictly-newer 3-way semver comparison (only updates upward → no downgrades).
-static bool isNewer(const Version &remote) {
-    if (remote.major != currentVersion.major) {
-        return remote.major > currentVersion.major;
-    }
-    if (remote.minor != currentVersion.minor) {
-        return remote.minor > currentVersion.minor;
-    }
-    return remote.patch > currentVersion.patch;
-}
+// static bool isNewer(const Version &remote) {
+//     if (remote.major != currentVersion.major) {
+//         return remote.major > currentVersion.major;
+//     }
+//     if (remote.minor != currentVersion.minor) {
+//         return remote.minor > currentVersion.minor;
+//     }
+//     return remote.patch > currentVersion.patch;
+// }
 
 // The whole update runs here, on its own task with a TLS-sized stack (mirrors
 // pairingTask). On a successful OTA the device reboots; otherwise it posts
@@ -116,7 +117,7 @@ static void updateTask(void *pvParameters) {
 
     pages::drawUpdating();
 
-    String url = String(OtaConfig::OTA_BASE_URL) + OtaConfig::FIRMWARE_BIN;
+    String url = String(ui::strings::helpQr) + OtaConfig::FIRMWARE_BIN;
     ESP_LOGW("UPDATE", "Starting OTA from %s (free heap: %lu, largest block: %lu)",
              url.c_str(), (unsigned long)esp_get_free_heap_size(),
              (unsigned long)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));

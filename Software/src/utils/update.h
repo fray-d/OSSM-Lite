@@ -13,8 +13,6 @@
 // ossmStartUpdate in update.cpp), because a TLS handshake needs far more stack
 // than the button task — where the state machine runs — has available.
 namespace OtaConfig {
-    static const char *OTA_BASE_URL = "https://fray-d.github.io/OSSM-hardware/";
-  //  static const char *VERSION_JSON = "version.json";
     static const char *FIRMWARE_BIN = "firmware.bin";
 }  // namespace OtaConfig
 
