@@ -25,7 +25,6 @@ static const uint8_t* small = u8g2_font_6x10_tf;
 static const uint8_t* header = u8g2_font_spleen5x8_me;
 static const uint8_t* title = u8g2_font_maniac_tf;
 static const uint8_t* medium = u8g2_font_helvB10_tf;
-static const uint8_t* pairingCode = u8g2_font_helvB14_tf;
 static const uint8_t* icons = u8g2_font_siji_t_6x10;
 }  // namespace Font
 

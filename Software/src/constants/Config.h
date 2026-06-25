@@ -1,13 +1,9 @@
 #ifndef OSSM_SOFTWARE_CONFIG_H
 #define OSSM_SOFTWARE_CONFIG_H
 
-#include <U8g2lib.h>
-
 /**
     Default Config for OSSM - Reference board users should tweak UserConfig to
    match their personal build.
-
-    //TODO: restore user overrides with a clever null coalescing operator
 */
 namespace Config {
 
@@ -17,7 +13,8 @@ namespace Config {
     namespace Driver {
         // Max speed of the device
         constexpr float maxRPM = 1500.0f;
-        // Number of teeth the pulley that is attached to the servo/stepper shaft has.
+        // Number of teeth the pulley that is attached to the servo/stepper
+        // shaft has.
         constexpr float pulleyToothCount = 20.0f;
         // Set to your belt pitch (Distance between two teeth on the belt) (E.g.
         // GT2 belt has 2mm tooth pitch)
@@ -27,11 +24,13 @@ namespace Config {
         // Top acceleration of the device in mm/s/s
         constexpr float maxAcceleration = 50000.0f;
         // Number of steps to move the arm 1mm
-        constexpr float maxSpeedMmPerSecond = maxRPM / 60.0 * pulleyToothCount * beltPitchMm;
+        constexpr float maxSpeedMmPerSecond =
+            maxRPM / 60.0 * pulleyToothCount * beltPitchMm;
         // This should match the step/rev of your stepper or servo.
         // N.b. the iHSV57 has a table on the side for setting the DIP switches
         // to your preference.
-        constexpr float stepsPerMM = motorStepPerRevolution / (pulleyToothCount * beltPitchMm);
+        constexpr float stepsPerMM =
+            motorStepPerRevolution / (pulleyToothCount * beltPitchMm);
         // This is the measured current that use to infer when the device has
         // reached the end of its stroke. during "Homing".
         constexpr float sensorlessCurrentLimit = 6.0f;
@@ -75,16 +74,6 @@ namespace Config {
         // there is NO security other than knowing this name, make this unique
         // to avoid collisions with other users
         constexpr char *ossmId = nullptr;
-    }
-
-    /**
-        Font Config. These must be the "f" variants of the font to support other
-       languages.
-*/
-    namespace Font {
-        static auto bold = u8g2_font_helvB08_tf;
-        static auto base = u8g2_font_helvR08_tf;
-        static auto small = u8g2_font_6x10_tf;
     }
 
     /**

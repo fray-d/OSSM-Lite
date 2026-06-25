@@ -47,25 +47,6 @@ namespace ui {
             .bottomText = longPressReset,
         };
 
-        static const TextPage pairingPage = {
-            .title = pairingTitle,
-            .body = pairingBody,
-            .bottomText = skip,
-        };
-
-        static const TextPage pairingConnectingPage = {
-            .title = pairing,
-            .body = pairingConnecting,
-            .bottomText = skip,
-
-        };
-
-        static const TextPage pairingSuccessPage = {
-            .title = pairedTitle,
-            .body = pairedBody,
-            .bottomText = skip,
-        };
-
     }  // namespace pages
 }  // namespace ui
 

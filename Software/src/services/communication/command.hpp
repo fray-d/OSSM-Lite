@@ -1,18 +1,14 @@
 #ifndef OSSM_COMMUNICATION_COMMAND_HPP
 #define OSSM_COMMUNICATION_COMMAND_HPP
 
-#include <queue>
+// #include <queue>
 #include <regex>
 
-#include "Arduino.h"
-#include "NimBLECharacteristic.h"
-#include "NimBLEService.h"
-#include "NimBLEUUID.h"
 #include "queue.h"
 #include "services/led.h"
 
 static const std::regex commandRegex(
-    R"(go:(simplePenetration|strokeEngine|streaming|menu)|set:(speed|stroke|depth|sensation|buffer|pattern):\d+|set:wifi:[^|]+\|.+|stream:\d+:\d+)");
+    R"(go:(strokeEngine|streaming|menu)|set:(speed|stroke|depth|sensation|buffer|pattern):\d+|set:wifi:[^|]+\|.+|stream:\d+:\d+)");
 
 /** Handler class for characteristic actions */
 class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
@@ -45,8 +41,7 @@ class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline chrCallbacks;
 
-inline NimBLECharacteristic* initCommandCharacteristic(NimBLEService* pService,
-                                                NimBLEUUID uuid) {
+inline NimBLECharacteristic* initCommandCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
     // Command characteristic (writable, readable)
     NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR);

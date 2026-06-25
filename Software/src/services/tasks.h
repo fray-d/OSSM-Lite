@@ -15,7 +15,6 @@ namespace Tasks {
 
     extern TaskHandle_t runHomingTaskH;
     extern TaskHandle_t runAdvancedPenetrationTaskH;
-    extern TaskHandle_t runSimplePenetrationTaskH;
     extern TaskHandle_t runStrokeEngineTaskH;
 
     // Constants can stay in the header

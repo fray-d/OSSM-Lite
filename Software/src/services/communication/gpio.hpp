@@ -3,11 +3,6 @@
 
 #include <regex>
 
-#include "Arduino.h"
-#include "NimBLECharacteristic.h"
-#include "NimBLEService.h"
-#include "NimBLEUUID.h"
-#include "constants/LogTags.h"
 #include "constants/Pins.h"
 
 // Simple helper to map 1-4 to actual board pins
@@ -38,7 +33,7 @@ class GPIOCallbacks : public NimBLECharacteristicCallbacks {
 
         if (!std::regex_match(raw, rx)) {
             static const char err[] PROGMEM = "error:invalid_format";
-            ESP_LOGW(NIMBLE_TAG, "GPIO write invalid format: %s", raw.c_str());
+            ESP_LOGW("NIMBLE", "GPIO write invalid format: %s", raw.c_str());
             pCharacteristic->setValue(String(FPSTR(err)));
             return;
         }
@@ -51,7 +46,7 @@ class GPIOCallbacks : public NimBLECharacteristicCallbacks {
         int targetPin = mapGpioIndexToPin(index);
         if (targetPin < 0) {
             static const char err[] PROGMEM = "error:pin_out_of_range";
-            ESP_LOGW(NIMBLE_TAG, "GPIO write out of range index: %d", index);
+            ESP_LOGW("NIMBLE", "GPIO write out of range index: %d", index);
             pCharacteristic->setValue(String(FPSTR(err)));
             return;
         }
@@ -59,7 +54,7 @@ class GPIOCallbacks : public NimBLECharacteristicCallbacks {
         int level = (stateStr == "high" || stateStr == "1") ? HIGH : LOW;
         digitalWrite(targetPin, level);
 
-        // ESP_LOGD(NIMBLE_TAG, "GPIO set pin%d (GPIO %d) to %s", index,
+        // ESP_LOGD("NIMBLE", "GPIO set pin%d (GPIO %d) to %s", index,
         // targetPin,
         //          level == HIGH ? "HIGH" : "LOW");
 
@@ -77,8 +72,7 @@ class GPIOCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline gpioCallbacks;
 
-inline NimBLECharacteristic* initGPIOCharacteristic(NimBLEService* pService,
-                                             NimBLEUUID uuid) {
+inline NimBLECharacteristic* initGPIOCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
     NimBLECharacteristic* pChar = pService->createCharacteristic(
         uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
 

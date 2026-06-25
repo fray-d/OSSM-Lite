@@ -1,19 +1,10 @@
 #ifndef OSSM_NIMBLE_H
 #define OSSM_NIMBLE_H
 
-#include <NimBLEDevice.h>
 #include <NimBLEServer.h>
-#include <esp_log.h>
+#include <NimBLEDevice.h>
 
 #define SERVICE_UUID "522b443a-4f53-534d-0001-420badbabe69"
-
-// **********************************************************
-// SYSTEM CHARACTERISTICS
-// - Range: 0002-0FFF
-// **********************************************************
-// Pairing characteristic: read device info, write WiFi credentials.
-// Used by the dashboard BLE one-click pairing flow.
-#define CHARACTERISTIC_PAIRING_UUID "522b443a-4f53-534d-0010-420badbabe69"
 
 // **********************************************************
 // Command and Configuration Characteristics

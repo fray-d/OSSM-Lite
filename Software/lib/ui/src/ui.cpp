@@ -202,8 +202,11 @@ namespace ui {
     }
 
     void drawHelloFrame(u8g2_t* u8g2, const HelloFrame& frame,
-                         const char* version) {
+                         const char* version, const char* header) {
         clearPage(u8g2, true, true);
+        if (header) {
+            setHeader(u8g2, header);
+        }
         u8g2_SetMaxClipWindow(u8g2);
         u8g2_SetFont(u8g2, Font::title);
         int startX = 24;
@@ -212,8 +215,10 @@ namespace ui {
         u8g2_DrawUTF8(u8g2, startX + letterSpacing, frame.heights[1], "S");
         u8g2_DrawUTF8(u8g2, startX + letterSpacing * 2, frame.heights[2], "S");
         u8g2_DrawUTF8(u8g2, startX + letterSpacing * 3, frame.heights[3], "M");
+        u8g2_SetFont(u8g2, Font::small);
+        char* lite = "LITE";
+        u8g2_DrawUTF8(u8g2, 82, 55, lite);
         if (version) {
-            u8g2_SetFont(u8g2, Font::small);
             u8g2_DrawUTF8(u8g2, 1, SCREEN_HEIGHT - 1, version);
         }
     }
@@ -266,12 +271,12 @@ namespace ui {
             data.minLabel ? data.minLabel : strings::min;
 
         if (data.isStrokeEngine) {
-            if (data.activeControl == PlayControl::SENSATION) {
+            if (data.activeControl == PlayControls::SENSATION) {
                 drawShape::settingBar(u8g2, strings::sensation, data.sensation,
                                       128, 0, RIGHT_ALIGNED, 7);
                 drawShape::rangeBarSmall(u8g2, data.minPosition, data.maxPosition, 113);
             } else {
-                bool maxActive = (data.activeControl == PlayControl::MAX_POSITION);
+                bool maxActive = (data.activeControl == PlayControls::MAX_POSITION);
                 const char* rangeLabel = maxActive ? strings::max : minLabel;
                 drawShape::settingBarSmall(u8g2, data.sensation, 125);
                 drawShape::rangeBar(u8g2, rangeLabel, data.minPosition,
@@ -280,21 +285,21 @@ namespace ui {
             }
         } else if (data.isStreaming) {
             switch (data.activeControl) {
-                case PlayControl::BUFFER:
+                case PlayControls::BUFFER:
                     drawShape::settingBar(u8g2, strings::buffer, data.buffer,
                                           128, 0, RIGHT_ALIGNED, 15);
                     drawShape::settingBarSmall(u8g2, data.sensation, 113);
                     drawShape::settingBarSmall(u8g2, data.maxPosition, 108);
                     drawShape::settingBarSmall(u8g2, data.minPosition, 103);
                     break;
-                case PlayControl::MIN_POSITION:
+                case PlayControls::MIN_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
                     drawShape::settingBarSmall(u8g2, data.maxPosition, 115);
                     drawShape::settingBar(u8g2, minLabel, data.minPosition, 113,
                                           0, RIGHT_ALIGNED);
                     break;
-                case PlayControl::SENSATION: {
+                case PlayControls::SENSATION: {
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBar(u8g2, strings::max, data.sensation,
                                           123, 0, RIGHT_ALIGNED, 10);
@@ -306,7 +311,7 @@ namespace ui {
                     drawShape::settingBarSmall(u8g2, data.minPosition, 103);
                     break;
                 }
-                case PlayControl::MAX_POSITION:
+                case PlayControls::MAX_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
                     drawShape::settingBar(u8g2, strings::max, data.maxPosition, 118,
@@ -322,14 +327,14 @@ namespace ui {
         short lh3 = 56;
         short lh4 = 64;
 
-        if (!data.isStrokeEngine && !data.isStreaming) {
+        if (!data.isStreaming) {
             u8g2_SetFont(u8g2, Font::small);
             char countStr[16];
             snprintf(countStr, sizeof(countStr), "# %d", data.strokeCount);
             u8g2_DrawUTF8(u8g2, 14, lh4, countStr);
         }
 
-        if (!data.isStrokeEngine && !data.isStreaming && data.distanceStr) {
+        if (data.isStreaming && data.distanceStr) {
             int sw = u8g2_GetUTF8Width(u8g2, data.distanceStr);
             u8g2_DrawUTF8(u8g2, 104 - sw, lh3, data.distanceStr);
         }

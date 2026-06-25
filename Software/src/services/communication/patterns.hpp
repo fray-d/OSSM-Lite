@@ -4,7 +4,6 @@
 #include "ArduinoJson.h"
 #include "NimBLEService.h"
 #include "Strings.h"
-#include "constants/LogTags.h"
 #include "esp_log.h"
 
 inline NimBLECharacteristic* initPatternsCharacteristic(NimBLEService* pService,
@@ -60,7 +59,7 @@ class PatternDataCallbacks : public NimBLECharacteristicCallbacks {
         // Set the characteristic value to the description
         pCharacteristic->setValue(description);
 
-        ESP_LOGD(NIMBLE_TAG,
+        ESP_LOGD("Pattern Callback",
                  "Pattern description requested: index=%d, validIndex=%d, "
                  "description=%s",
                  patternIndex, validIndex, description);
@@ -70,7 +69,7 @@ class PatternDataCallbacks : public NimBLECharacteristicCallbacks {
                 NimBLEConnInfo& connInfo) override {
         // Return the current value (set by onWrite)
         std::string value = pCharacteristic->getValue();
-        ESP_LOGD(NIMBLE_TAG, "Pattern description read: %s", value.c_str());
+        ESP_LOGD("Pattern Callback", "Pattern description read: %s", value.c_str());
     }
 } inline patternDataCallbacks;
 

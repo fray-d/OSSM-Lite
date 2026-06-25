@@ -1,11 +1,6 @@
 #ifndef OSSM_SOFTWARE_COMMANDS_H
 #define OSSM_SOFTWARE_COMMANDS_H
 
-#include <regex>
-#include <string>
-
-#include "Arduino.h"
-
 // These are BLE commands that we will process and send to the state machine.
 // The state machine will execute these commands if appropiate
 
@@ -17,7 +12,6 @@ namespace Prefix {
 enum class Commands {
     // GO TO
     goToStrokeEngine,
-    goToSimplePenetration,
     goToStreaming,
     goToMenu,
 
@@ -147,8 +141,6 @@ inline WiFiCredentials parseWiFiCommand(const String& str) {
 inline CommandValue commandFromString(const String& str) {
     if (str.startsWith("go:")) {
         if (str == "go:strokeEngine") return {Commands::goToStrokeEngine, 0, 0};
-        if (str == "go:simplePenetration")
-            return {Commands::goToSimplePenetration, 0, 0};
         if (str == "go:streaming") return {Commands::goToStreaming, 0, 0};
         if (str == "go:menu") return {Commands::goToMenu, 0, 0};
         return {Commands::goToMenu, 0, 0};  // Default

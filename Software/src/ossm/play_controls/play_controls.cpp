@@ -1,21 +1,13 @@
 #include "play_controls.h"
 
-#include "Strings.h"
-#include "constants/Menu.h"
-#include "constants/Pins.h"
 #include "services/board.h"
 #include "ossm/state/ble.h"
-#include "ossm/state/menu.h"
-#include "ossm/state/session.h"
 #include "ossm/state/settings.h"
 #include "ossm/state/state.h"
-#include "services/display.h"
 #include "services/encoder.h"
 #include "services/tasks.h"
-#include "structs/SettingPercents.h"
 #include "ui.h"
 #include "utils/analog.h"
-#include "utils/format.h"
 #include "components/HeaderBar.h"
 
 namespace sml = boost::sml;
@@ -23,42 +15,30 @@ using namespace sml;
 
 namespace play_controls {
 
-static ui::PlayControl toUiPlayControl(PlayControls pc) {
-    switch (pc) {
-        case PlayControls::MIN_POSITION: return ui::PlayControl::MIN_POSITION;
-        case PlayControls::SENSATION:    return ui::PlayControl::SENSATION;
-        case PlayControls::MAX_POSITION: return ui::PlayControl::MAX_POSITION;
-        case PlayControls::BUFFER:       return ui::PlayControl::BUFFER;
-    }
-    return ui::PlayControl::MAX_POSITION;
-}
-
 static void drawPlayControlsTask(void *pvParameters) {
     encoder.setAcceleration(10);
     encoder.setBoundaries(0, 100, false);
 
-    switch (session.playControl) {
-        case PlayControls::MIN_POSITION:
+    switch (settings.playControl) {
+        case ui::PlayControls::MIN_POSITION:
             encoder.setEncoderValue(settings.minPosition);
             break;
-        case PlayControls::SENSATION:
+        case ui::PlayControls::SENSATION:
             encoder.setEncoderValue(settings.sensation);
             break;
-        case PlayControls::MAX_POSITION:
+        case ui::PlayControls::MAX_POSITION:
             encoder.setEncoderValue(settings.maxPosition);
             break;
-        case PlayControls::BUFFER:
+        case ui::PlayControls::BUFFER:
             encoder.setEncoderValue(settings.buffer);
             break;
     }
 
-    SettingPercents next = {0, 0, 0, 0, 0};
+    SettingPercents next = {0, 0, 0, 0, 0, 0, 0};
     unsigned long displayLastUpdated = 0;
 
     auto isInCorrectState = []() {
-        return stateMachine->is("simplePenetration"_s) ||
-               stateMachine->is("simplePenetration.idle"_s) ||
-               stateMachine->is("strokeEngine"_s) ||
+        return stateMachine->is("strokeEngine"_s) ||
                stateMachine->is("strokeEngine.idle"_s) ||
                stateMachine->is("streaming"_s) ||
                stateMachine->is("streaming.idle"_s);
@@ -85,15 +65,15 @@ static void drawPlayControlsTask(void *pvParameters) {
 
         if (abs(next.speedKnob - settings.speedKnob) > 2 &&
             next.speedKnob < settings.speed) {
-            ::resetLastSpeedCommandWasFromBLE();
+            resetLastSpeedCommandWasFromBLE();
         }
 
         next.speed = next.speedKnob;
-        if (settings.speedBLE.has_value()) {
+        if (settings.speedBLE > 0) {
             if (USE_SPEED_KNOB_AS_LIMIT) {
-                next.speed = next.speedKnob * settings.speedBLE.value() / 100;
+                next.speed = next.speedKnob * settings.speedBLE / 100;
             } else if (::wasLastSpeedCommandFromBLE()) {
-                next.speed = settings.speedBLE.value();
+                next.speed = settings.speedBLE;
             }
         }
 
@@ -109,8 +89,8 @@ static void drawPlayControlsTask(void *pvParameters) {
         settings.speedKnob = next.speedKnob;
         encoderValue = encoder.readEncoder();
 
-        switch (session.playControl) {
-            case PlayControls::MIN_POSITION:
+        switch (settings.playControl) {
+            case ui::PlayControls::MIN_POSITION:
                 next.minPosition = encoderValue;
                 if (next.minPosition > settings.maxPosition) {
                     next.minPosition = settings.maxPosition;
@@ -120,13 +100,13 @@ static void drawPlayControlsTask(void *pvParameters) {
                     shouldUpdateDisplay || next.minPosition - settings.minPosition >= 1;
                 settings.minPosition = next.minPosition;
                 break;
-            case PlayControls::SENSATION:
+            case ui::PlayControls::SENSATION:
                 next.sensation = encoderValue;
                 shouldUpdateDisplay =
                     shouldUpdateDisplay || next.sensation - settings.sensation >= 1;
                 settings.sensation = next.sensation;
                 break;
-            case PlayControls::MAX_POSITION:
+            case ui::PlayControls::MAX_POSITION:
                 next.maxPosition = encoderValue;
                 if (next.maxPosition < settings.minPosition) {
                     next.maxPosition = settings.minPosition;
@@ -136,7 +116,7 @@ static void drawPlayControlsTask(void *pvParameters) {
                     shouldUpdateDisplay || next.maxPosition - settings.maxPosition >= 1;
                 settings.maxPosition = next.maxPosition;
                 break;
-            case PlayControls::BUFFER:
+            case ui::PlayControls::BUFFER:
                 next.buffer = encoderValue;
                 shouldUpdateDisplay =
                     shouldUpdateDisplay || next.buffer - settings.buffer >= 1;
@@ -155,24 +135,13 @@ static void drawPlayControlsTask(void *pvParameters) {
         displayLastUpdated = millis();
 
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
-            const char *headerText;
+            const char *headerText = ui::strings::streaming;
             if (isStrokeEngine) {
-                headerText =
-                    ui::strings::strokeEngineNames[(int)settings.pattern];
-            } else if (isStreaming) {
-                headerText = ui::strings::streaming;
-            } else {
-                headerText = ui::strings::simplePenetration;
+                headerText = ui::strings::strokeEngineNames[(int)settings.pattern];
             }
 
             static String distStr;
             static String timeStr;
-            if (!isStrokeEngine && !isStreaming) {
-                distStr = formatDistance(session.distanceMeters);
-            }
-            if (!isStreaming) {
-                timeStr = formatTime(displayLastUpdated - session.startTime);
-            }
 
             ui::PlayControlsData data{};
             data.speed = next.speed;
@@ -180,19 +149,13 @@ static void drawPlayControlsTask(void *pvParameters) {
             data.sensation = settings.sensation;
             data.maxPosition = settings.maxPosition;
             data.buffer = settings.buffer;
-            data.activeControl = toUiPlayControl(session.playControl);
-            data.strokeCount = session.strokeCount;
-            data.distanceMeters = session.distanceMeters;
-            data.elapsedMs = displayLastUpdated - session.startTime;
+            data.activeControl = settings.playControl;
             data.pattern = (int)settings.pattern;
             data.isStrokeEngine = isStrokeEngine;
             data.isStreaming = isStreaming;
             data.headerText = headerText;
             data.speedLabel = ui::strings::speed;
             data.minLabel = ui::strings::min;
-            data.distanceStr =
-                (!isStrokeEngine && !isStreaming) ? distStr.c_str() : nullptr;
-            data.timeStr = !isStreaming ? timeStr.c_str() : nullptr;
 
             ui::drawPlayControls(display.getU8g2(), data);
             refreshPage(true, true);

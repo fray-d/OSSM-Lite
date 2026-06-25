@@ -9,11 +9,9 @@
 #include <esp_system.h>
 
 #include "ArduinoJson.h"
-#include "constants/LogTags.h"
 #include "ossm/Events.h"
 #include "ossm/pages/update.h"
 #include "ossm/state/state.h"
-#include "services/communication/mqtt.h"
 #include "structs/Version.h"
 
 // NOTE: logs in updateTask are ESP_LOGW so they are visible in the production
@@ -60,30 +58,29 @@ static int otaHttpGet(const String &url, String *out, int timeoutMs) {
 // Fetch the published version for the production channel. Returns currentVersion
 // on any failure (incl. a TLS allocation failure under low heap) so a flaky
 // network never triggers a spurious update or a crash.
-static Version getRemoteVersion() {
-    String url = String(OtaConfig::OTA_BASE_URL) + OtaConfig::PRODUCTION_PATH +
-                 OtaConfig::VERSION_JSON;
+// static Version getRemoteVersion() {
+//     String url = String(OtaConfig::OTA_BASE_URL) + OtaConfig::VERSION_JSON;
 
-    String payload;
-    int status = otaHttpGet(url, &payload, 15000);
-    if (status != 200) {
-        ESP_LOGW(UPDATE_TAG, "Update check failed (HTTP %d)", status);
-        return currentVersion;
-    }
+//     String payload;
+//     int status = otaHttpGet(url, &payload, 15000);
+//     if (status != 200) {
+//         ESP_LOGW("UPDATE", "Update check failed (HTTP %d)", status);
+//         return currentVersion;
+//     }
 
-    JsonDocument version;
-    DeserializationError error = deserializeJson(version, payload);
-    if (error) {
-        ESP_LOGW(UPDATE_TAG, "Failed to parse version.json: %s", error.c_str());
-        return currentVersion;
-    }
+//     JsonDocument version;
+//     DeserializationError error = deserializeJson(version, payload);
+//     if (error) {
+//         ESP_LOGW("UPDATE", "Failed to parse version.json: %s", error.c_str());
+//         return currentVersion;
+//     }
 
-    return {
-        .major = version["major"] | currentVersion.major,
-        .minor = version["minor"] | currentVersion.minor,
-        .patch = version["patch"] | currentVersion.patch,
-    };
-}
+//     return {
+//         .major = version["major"] | currentVersion.major,
+//         .minor = version["minor"] | currentVersion.minor,
+//         .patch = version["patch"] | currentVersion.patch,
+//     };
+// }
 
 // Strictly-newer 3-way semver comparison (only updates upward → no downgrades).
 static bool isNewer(const Version &remote) {
@@ -102,38 +99,25 @@ static bool isNewer(const Version &remote) {
 // self-deletes. BLE is intentionally left up — this pass measures whether TLS
 // fits alongside it. If TLS can't allocate, it fails gracefully (no crash).
 static void updateTask(void *pvParameters) {
-    ESP_LOGW(UPDATE_TAG, "Update task started (free heap: %lu, largest block: %lu)",
+    ESP_LOGW("UPDATE", "Update task started (free heap: %lu, largest block: %lu)",
              (unsigned long)esp_get_free_heap_size(),
              (unsigned long)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
 
-    // Free MQTT's TLS memory and stop its competing reconnect retries for the
-    // duration of the update. On success the reboot brings MQTT back fresh; on
-    // the no-update / failure paths we restart it before returning.
-    bool mqttStopped = false;
-    if (mqttClient != nullptr) {
-        esp_mqtt_client_stop(mqttClient);
-        mqttStopped = true;
-    }
+    // Version remote = getRemoteVersion();
+    // ESP_LOGW("UPDATE", "Version check done (free heap: %lu)",
+    //          (unsigned long)esp_get_free_heap_size());
 
-    Version remote = getRemoteVersion();
-    ESP_LOGW(UPDATE_TAG, "Version check done (free heap: %lu)",
-             (unsigned long)esp_get_free_heap_size());
-
-    if (!isNewer(remote)) {
-        ESP_LOGW(UPDATE_TAG, "No newer version available");
-        if (mqttStopped) {
-            esp_mqtt_client_start(mqttClient);
-        }
-        stateMachine->process_event(UpdateUnavailable{});
-        vTaskDelete(nullptr);
-        return;
-    }
+    // if (!isNewer(remote)) {
+    //     ESP_LOGW("UPDATE", "No newer version available");
+    //     stateMachine->process_event(UpdateUnavailable{});
+    //     vTaskDelete(nullptr);
+    //     return;
+    // }
 
     pages::drawUpdating();
 
-    String url = String(OtaConfig::OTA_BASE_URL) + OtaConfig::PRODUCTION_PATH +
-                 OtaConfig::FIRMWARE_BIN;
-    ESP_LOGW(UPDATE_TAG, "Starting OTA from %s (free heap: %lu, largest block: %lu)",
+    String url = String(OtaConfig::OTA_BASE_URL) + OtaConfig::FIRMWARE_BIN;
+    ESP_LOGW("UPDATE", "Starting OTA from %s (free heap: %lu, largest block: %lu)",
              url.c_str(), (unsigned long)esp_get_free_heap_size(),
              (unsigned long)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
 
@@ -146,14 +130,11 @@ static void updateTask(void *pvParameters) {
 
     esp_err_t ret = esp_https_ota(&httpConfig);
     if (ret == ESP_OK) {
-        ESP_LOGW(UPDATE_TAG, "OTA succeeded, restarting...");
+        ESP_LOGW("UPDATE", "OTA succeeded, restarting...");
         esp_restart();
     }
 
-    ESP_LOGE(UPDATE_TAG, "OTA failed: %s", esp_err_to_name(ret));
-    if (mqttStopped) {
-        esp_mqtt_client_start(mqttClient);
-    }
+    ESP_LOGE("UPDATE", "OTA failed: %s", esp_err_to_name(ret));
     stateMachine->process_event(UpdateUnavailable{});
     vTaskDelete(nullptr);
 }

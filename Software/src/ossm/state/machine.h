@@ -1,12 +1,11 @@
 #ifndef OSSM_STATE_MACHINE_H
 #define OSSM_STATE_MACHINE_H
 
-#include "boost/sml.hpp"
-
-#include "actions.h"
-#include "guards.h"
-#include "../Events.h"
 #include "../../utils/update.h"
+#include "../Events.h"
+#include "actions.h"
+#include "boost/sml.hpp"
+#include "guards.h"
 
 namespace sml = boost::sml;
 
@@ -17,13 +16,12 @@ struct OSSMStateMachine {
         using namespace guards;
 
         return make_transition_table(
-        // clang-format off
+            // clang-format off
             *"idle"_s + done / drawHello = "homing"_s,
 
             "homing"_s / startHoming = "homing.run"_s,
             "homing.run"_s + error = "error"_s,
             "homing.run"_s + done[isFirstHomed] / startHoming = "measure.run"_s,
-            "homing.run"_s + done[(isOption(Menu::SimplePenetration))] / setHomed = "simplePenetration"_s,
             "homing.run"_s + done[(isOption(Menu::AdvancedPenetration))] / setHomed = "advancedPenetration"_s,
             "homing.run"_s + done[(isOption(Menu::StrokeEngine))] / setHomed = "strokeEngine"_s,
             "homing.run"_s + done[(isOption(Menu::Streaming))] / setHomed = "streaming"_s,
@@ -32,24 +30,13 @@ struct OSSMStateMachine {
             "measure.run"_s + done / setHomed = "menu"_s,
 
             "menu"_s / (drawMenu) = "menu.idle"_s,
-            "menu.idle"_s + buttonPress[(isOption(Menu::SimplePenetration))] = "simplePenetration"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::StrokeEngine))] = "strokeEngine"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Streaming))] = "streaming"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::AdvancedPenetration))] = "advancedPenetration"_s,
-            "menu.idle"_s + buttonPress[(isOption(Menu::Pairing)) && isOnline] = "pairing"_s,
-            "menu.idle"_s + buttonPress[(isOption(Menu::Pairing)) && !isOnline] = "pairing.wifi"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::UpdateOSSM))] = "update"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::WiFiSetup))] = "wifi"_s,
             "menu.idle"_s + buttonPress[isOption(Menu::Help)] = "help"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Restart))] = "restart"_s,
-
-            "simplePenetration"_s [isNotHomed] = "homing"_s,
-            "simplePenetration"_s [isPreflightSafe] / (resetSettingsSimplePen, drawPlayControls, startSimplePenetration) = "simplePenetration.idle"_s,
-            "simplePenetration"_s / drawPreflight = "simplePenetration.preflight"_s,
-            "simplePenetration.preflight"_s + done / (resetSettingsSimplePen, drawPlayControls, startSimplePenetration) = "simplePenetration.idle"_s,
-            "simplePenetration.preflight"_s + longPress / emergencyStop = "menu"_s,
-            "simplePenetration.idle"_s + longPress / emergencyStop = "menu"_s,
-            "simplePenetration.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
 
             "advancedPenetration"_s [isNotHomed] = "homing"_s,
             "advancedPenetration"_s [isPreflightSafe] / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
@@ -88,21 +75,6 @@ struct OSSMStateMachine {
             "streaming.idle"_s + longPress / emergencyStop = "menu"_s,
             "streaming.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
             "streaming.idle"_s + buttonPress / incrementControlStreaming = "streaming.idle"_s,
-
-            "pairing"_s / checkPairing = "pairing.idle"_s,
-            "pairing.idle"_s + done = "pairing.success"_s,
-            "pairing.idle"_s + buttonPress = "menu"_s,
-            "pairing.idle"_s + longPress = "menu"_s,
-            "pairing.idle"_s + error = "menu"_s,
-
-            "pairing.success"_s / drawPairingSuccess = "pairing.success.idle"_s,
-            "pairing.success.idle"_s + buttonPress = "menu"_s,
-            "pairing.success.idle"_s + longPress = "menu"_s,
-
-            "pairing.wifi"_s / drawWiFi = "pairing.wifi.idle"_s,
-            "pairing.wifi.idle"_s + done = "pairing"_s,
-            "pairing.wifi.idle"_s + buttonPress = "menu"_s,
-            "pairing.wifi.idle"_s + longPress = "menu"_s,
 
             "update"_s [isOnline] / (drawUpdate, startUpdate) = "update.checking"_s,
             "update"_s = "wifi"_s,

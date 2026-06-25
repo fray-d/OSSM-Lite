@@ -1,37 +1,30 @@
 #include "Arduino.h"
 #include "OneButton.h"
 #include "components/HeaderBar.h"
-#include "esp_log.h"
-#include "ossm/Events.h"
-#include "ossm/OSSM.h"
 #include "ossm/state/state.h"
 #include "services/board.h"
-#include "services/communication/mqtt.h"
 #include "services/communication/nimble.h"
 #include "services/display.h"
-#include "services/encoder.h"
 #include "services/led.h"
-#include "services/stepper.h"
 #include "services/wm.h"
 
 namespace sml = boost::sml;
 using namespace sml;
 
 /*
- *  ██████╗ ███████╗███████╗███╗   ███╗
- * ██╔═══██╗██╔════╝██╔════╝████╗ ████║
- * ██║   ██║███████╗███████╗██╔████╔██║
- * ██║   ██║╚════██║╚════██║██║╚██╔╝██║
- * ╚██████╔╝███████║███████║██║ ╚═╝ ██║
- *  ╚═════╝ ╚══════╝╚══════╝╚═╝     ╚═╝
+ *  ██████╗ ███████╗███████╗███╗   ███╗    ██╗     ██╗████████╗███████╗
+ * ██╔═══██╗██╔════╝██╔════╝████╗ ████║    ██║     ██║╚══██╔══╝██╔════╝
+ * ██║   ██║███████╗███████╗██╔████╔██║    ██║     ██║   ██║   █████╗
+ * ██║   ██║╚════██║╚════██║██║╚██╔╝██║    ██║     ██║   ██║   ██╔══╝
+ * ╚██████╔╝███████║███████║██║ ╚═╝ ██║    ███████╗██║   ██║   ███████╗
+ *  ╚═════╝ ╚══════╝╚══════╝╚═╝     ╚═╝    ╚══════╝╚═╝   ╚═╝   ╚══════╝
+
  *
- * Welcome to the open source sex machine!
- * This is a product of Kinky Makers and is licensed under the MIT license.
+ * Welcome to the open source sex machine, lite edition!
+ * This is fork of the OSSM and is licensed under the MIT license.
  *
- * Research and Desire is a financial sponsor of this project.
- *
- * But our biggest sponsor is you! If you want to support this project, please
- * contribute, fork, branch and share!
+ * The primary goal is to remove some of the heavy integration with R+D
+ * systems, simplify the user experience, and clean up unused code.
  */
 
 OneButton button(Pins::Remote::encoderSwitch, false);
@@ -49,12 +42,9 @@ void __attribute__((weak)) setup() {
     initDisplay();
 
     ESP_LOGD("Main", "Display %s", isDisplayAvailable() ? "connected":"disconnected");
-    
+
     // Initialize header bar task
     initHeaderBar();
-
-    // Create OSSM instance for backward compatibility (BLE command handling)
-    ossm = new OSSM();
 
     // Initialize state machine after global state is set up
     initStateMachine();
@@ -91,9 +81,6 @@ void __attribute__((weak)) setup() {
                     ESP_LOGD("MAIN", "Initializing communication services");
                     initNimble();
                     initWM();
-                    if (WiFi.status() == WL_CONNECTED) {
-                        initMQTT();
-                    }
                     initialized = true;
                     vTaskDelete(nullptr);
                 }

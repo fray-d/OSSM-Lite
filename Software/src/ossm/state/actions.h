@@ -10,13 +10,11 @@ void ossmStartStreaming();
 void ossmDrawPatternControls();
 void ossmDrawPreflight();
 void ossmResetSettingsStrokeEngine();
-void ossmResetSettingsSimplePen();
 void ossmResetSettingsStreaming();
 void ossmAdvancedClick();
 void ossmIncrementControlStrokeEngine();
 void ossmIncrementControlStreaming();
 void ossmStartAdvancedPenetration();
-void ossmStartSimplePenetration();
 void ossmStartStrokeEngine();
 void ossmEmergencyStop();
 void ossmDrawHelp();
@@ -29,55 +27,58 @@ void ossmDrawError();
 void ossmSetHomed();
 void ossmSetFirstHomed();
 void ossmSetNotHomed();
-void ossmCheckPairing();
-void ossmDrawPairingSuccess();
 void ossmResetWiFi();
 void ossmRestart();
 
 namespace actions {
-
     constexpr auto drawHello = []() { ossmDrawHello(); };
-    
+
     constexpr auto drawMenu = []() { ossmDrawMenu(); };
-    
+
     constexpr auto startHoming = []() { ossmStartHoming(); };
-    
+
     constexpr auto drawPlayControls = []() { ossmDrawPlayControls(); };
-    
+
     constexpr auto startStreaming = []() { ossmStartStreaming(); };
-    
+
     constexpr auto drawPatternControls = []() { ossmDrawPatternControls(); };
-    
+
     constexpr auto drawPreflight = []() { ossmDrawPreflight(); };
-    
-    constexpr auto resetSettingsStrokeEngine = []() { ossmResetSettingsStrokeEngine(); };
 
-    constexpr auto resetSettingsSimplePen = []() { ossmResetSettingsSimplePen(); };
+    constexpr auto resetSettingsStrokeEngine = []() {
+        ossmResetSettingsStrokeEngine();
+    };
 
-    constexpr auto resetSettingsStreaming = []() { ossmResetSettingsStreaming(); };
+    constexpr auto resetSettingsStreaming = []() {
+        ossmResetSettingsStreaming();
+    };
 
-    constexpr auto incrementControlStrokeEngine = []() { ossmIncrementControlStrokeEngine(); };
+    constexpr auto incrementControlStrokeEngine = []() {
+        ossmIncrementControlStrokeEngine();
+    };
 
-    constexpr auto incrementControlStreaming = []() { ossmIncrementControlStreaming(); };
+    constexpr auto incrementControlStreaming = []() {
+        ossmIncrementControlStreaming();
+    };
 
     constexpr auto advancedClick = []() { ossmAdvancedClick(); };
 
-    constexpr auto startAdvancedPenetration = []() { ossmStartAdvancedPenetration(); };
-
-    constexpr auto startSimplePenetration = []() { ossmStartSimplePenetration(); };
+    constexpr auto startAdvancedPenetration = []() {
+        ossmStartAdvancedPenetration();
+    };
 
     constexpr auto startStrokeEngine = []() { ossmStartStrokeEngine(); };
-    
+
     constexpr auto emergencyStop = []() { ossmEmergencyStop(); };
-    
+
     constexpr auto drawHelp = []() { ossmDrawHelp(); };
-    
+
     constexpr auto drawWiFi = []() { ossmDrawWiFi(); };
-    
+
     constexpr auto drawUpdate = []() { ossmDrawUpdate(); };
-    
+
     constexpr auto drawNoUpdate = []() { ossmDrawNoUpdate(); };
-    
+
     constexpr auto drawUpdating = []() { ossmDrawUpdating(); };
 
     // Spawns the OTA update task (TLS check + download run there, not on the
@@ -85,21 +86,17 @@ namespace actions {
     constexpr auto startUpdate = []() { ossmStartUpdate(); };
 
     constexpr auto stopWifiPortal = []() {};
-    
-    constexpr auto resetWiFi = []() { ossmResetWiFi(); };
-    
-    constexpr auto drawError = []() { ossmDrawError(); };
-    
-    constexpr auto checkPairing = []() { ossmCheckPairing(); };
 
-    constexpr auto drawPairingSuccess = []() { ossmDrawPairingSuccess(); };
+    constexpr auto resetWiFi = []() { ossmResetWiFi(); };
+
+    constexpr auto drawError = []() { ossmDrawError(); };
 
     constexpr auto setHomed = []() { ossmSetHomed(); };
 
     constexpr auto setFirstHomed = []() { ossmSetFirstHomed(); };
-    
+
     constexpr auto setNotHomed = []() { ossmSetNotHomed(); };
-    
+
     constexpr auto restart = []() { ossmRestart(); };
 
 }  // namespace actions

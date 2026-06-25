@@ -1,15 +1,19 @@
 #ifndef OSSM_STATE_SETTINGS_H
 #define OSSM_STATE_SETTINGS_H
 
-#include "structs/SettingPercents.h"
+#include "ui.h"
+#include "../lib/StrokeEngine/src/StrokeEngine.h"
 
-/**
- * Global settings - user-adjustable parameters
- * Exported from OSSM class static member
- */
-extern SettingPercents settings;
-
-// Helper function to get speed
-inline int getSpeed() { return settings.speed; }
+extern struct SettingPercents {
+    float speed;
+    float sensation;
+    float maxPosition;
+    float minPosition;
+    float buffer;
+    float speedKnob;
+    float speedBLE;
+    StrokePatterns pattern;
+    ui::PlayControls playControl = ui::PlayControls::MIN_POSITION;
+} settings;
 
 #endif  // OSSM_STATE_SETTINGS_H

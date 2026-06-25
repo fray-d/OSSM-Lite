@@ -1,13 +1,13 @@
 #ifndef OSSM_STATE_MENU_H
 #define OSSM_STATE_MENU_H
 
-#include "constants/Menu.h"
+#include "MenuItems.h"
 
 /**
  * Menu state - tracks current menu selection
  */
 struct MenuState {
-    Menu currentOption = Menu::SimplePenetration;
+    Menu currentOption = Menu::AdvancedPenetration;
 };
 
 extern MenuState menuState;

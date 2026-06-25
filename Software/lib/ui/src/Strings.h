@@ -9,9 +9,8 @@ namespace ui {
         // ============================================================
         // Branding
         // ============================================================
-        static const char researchAndDesire[] PROGMEM =
-            "Research & Desire         ";
-        static const char kinkyMakers[] PROGMEM = "Kinky Makers       ";
+        static const char deviceName[] PROGMEM = "OSSM Lite";
+        static const char kinkyMakers[] PROGMEM = "Kinky Makers";
 
         // ============================================================
         // General UI labels
@@ -28,13 +27,10 @@ namespace ui {
         // ============================================================
         static const char advancedPenetration[] PROGMEM =
             "Advanced Penetration";
-        static const char simplePenetration[] PROGMEM =
-            "Simple Penetration";
         static const char strokeEngine[] PROGMEM = "Stroke Engine";
-        static const char streaming[] PROGMEM = "Streaming (beta)";
+        static const char streaming[] PROGMEM = "Streaming";
         static const char deepThroatTrainerSync[] PROGMEM =
             "DeepThroat Sync";
-        static const char pairing[] PROGMEM = "Pairing";
         static const char update[] PROGMEM = "Update";
         static const char wifi[] PROGMEM = "Wi-Fi";
 
@@ -105,17 +101,6 @@ namespace ui {
             "You are now connected to WiFi!";
         static const char longPressReset[] PROGMEM =
             "Long press to reset WiFi";
-
-        // ============================================================
-        // Pairing page
-        // ============================================================
-        static const char pairingTitle[] PROGMEM = "Pair OSSM";
-        static const char pairingBody[] PROGMEM =
-            "Enter code\nor scan QR";
-        static const char pairingConnecting[] PROGMEM = "Connecting...";
-        static const char pairedTitle[] PROGMEM = "Paired!";
-        static const char pairedBody[] PROGMEM =
-            "Your OSSM is now\nlinked to your\naccount.";
 
         // ============================================================
         // Stroke Engine pattern names

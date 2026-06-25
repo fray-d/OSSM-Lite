@@ -8,10 +8,8 @@
 #include "services/display.h"
 #include "services/encoder.h"
 #include "services/tasks.h"
-#include "structs/SettingPercents.h"
 #include "ui.h"
 #include "utils/analog.h"
-#include "utils/format.h"
 #include "components/HeaderBar.h"
 
 namespace sml = boost::sml;
@@ -37,19 +35,10 @@ static void drawPatternControlsTask(void *pvParameters) {
     showHeaderIcons = true;
 
     while (isInCorrectState()) {
-        float speed;
-        float speedKnob = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
-        settings.speedKnob = speedKnob;
-        if (USE_SPEED_KNOB_AS_LIMIT || !settings.speedBLE.has_value()) {
-            speed = speedKnob * (settings.speedBLE.value_or(100)) / 100;
-        } else {
-            speedKnob = settings.speedBLE.value_or(100);
-            speed = settings.speedBLE.value_or(100);
-        }
-
-        if (speed != settings.speed) {
+        settings.speedKnob = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
+        if (settings.speedKnob != settings.speed) {
             shouldUpdateDisplay = true;
-            settings.speed = speed;
+            settings.speed = settings.speedKnob;
         }
 
         nextPattern = StrokePatterns(encoder.readEncoder() / 3);

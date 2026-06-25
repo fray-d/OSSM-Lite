@@ -1,13 +1,16 @@
 #include "board.h"
 
+#include "constants/Pins.h"
+#include "services/encoder.h"
+#include "services/led.h"
+#include "services/stepper.h"
+
 bool USE_LATENCY_COMPENSATION = false;
 bool USE_SPEED_KNOB_AS_LIMIT = true;
-
 void initBoard() {
     Serial.begin(115200);
 
-    pinMode(Pins::Remote::encoderSwitch,
-            INPUT_PULLDOWN);  // Rotary Encoder Pushbutton
+    pinMode(Pins::Remote::encoderSwitch, INPUT_PULLDOWN);
 
     pinMode(Pins::GPIO::pin1, OUTPUT);
     pinMode(Pins::GPIO::pin2, OUTPUT);

@@ -9,6 +9,6 @@ namespace streaming {
      */
     void startStreaming();
 
-}  // namespace simple_penetration
+}  // namespace streaming
 
 #endif  // OSSM_STREAMING_H

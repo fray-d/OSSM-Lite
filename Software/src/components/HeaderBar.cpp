@@ -1,10 +1,5 @@
 #include "HeaderBar.h"
 
-#include <WiFi.h>
-#include <esp_log.h>
-#include <services/board.h>
-
-#include "constants/LogTags.h"
 #include "services/communication/nimble.h"
 #include "services/led.h"
 
@@ -139,7 +134,7 @@ void drawBleIcon() {
 [[noreturn]] void headerBarTask(void* pvParameters) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    ESP_LOGI(HEADERBAR_TAG, "Header bar task started");
+    ESP_LOGI("HeaderBar", "Header bar task started");
 
     if (showHeaderIcons) {
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
@@ -187,7 +182,7 @@ void drawBleIcon() {
             refreshIcons();
             xSemaphoreGive(displayMutex);
         } else {
-            ESP_LOGW(HEADERBAR_TAG, "Failed to acquire display mutex");
+            ESP_LOGW("HeaderBar", "Failed to acquire display mutex");
         }
 
         vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -197,7 +192,7 @@ void drawBleIcon() {
 [[noreturn]] void nonHeaderBarTask(void* pvParameters) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    ESP_LOGI(HEADERBAR_TAG, "LED task started");
+    ESP_LOGI("HeaderBar", "LED task started");
 
     while (true) {
         updateLEDForMachineStatus();
@@ -215,19 +210,15 @@ void initHeaderBar() {
                         0);
         return;
     }
-    ESP_LOGI(HEADERBAR_TAG, "Initializing header bar task");
+    ESP_LOGI("HeaderBar", "Initializing header bar task");
 
-    BaseType_t result =
-        xTaskCreatePinnedToCore(headerBarTask, "headerBar",
-                                4 * configMINIMAL_STACK_SIZE,
-                                nullptr,
-                                tskIDLE_PRIORITY + 1,
-                                &headerBarTaskHandle,
-                                0);
+    BaseType_t result = xTaskCreatePinnedToCore(
+        headerBarTask, "headerBar", 4 * configMINIMAL_STACK_SIZE, nullptr,
+        tskIDLE_PRIORITY + 1, &headerBarTaskHandle, 0);
 
     if (result != pdPASS) {
-        ESP_LOGE(HEADERBAR_TAG, "Failed to create header bar task");
+        ESP_LOGE("HeaderBar", "Failed to create header bar task");
     } else {
-        ESP_LOGI(HEADERBAR_TAG, "Header bar task created successfully");
+        ESP_LOGI("HeaderBar", "Header bar task created successfully");
     }
 }

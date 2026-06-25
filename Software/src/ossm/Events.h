@@ -30,9 +30,6 @@ struct Home {};
 struct BleClick {};
 struct ReturnToMenu {};
 
-// Posted by the OTA update task when no update was applied (no newer version,
-// or the check/download failed) so the SM leaves "checking" and shows the
-// no-update page.
 struct UpdateUnavailable {};
 
 // Definitions to make the table easier to read.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OSSM Web Flasher — min-max-stroke</title>
+  <title>OSSM Lite Web Flasher</title>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js"></script>
   <style>
     body {
@@ -56,19 +56,18 @@
 </head>
 <body>
   <h1>OSSM Web Flasher</h1>
-  <span class="branch">min-max-stroke</span>
+  <span class="branch">Lite</span>
 
   <p>
-    Flash the latest <strong>min-max-stroke</strong> firmware directly from your browser.
+    Flash the latest firmware directly from your browser.
     No build tools required — just a USB-C cable and Chrome or Edge.
   </p>
 
-  <p>This branch adds <code>set:min</code> and <code>set:max</code> BLE commands,
-  replacing the depth/stroke model with explicit min/max position control.</p>
+  <p>Warning, flashing from the browser will erase your configurations and preferences on your device. Use the on-device over-the-air update functionality to maintain your configurations.</p>
 
   <div class="flash-row">
     <esp-web-install-button
-      manifest="https://aperturetest.github.io/OSSM-hardware/manifest.json">
+      manifest="https://fray-d.github.io/OSSM-hardware/manifest.json">
       <button slot="activate">⚡ Connect &amp; Flash</button>
     </esp-web-install-button>
   </div>
@@ -79,8 +78,8 @@
       <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank">CP210x USB driver</a>.
     </p>
     <p>
-      Source: <a href="https://github.com/aperturetest/OSSM-hardware/tree/min-max-stroke" target="_blank">
-        aperturetest/OSSM-hardware @ min-max-stroke
+      <a href="https://github.com/fray-d/OSSM-hardware/" target="_blank">
+        Source  
       </a>
     </p>
   </div>

@@ -3,7 +3,7 @@
 
 #include <NimBLECharacteristic.h>
 #include <NimBLEService.h>
-#include <NimBLEUUID.h>
+#include <services/board.h>
 
 #include "Arduino.h"
 #include "services/UserConfig.h"
@@ -25,8 +25,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
         String configValue = String(value.c_str());
         configValue.toLowerCase();
 
-        ESP_LOGD(NIMBLE_TAG, "Speed knob config write: %s",
-                 configValue.c_str());
+        ESP_LOGD("NIMBLE", "Speed knob config write: %s", configValue.c_str());
 
         // Store config strings in PROGMEM
         static const char true_str[] PROGMEM = "true";
@@ -41,7 +40,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
             USE_SPEED_KNOB_AS_LIMIT = false;
             pCharacteristic->setValue(String(FPSTR(false_str)));
         } else {
-            ESP_LOGW(NIMBLE_TAG, "Invalid speed knob config value: %s",
+            ESP_LOGW("NIMBLE", "Invalid speed knob config value: %s",
                      configValue.c_str());
             pCharacteristic->setValue(String(FPSTR(error_invalid)));
         }
@@ -54,7 +53,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
 
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
         ESP_LOGV(
-            NIMBLE_TAG,
+            "NIMBLE",
             "Speed knob config notification/indication return code: %d, %s",
             code, NimBLEUtils::returnCodeToString(code));
     }
@@ -83,7 +82,7 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
         String configValue = String(value.c_str());
         configValue.toLowerCase();
 
-        ESP_LOGD(NIMBLE_TAG, "Latency compensation config write: %s",
+        ESP_LOGD("NIMBLE", "Latency compensation config write: %s",
                  configValue.c_str());
 
         // Store config strings in PROGMEM
@@ -99,7 +98,7 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
             USE_LATENCY_COMPENSATION = false;
             pCharacteristic->setValue(String(FPSTR(false_str)));
         } else {
-            ESP_LOGW(NIMBLE_TAG, "Invalid latency compensation config value: %s",
+            ESP_LOGW("NIMBLE", "Invalid latency compensation config value: %s",
                      configValue.c_str());
             pCharacteristic->setValue(String(FPSTR(error_invalid)));
         }
@@ -111,10 +110,10 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
     }
 
     void onStatus(NimBLECharacteristic* pCharacteristic, int code) override {
-        ESP_LOGV(
-            NIMBLE_TAG,
-            "Latency compensation config notification/indication return code: %d, %s",
-            code, NimBLEUtils::returnCodeToString(code));
+        ESP_LOGV("NIMBLE",
+                 "Latency compensation config notification/indication return "
+                 "code: %d, %s",
+                 code, NimBLEUtils::returnCodeToString(code));
     }
 } inline latencyCompensationConfigCallbacks;
 
@@ -174,7 +173,7 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
         } else if (configValue == "false" || configValue == "0" || configValue == "f") {
             UserConfig::setDirection(false);
         } else {
-            ESP_LOGW(NIMBLE_TAG, "Invalid direction config value: %s",configValue.c_str());
+            ESP_LOGW("NIMBLE", "Invalid direction config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
     }
@@ -254,7 +253,7 @@ class ReHomeConfigCallbacks : public NimBLECharacteristicCallbacks {
         } else if (configValue == "false" || configValue == "0" || configValue == "f") {
             UserConfig::setReHome(false);
         } else {
-            ESP_LOGW(NIMBLE_TAG, "Invalid home between modes config value: %s",configValue.c_str());
+            ESP_LOGW("NIMBLE", "Invalid home between modes config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
     }

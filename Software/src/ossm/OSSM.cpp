@@ -1,35 +1,16 @@
 #include "OSSM.h"
 
 #include "command/commands.hpp"
-#include "ossm/state/ble.h"
-#include "ossm/state/calibration.h"
-#include "ossm/state/menu.h"
-#include "ossm/state/session.h"
 #include "ossm/state/settings.h"
 #include "ossm/state/state.h"
-#include "services/communication/mqtt.h"
 #include "services/communication/queue.h"
 #include "services/encoder.h"
-#include "services/stepper.h"
 
 namespace sml = boost::sml;
 using namespace sml;
 
 // Global OSSM pointer (kept for backward compatibility during migration)
 OSSM *ossm = nullptr;
-
-// Static member definition, with first pattern.
-SettingPercents OSSM::setting = {.speed = 0,
-                                 .minPosition = 0,
-                                 .sensation = 50,
-                                 .maxPosition = 20,
-                                 .buffer = 100,
-                                 .pattern = StrokePatterns(0)};
-
-OSSM::OSSM() {
-    // Initialize global state from OSSM::setting
-    settings = OSSM::setting;
-}
 
 void OSSM::ble_click(String commandString) {
     CommandValue command = commandFromString(commandString);
@@ -44,12 +25,6 @@ void OSSM::ble_click(String commandString) {
     switch (command.command) {
         case Commands::goToStrokeEngine:
             menuState.currentOption = Menu::StrokeEngine;
-            if (stateMachine != nullptr) {
-                stateMachine->process_event(ButtonPress{});
-            }
-            break;
-        case Commands::goToSimplePenetration:
-            menuState.currentOption = Menu::SimplePenetration;
             if (stateMachine != nullptr) {
                 stateMachine->process_event(ButtonPress{});
             }
@@ -76,12 +51,12 @@ void OSSM::ble_click(String commandString) {
         case Commands::setDepth:
             // Intentionally fall through as Legacy alias: set:depth:X → setMaxPosition
         case Commands::setMaxPosition:
-            session.playControl = PlayControls::MAX_POSITION;
+            settings.playControl = ui::PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
             settings.maxPosition = command.value;
             break;
         case Commands::setMinPosition:
-            session.playControl = PlayControls::MIN_POSITION;
+            settings.playControl = ui::PlayControls::MIN_POSITION;
             encoder.setEncoderValue(command.value);
             settings.minPosition = command.value;
             break;
@@ -89,16 +64,16 @@ void OSSM::ble_click(String commandString) {
             // Legacy alias: set:stroke:X → minPosition = maxPosition - value
             settings.minPosition = settings.maxPosition - (command.value / 100.0f) * settings.maxPosition;
             settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
-            session.playControl = PlayControls::MIN_POSITION;
+            settings.playControl = ui::PlayControls::MIN_POSITION;
             encoder.setEncoderValue(settings.minPosition);
             break;
         case Commands::setSensation:
-            session.playControl = PlayControls::SENSATION;
+            settings.playControl = ui::PlayControls::SENSATION;
             encoder.setEncoderValue(command.value);
             settings.sensation = command.value;
             break;
         case Commands::setBuffer:
-            session.playControl = PlayControls::BUFFER;
+            settings.playControl = ui::PlayControls::BUFFER;
             encoder.setEncoderValue(command.value);
             settings.buffer = command.value;
             break;
@@ -110,7 +85,7 @@ void OSSM::ble_click(String commandString) {
             targetQueue.push({
                 static_cast<uint8_t>(command.value),
                 static_cast<uint16_t>(command.time),
-                std::chrono::steady_clock::now()});
+                std::chrono::steady_clock::now(), 0});
             break;
         case Commands::setWifi:
         case Commands::ignore:
@@ -128,41 +103,12 @@ String OSSM::getStateFingerprint() {
     String output = currentState + ":";
     output += String((int)settings.speed) + ":";
     output += String((int)settings.minPosition) + ":";
-    output += String((int)settings.sensation) + ":";
     output += String((int)settings.maxPosition) + ":";
+    output += String((int)settings.sensation) + ":";
     output += String(static_cast<int>(settings.pattern)) + ":";
-    output += sessionId;
     return output;
 }
 
-// ┌──────────────────────────────────────────────────────────────────────┐
-// │ MQTT TELEMETRY PAYLOAD — SHARED CONTRACT WITH RAD DASHBOARD        │
-// │                                                                    │
-// │ This payload is published via MQTT to `ossm/{macAddress}` and      │
-// │ received by the Dashboard at:                                      │
-// │   rad-app/src/app/api/lockbox/event/ossm/[mac]/route.ts            │
-// │                                                                    │
-// │ The Dashboard validates it with a Zod schema (payloadSchema).      │
-// │ ANY change here MUST be mirrored in that Zod schema, and vice      │
-// │ versa, or telemetry ingestion will silently fail (400 Bad Request). │
-// │                                                                    │
-// │ Required fields (all must be present):                             │
-// │   timestamp  : number   — millis() uptime                         │
-// │   state      : string   — Boost.SML state name                    │
-// │   speed      : integer  — cast from float                         │
-// │   stroke     : integer  — cast from float                         │
-// │   sensation  : integer  — cast from float                         │
-// │   depth      : integer  — cast from float                         │
-// │   pattern    : integer  — StrokePatterns enum ordinal             │
-// │   position   : number   — stepper position in mm (float)          │
-// │   sessionId  : UUID     — regenerated each time a play mode starts  │
-// │                                                                    │
-// │ Optional fields:                                                   │
-// │   meta       : string   — JSON-encoded metadata (optional)         │
-// │                                                                    │
-// │ This is also sent over BLE via NimBLE notifications.               │
-// │ See: test/test_mqtt_payload/ for contract tests.                   │
-// └──────────────────────────────────────────────────────────────────────┘
 String OSSM::getCurrentState() {
     String currentState;
     if (stateMachine != nullptr) {
@@ -170,17 +116,13 @@ String OSSM::getCurrentState() {
             [&currentState](auto state) { currentState = state.c_str(); });
     }
 
-    float positionMm = float(stepper->getCurrentPosition()) / float(1_mm);
-    if (isnan(positionMm)) positionMm = 0.0f;
-
     return "{\"timestamp\":" + String((unsigned long)millis()) +
            ",\"state\":\"" + currentState +
            "\",\"speed\":" + String((int)settings.speed) +
            ",\"minPosition\":" + String((int)settings.minPosition) +
            ",\"maxPosition\":" + String((int)settings.maxPosition) +
            ",\"sensation\":" + String((int)settings.sensation) +
-           ",\"buffer\":" + String((int)settings.buffer) +
-           ",\"pattern\":" + String(static_cast<int>(settings.pattern)) +
-           ",\"position\":" + String(positionMm, 2) +
-           ",\"sessionId\":\"" + sessionId + "\"}";
+           ",\"buffer\":" + String((int)settings.buffer) + 
+           ",\"pattern\":" + String(static_cast<int>(settings.pattern)) + 
+           "}";
 }

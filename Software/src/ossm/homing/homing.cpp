@@ -5,8 +5,7 @@
 #include "constants/Config.h"
 #include "constants/Pins.h"
 #include "constants/Version.h"
-#include "homing_logic.h"
-#include "Logos.h"
+#include "HelloAnimation.h"
 #include "ossm/Events.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/error.h"
@@ -37,7 +36,7 @@ namespace homing {
         stepper->setSpeedInHz(25_mm);
 
         // Recalibrate the current sensor offset.
-        calibration.currentSensorOffset = (getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 1000}));
+        calibration.currentSensorOffset = getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 1000});
     }
 
     static void startHomingTask(void *pvParameters) {
@@ -69,11 +68,9 @@ namespace homing {
 
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
             if (stateMachine->is("homing.run"_s)) {
-                ui::LogoData logo{ui::strings::homing, ui::logos::KMLogo, 50, 50, 60, 14, VERSION};
-                ui::drawLogo(display.getU8g2(), logo);
+            ui::drawHelloFrame(display.getU8g2(), ui::HELLO_FRAMES[ui::HELLO_FRAME_COUNT - 1], VERSION, ui::strings::homing);
             } else {
-                ui::LogoData logo{ui::strings::measuringRail, ui::logos::RDLogo, 57, 50, 55, 14, VERSION};
-                ui::drawLogo(display.getU8g2(), logo);
+            ui::drawHelloFrame(display.getU8g2(), ui::HELLO_FRAMES[ui::HELLO_FRAME_COUNT - 1], VERSION, ui::strings::measuringRail);
             }
             refreshPage(true, true);
             xSemaphoreGive(displayMutex);
@@ -82,25 +79,25 @@ namespace homing {
         int16_t sign = stateMachine->is("homing.run"_s) ? -1 : 1;
         int32_t targetPositionInSteps = round(sign * Config::Driver::maxStrokeSteps);
 
-        ESP_LOGD("Homing", "Target position in steps: %d", targetPositionInSteps);
+        ESP_LOGD("Homing", "Target position in steps: %d",
+                 targetPositionInSteps);
         stepper->moveTo(targetPositionInSteps, false);
 
         auto isInCorrectState = []() {
-            // Add any states that you want to support here.
             return stateMachine->is("homing"_s) ||
                    stateMachine->is("measure.run"_s) ||
                    stateMachine->is("homing.run"_s);
         };
 
         bool second = true;
-        if (UserConfig::getHomingType() == UserConfig::HomingType::DoubleTap) {
+        if (isDouble) {
             second = false;
         }
         while (isInCorrectState()) {
             TickType_t xCurrentTickCount = xTaskGetTickCount();
             TickType_t xTicksPassed = xCurrentTickCount - xTaskStartTime;
             uint32_t msPassed = xTicksPassed * portTICK_PERIOD_MS;
-            if (homing_logic::isHomingTimedOut(msPassed, 40000)) {
+            if (msPassed > 40000) {
                 ESP_LOGE("Homing", "Homing took too long. Check power and restart");
                 errorState.message = ui::strings::homingTookTooLong;
 
@@ -109,14 +106,14 @@ namespace homing {
                 break;
             }
 
-            float current = getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 50}) - calibration.currentSensorOffset;
+            float current = getAnalogAveragePercent(SampleOnPin{
+                                Pins::Driver::currentSensorPin, 50}) -
+                            calibration.currentSensorOffset;
 
             ESP_LOGV("Homing", "Current: %f", current);
-            bool isCurrentOverLimit = homing_logic::isCurrentOverLimit(
-                current, 0, Config::Driver::sensorlessCurrentLimit);
 
-            if (!isCurrentOverLimit) {
-                vTaskDelay(10);  // Increased from 1ms to 10ms to reduce CPU load
+            if (current < Config::Driver::sensorlessCurrentLimit) {
+                vTaskDelay(10);  // 10ms to reduce CPU load
                 continue;
             }
 
@@ -128,11 +125,8 @@ namespace homing {
             stepper->moveTo(currentPosition - sign * Config::Driver::homingOffsetMm, true);
 
             // measure and save the current position
-            calibration.measuredStrokeSteps =
-                homing_logic::calculateMeasuredStroke(
-                    stepper->getCurrentPosition(),
-                    calibration.measuredStrokeSteps,
-                    Config::Driver::maxStrokeSteps);
+            calibration.measuredStrokeSteps = std::max(std::abs(float(stepper->getCurrentPosition())),calibration.measuredStrokeSteps);
+            calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,Config::Driver::maxStrokeSteps);
 
             if (!second && stateMachine->is("homing.run"_s) &&
                         abs(stepper->getCurrentPosition()) < Config::Driver::minStrokeLengthMm) {
@@ -173,7 +167,8 @@ namespace homing {
     }
 
     bool isStrokeTooShort() {
-        if (calibration.measuredStrokeSteps > Config::Driver::minStrokeLengthMm) {
+        if (calibration.measuredStrokeSteps >
+            Config::Driver::minStrokeLengthMm) {
             return false;
         }
         errorState.message = ui::strings::strokeTooShort;
