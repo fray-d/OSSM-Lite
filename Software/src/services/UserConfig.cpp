@@ -3,6 +3,10 @@
 #include <Preferences.h>
 
 namespace UserConfig {
+    float getSpeedCurve() {
+        return 0.8;
+    }
+
     std::string getDeviceName() {
         Preferences userConfig;
         userConfig.begin("UserConfig", true);

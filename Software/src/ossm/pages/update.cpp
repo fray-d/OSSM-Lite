@@ -1,5 +1,3 @@
-#include "update.h"
-
 #include "components/HeaderBar.h"
 #include "services/display.h"
 #include "ui.h"

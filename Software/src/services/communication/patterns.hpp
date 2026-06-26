@@ -21,7 +21,7 @@ inline NimBLECharacteristic* initPatternsCharacteristic(NimBLEService* pService,
     for (int i = 0; i < sizeof(ui::strings::strokeEngineNames) /
                             sizeof(ui::strings::strokeEngineNames[0]);
          i++) {
-        JsonObject pattern = arr.add();
+        JsonObject pattern = arr.add<JsonObject>();
         pattern["name"] = ui::strings::strokeEngineNames[i];
         pattern["idx"] = i;
     }

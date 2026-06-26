@@ -216,8 +216,7 @@ namespace ui {
         u8g2_DrawUTF8(u8g2, startX + letterSpacing * 2, frame.heights[2], "S");
         u8g2_DrawUTF8(u8g2, startX + letterSpacing * 3, frame.heights[3], "M");
         u8g2_SetFont(u8g2, Font::small);
-        char* lite = "LITE";
-        u8g2_DrawUTF8(u8g2, 82, 55, lite);
+        u8g2_DrawUTF8(u8g2, 82, 55, "LITE");
         if (version) {
             u8g2_DrawUTF8(u8g2, 1, SCREEN_HEIGHT - 1, version);
         }

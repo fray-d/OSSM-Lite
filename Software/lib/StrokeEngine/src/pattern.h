@@ -34,7 +34,7 @@ enum class StrokePatterns {
     Insist,
     ProgressiveStroke,
     RandomStroke,
-    PoinStroke,
+    PointStroke,
     //Add additional strokes here
     Count
 };
@@ -749,7 +749,7 @@ inline Pattern* Pattern::Create(StrokePatterns pattern){
             return new ProgressiveStroke();
         case StrokePatterns::RandomStroke:
             return new RandomStroke();
-        case StrokePatterns::PoinStroke:
+        case StrokePatterns::PointStroke:
             return new PointStroke();
         default:
             return new SimpleStroke();

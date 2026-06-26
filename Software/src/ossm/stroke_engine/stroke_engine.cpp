@@ -54,7 +54,7 @@ static void startStrokeEngineTask(void *pvParameters) {
             }
             
             //Curve the speed based on userconfig
-            float exp = UserConfig::strokeEngineSpeedCurve;
+            float exp = UserConfig::getSpeedCurve();
             float speed = settings.speed/100;
             speed = pow( 1 - pow( 1 - speed, exp), 1 / exp) * 100;
             Stroker.setSpeed(speed, true);

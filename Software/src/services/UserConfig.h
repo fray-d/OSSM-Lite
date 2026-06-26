@@ -4,7 +4,7 @@
 #include "Arduino.h"
 
 namespace UserConfig {
-    static float strokeEngineSpeedCurve = 0.8;
+    float getSpeedCurve();
 
     std::string getDeviceName();
     void setDeviceName(String value);

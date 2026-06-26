@@ -1,7 +1,6 @@
 #ifndef OSSM_STATE_MACHINE_H
 #define OSSM_STATE_MACHINE_H
 
-#include "../../utils/update.h"
 #include "../Events.h"
 #include "actions.h"
 #include "boost/sml.hpp"
