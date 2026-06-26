@@ -13,7 +13,7 @@ static void updateTask(void *pvParameters) {
 
     pages::drawUpdating();
 
-    String url = String(ui::strings::helpQr) + "firmware.bin";
+    String url = String(ui::strings::updateURL) + "firmware.bin";
     ESP_LOGW("UPDATE", "Starting OTA from %s (free heap: %lu, largest block: %lu)",
              url.c_str(), (unsigned long)esp_get_free_heap_size(),
              (unsigned long)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));

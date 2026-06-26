@@ -74,6 +74,8 @@ namespace ui {
         static const char helpBody[] PROGMEM = "On Discord,\nor GitHub";
         static const char helpBottom[] PROGMEM = "Click to exit";
         static const char helpQr[] PROGMEM =
+            "https://github.com/fray-d/OSSM-Lite";
+        static const char updateURL[] PROGMEM =
             "https://fray-d.github.io/OSSM-Lite/";
 
         // ============================================================
