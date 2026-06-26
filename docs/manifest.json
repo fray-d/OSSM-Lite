@@ -6,19 +6,19 @@
       "improv": false,
       "parts": [
         {
-          "path": "https://fray-d.github.io/OSSM-hardware/bootloader.bin",
+          "path": "https://fray-d.github.io/OSSM-Lite/bootloader.bin",
           "offset": 4096
         },
         {
-          "path": "https://fray-d.github.io/OSSM-hardware/partitions.bin",
+          "path": "https://fray-d.github.io/OSSM-Lite/partitions.bin",
           "offset": 32768
         },
         {
-          "path": "https://fray-d.github.io/OSSM-hardware/boot_app0.bin",
+          "path": "https://fray-d.github.io/OSSM-Lite/boot_app0.bin",
           "offset": 57344
         },
         {
-          "path": "https://fray-d.github.io/OSSM-hardware/firmware.bin",
+          "path": "https://fray-d.github.io/OSSM-Lite/firmware.bin",
           "offset": 65536
         }
       ]

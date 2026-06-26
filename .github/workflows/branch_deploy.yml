@@ -95,7 +95,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const deploymentId = ${{ steps.create_deployment.outputs.result }}.id;
-            const flashUrl = 'https://fray-d.github.io/OSSM-hardware/';
+            const flashUrl = 'https://fray-d.github.io/OSSM-Lite/';
             await github.rest.repos.createDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
