@@ -19,4 +19,5 @@ void initEncoder() {
     encoder.setBoundaries(0, 99, false);
     encoder.setAcceleration(0);
     encoder.disableAcceleration();
+    encoder.correctionOffset = 1;
 } 

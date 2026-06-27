@@ -49,11 +49,16 @@ void OSSM::ble_click(String commandString) {
             settings.speedBLE = command.value;
             break;
         case Commands::setDepth:
+            command.value = constrain(command.value, 1.0f, 100.0f);
+            settings.minPosition = (settings.maxPosition - settings.minPosition) / settings.maxPosition * 100.0;
+            settings.minPosition = command.value - (settings.minPosition / 100.0f) * command.value;
+            settings.minPosition = constrain(settings.minPosition, 0.01f, 100.0f);
             // Intentionally fall through as Legacy alias: set:depth:X → setMaxPosition
         case Commands::setMaxPosition:
             settings.playControl = ui::PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
             settings.maxPosition = command.value;
+            settings.maxPosition = constrain(settings.maxPosition, 1.0f, 100.0f);
             break;
         case Commands::setMinPosition:
             settings.playControl = ui::PlayControls::MIN_POSITION;
@@ -63,7 +68,7 @@ void OSSM::ble_click(String commandString) {
         case Commands::setStroke:
             // Legacy alias: set:stroke:X → minPosition = maxPosition - value
             settings.minPosition = settings.maxPosition - (command.value / 100.0f) * settings.maxPosition;
-            settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
+            settings.minPosition = constrain(settings.minPosition, 0.05f, 100.0f);
             settings.playControl = ui::PlayControls::MIN_POSITION;
             encoder.setEncoderValue(settings.minPosition);
             break;
@@ -78,7 +83,7 @@ void OSSM::ble_click(String commandString) {
             settings.buffer = command.value;
             break;
         case Commands::setPattern:
-            settings.pattern = static_cast<StrokePatterns>(command.value % (int)StrokePatterns::Count);
+            settings.pattern = static_cast<StrokePatterns>((int)command.value % (int)StrokePatterns::Count);
             break;
         case Commands::streamPosition:
             // Position (0-100)
@@ -116,13 +121,17 @@ String OSSM::getCurrentState() {
             [&currentState](auto state) { currentState = state.c_str(); });
     }
 
+    float stroke = (settings.maxPosition - settings.minPosition) / settings.maxPosition * 100.0;
+
     return "{\"timestamp\":" + String((unsigned long)millis()) +
            ",\"state\":\"" + currentState +
-           "\",\"speed\":" + String((int)settings.speed) +
-           ",\"minPosition\":" + String((int)settings.minPosition) +
-           ",\"maxPosition\":" + String((int)settings.maxPosition) +
-           ",\"sensation\":" + String((int)settings.sensation) +
-           ",\"buffer\":" + String((int)settings.buffer) + 
+           "\",\"speed\":" + String(settings.speed) +
+           ",\"minPosition\":" + String(settings.minPosition) +
+           ",\"maxPosition\":" + String(settings.maxPosition) +
+           ",\"depth\":" + String(settings.maxPosition) +
+           ",\"stroke\":" + String(stroke) +
+           ",\"sensation\":" + String(settings.sensation) +
+           ",\"buffer\":" + String(settings.buffer) + 
            ",\"pattern\":" + String(static_cast<int>(settings.pattern)) + 
            "}";
 }

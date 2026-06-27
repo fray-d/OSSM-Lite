@@ -72,7 +72,7 @@ static void drawPlayControlsTask(void *pvParameters) {
         if (settings.speedBLE > 0) {
             if (USE_SPEED_KNOB_AS_LIMIT) {
                 next.speed = next.speedKnob * settings.speedBLE / 100;
-            } else if (::wasLastSpeedCommandFromBLE()) {
+            } else if (wasLastSpeedCommandFromBLE()) {
                 next.speed = settings.speedBLE;
             }
         }
@@ -92,8 +92,8 @@ static void drawPlayControlsTask(void *pvParameters) {
         switch (settings.playControl) {
             case ui::PlayControls::MIN_POSITION:
                 next.minPosition = encoderValue;
-                if (next.minPosition > settings.maxPosition) {
-                    next.minPosition = settings.maxPosition;
+                if (next.minPosition >= settings.maxPosition) {
+                    next.minPosition = settings.maxPosition - 1;
                     encoder.setEncoderValue(next.minPosition);
                 }
                 shouldUpdateDisplay =
@@ -108,8 +108,8 @@ static void drawPlayControlsTask(void *pvParameters) {
                 break;
             case ui::PlayControls::MAX_POSITION:
                 next.maxPosition = encoderValue;
-                if (next.maxPosition < settings.minPosition) {
-                    next.maxPosition = settings.minPosition;
+                if (next.maxPosition <= settings.minPosition) {
+                    next.maxPosition = settings.minPosition + 1;
                     encoder.setEncoderValue(next.maxPosition);
                 }
                 shouldUpdateDisplay =

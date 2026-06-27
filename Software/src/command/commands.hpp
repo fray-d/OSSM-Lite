@@ -36,7 +36,7 @@ enum class Commands {
 
 struct CommandValue {
     Commands command;
-    int value;
+    float value;
     int time;  // Used for streaming commands (time in ms)
 };
 
@@ -58,8 +58,8 @@ inline CommandValue setCommandValue(const String& str) {
     String command =
         str.substring(4, str.lastIndexOf(':'));  // Skip "set:" and get command
     String valueStr = str.substring(lastColon + 1);
-    int value = valueStr.toInt();
-    if (value < 0 || value > 100 || valueStr != String(value)) {
+    float value = valueStr.toFloat();
+    if (value < 0 || value > 100) {
         ESP_LOGI("COMMANDS", "Invalid value: %s", str.c_str());
         return {Commands::ignore, 0, 0};
     }
@@ -98,7 +98,7 @@ inline CommandValue streamCommandValue(const String& str) {
 
     // Extract position (between first and last colon)
     String posStr = str.substring(firstColon + 1, lastColon);
-    int pos = posStr.toInt();
+    float pos = posStr.toFloat();
     if (pos < 0 || pos > 100) {
         ESP_LOGI("COMMANDS", "Invalid stream position: %s", str.c_str());
         return {Commands::ignore, 0, 0};
