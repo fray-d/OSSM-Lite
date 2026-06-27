@@ -17,9 +17,6 @@ using namespace sml;
 
 namespace pattern_controls {
 
-static size_t numberOfDescriptions = sizeof(ui::strings::strokeEngineDescriptions);
-static size_t numberOfPatterns = sizeof(ui::strings::strokeEngineNames);
-
 static void drawPatternControlsTask(void *pvParameters) {
     auto isInCorrectState = []() {
         return stateMachine->is("strokeEngine.pattern"_s);
@@ -27,6 +24,8 @@ static void drawPatternControlsTask(void *pvParameters) {
 
     StrokePatterns nextPattern = settings.pattern;
     bool shouldUpdateDisplay = true;
+    size_t numberOfPatterns = sizeof(ui::strings::strokeEngineNames) /
+                              sizeof(ui::strings::strokeEngineNames[0]);
 
     encoder.setAcceleration(10);
     encoder.setBoundaries(0, numberOfPatterns * 3 - 1, true);
@@ -51,7 +50,7 @@ static void drawPatternControlsTask(void *pvParameters) {
         const char *patternName = ui::strings::strokeEngineNames[(int)nextPattern];
         const char *patternDescription = ui::strings::noDescription;
 
-        if ((int)nextPattern < (int)numberOfDescriptions) {
+        if ((int)nextPattern < (int)numberOfPatterns) {
             patternDescription = ui::strings::strokeEngineDescriptions[(int)nextPattern];
         }
 
