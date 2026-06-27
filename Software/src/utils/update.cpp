@@ -4,7 +4,9 @@
 #include <esp_https_ota.h>
 #include "ossm/pages/update.h"
 #include "ossm/state/state.h"
+#include "services/led.h"
 #include "Strings.h"
+
 static void updateTask(void *pvParameters) {
     ESP_LOGW("UPDATE", "Update task started (free heap: %lu, largest block: %lu)",
              (unsigned long)esp_get_free_heap_size(),
@@ -33,10 +35,12 @@ static void updateTask(void *pvParameters) {
 
     ESP_LOGE("UPDATE", "OTA failed: %s", esp_err_to_name(ret));
     stateMachine->process_event(UpdateUnavailable{});
+    setUpdateActive(false);
     vTaskDelete(nullptr);
 }
 
 void ossmStartUpdate() {
+    setUpdateActive(true);
     xTaskCreatePinnedToCore(updateTask, "updateTask",
                             20 * configMINIMAL_STACK_SIZE, nullptr, 1, nullptr,
                             0);

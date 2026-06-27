@@ -27,7 +27,8 @@ using namespace sml;
  * systems, simplify the user experience, and clean up unused code.
  */
 
-OneButton button(Pins::Remote::encoderSwitch, false);
+OneButton remote(Pins::Remote::encoderSwitch, false);
+OneButton button(Pins::ControlBoard::button, false);
 
 void __attribute__((weak)) setup() {
     // Suppress verbose GPIO configuration logs
@@ -52,13 +53,22 @@ void __attribute__((weak)) setup() {
     updateLEDForMachineStatus();  // Set initial LED state
 
     // // link functions to be called on events.
-    button.attachClick([]() { stateMachine->process_event(ButtonPress{}); });
-    button.attachDoubleClick([]() { stateMachine->process_event(DoublePress{}); });
-    button.attachLongPressStart([]() { stateMachine->process_event(LongPress{}); });
+    remote.attachClick([]() { stateMachine->process_event(ButtonPress{}); });
+    remote.attachDoubleClick([]() { stateMachine->process_event(DoublePress{}); });
+    remote.attachLongPressStart([]() { stateMachine->process_event(LongPress{}); });
+
+    button.attachClick([]() { 
+        ESP_LOGI("MAIN", "SINGLE CLICK");
+    });
+    button.attachDoubleClick([]() { 
+        ESP_LOGI("MAIN", "DOUBLE CLICK");
+    });
+    button.attachLongPressStart([]() { stateMachine->process_event(TryUpdate{}); });
 
     xTaskCreatePinnedToCore(
         [](void *pvParameters) {
             while (true) {
+                remote.tick();
                 button.tick();
                 vTaskDelay(25 / portTICK_PERIOD_MS);
             }

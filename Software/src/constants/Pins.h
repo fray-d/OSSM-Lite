@@ -51,9 +51,8 @@ namespace Pins {
         constexpr int limitSwitchPin = 12;
     }
 
-    namespace Wifi {
-        // Pin for Wi-Fi reset button (optional)
-        constexpr int resetPin = 23;
+    namespace ControlBoard {
+        constexpr int button = 23;
     }
 
     namespace GPIO {

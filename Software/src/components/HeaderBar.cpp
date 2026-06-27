@@ -152,6 +152,9 @@ void drawBleIcon() {
         bool stateChanged = (showHeaderIcons != lastShowState);
         lastShowState = showHeaderIcons;
 
+        updateLEDForMachineStatus();
+        vTaskDelay(25 / portTICK_PERIOD_MS);
+
         if (!showHeaderIcons) {
             if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
                 if (stateChanged) {
@@ -160,18 +163,13 @@ void drawBleIcon() {
                 refreshIcons();
                 xSemaphoreGive(displayMutex);
             }
-            updateLEDForMachineStatus();
-            vTaskDelay(100 / portTICK_PERIOD_MS);
             continue;
         }
 
         bool wifiChanged = shouldDrawWifiIcon() || stateChanged;
         bool bleChanged = shouldDrawBleIcon() || stateChanged;
 
-        updateLEDForMachineStatus();
-
         if (!wifiChanged && !bleChanged) {
-            vTaskDelay(100 / portTICK_PERIOD_MS);
             continue;
         }
 
@@ -184,8 +182,6 @@ void drawBleIcon() {
         } else {
             ESP_LOGW("HeaderBar", "Failed to acquire display mutex");
         }
-
-        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }
 
@@ -196,7 +192,7 @@ void drawBleIcon() {
 
     while (true) {
         updateLEDForMachineStatus();
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(25 / portTICK_PERIOD_MS);
     }
 }
 

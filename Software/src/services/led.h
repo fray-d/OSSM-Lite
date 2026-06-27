@@ -53,8 +53,6 @@ void setLEDStatusConnecting();
 // BLE status indication functions
 void updateLEDForBLEStatus();
 void showBLERainbow(int duration_ms = 1000);
-void showBLEAdvertising();  // Breathing blue
-void showBLEAdvertisingDimmed();  // Dimmed breathing blue after timeout
 void showBLEConnected();    // Dimmed blue
 void showBLEDisconnected(); // Off
 
@@ -63,8 +61,8 @@ void pulseForCommunication();  // Brief brightness increase for BLE communicatio
 
 // Machine status functions
 void setHomingActive(bool active);
-bool isHomingActive();
+void setUpdateActive(bool active);
+
 void updateLEDForMachineStatus();
-void showHomingBreathing();  // Breathing deep purple
 
 #endif // OSSM_SOFTWARE_LED_H

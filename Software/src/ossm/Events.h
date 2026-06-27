@@ -31,6 +31,7 @@ struct BleClick {};
 struct ReturnToMenu {};
 
 struct UpdateUnavailable {};
+struct TryUpdate {};
 
 // Definitions to make the table easier to read.
 static auto bleClick = sml::event<BleClick>;
@@ -42,4 +43,5 @@ static auto error = sml::event<Error>;
 static auto home = sml::event<Home>;
 static auto returnToMenu = sml::event<ReturnToMenu>;
 static auto updateUnavailable = sml::event<UpdateUnavailable>;
+static auto tryUpdate = sml::event<TryUpdate>;
 #endif  // OSSM_SOFTWARE_EVENTS_H

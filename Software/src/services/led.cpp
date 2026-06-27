@@ -10,8 +10,7 @@ static auto TAG = "LED";
 void initLED() {
     ESP_LOGI(TAG, "Initializing RGB LED on pin %d...", Pins::Display::ledPin);
 
-    FastLED.addLeds<LED_TYPE, Pins::Display::ledPin, COLOR_ORDER>(leds,
-                                                                  NUM_LEDS);
+    FastLED.addLeds<LED_TYPE, Pins::Display::ledPin, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(128);  // Set to 50% brightness by default
 
     // Turn off LED initially
@@ -46,24 +45,23 @@ void flashLED(CRGB color, int duration_ms) {
     setLEDOff();
 }
 
-void breatheLED(CRGB color, int period_ms) {
+void breatheLED(CRGB color, int period_ms, int step = 5, int max = 255, int min = 0) {
     static unsigned long lastUpdate = 0;
     static int breatheValue = 0;
     static bool increasing = true;
 
     unsigned long currentTime = millis();
-    if (currentTime - lastUpdate >
-        (period_ms / 510)) {  // 255 steps up + 255 steps down
+    if (currentTime - lastUpdate > period_ms) {
         lastUpdate = currentTime;
 
         if (increasing) {
-            breatheValue++;
-            if (breatheValue >= 255) {
+            breatheValue += step;
+            if (breatheValue >= max) {
                 increasing = false;
             }
         } else {
-            breatheValue--;
-            if (breatheValue <= 0) {
+            breatheValue -= step;
+            if (breatheValue <= min) {
                 increasing = true;
             }
         }
@@ -129,11 +127,9 @@ static unsigned long commPulseStartTime = 0;
 static uint8_t baseDimLevel = 30;  // Dim level when connected (out of 255)
 
 // Advertising timeout variables
-static bool advertisingDimmed =
-    false;  // Flag for dimmed advertising after timeout
+static bool advertisingDimmed = false;  // Flag for dimmed advertising after timeout
 static unsigned long advertisingStartTime = 0;  // When advertising started
-static const unsigned long ADVERTISING_TIMEOUT =
-    30000;  // 30 seconds in milliseconds
+static const unsigned long ADVERTISING_TIMEOUT = 30000;  // 30 seconds in milliseconds
 
 void updateLEDForBLEStatus() {
     BleStatus currentStatus = getBleStatus();
@@ -156,8 +152,7 @@ void updateLEDForBLEStatus() {
                 // Rainbow will be handled in the continuous loop
                 rainbowActive = true;
                 rainbowStartTime = currentTime;
-                advertisingStartTime =
-                    currentTime;            // Track when advertising started
+                advertisingStartTime = currentTime; // Track when advertising started
                 advertisingDimmed = false;  // Reset dimmed flag
                 break;
             case BleStatus::CONNECTED:
@@ -196,9 +191,9 @@ void updateLEDForBLEStatus() {
                 }
 
                 if (advertisingDimmed) {
-                    showBLEAdvertisingDimmed();
+                    breatheLED(COLOR_BLUE, 20, 5, 50);
                 } else {
-                    showBLEAdvertising();
+                    breatheLED(COLOR_BLUE, 20, 5);
                 }
             }
             break;
@@ -243,78 +238,6 @@ void showBLERainbow(int duration_ms) {
         // duration_ms
         uint8_t hue = (elapsed * 255) / duration_ms;
         setLEDColor(CHSV(hue, 255, 255));
-    }
-}
-
-void showBLEAdvertising() {
-    // Fast breathing blue effect (10x faster than original)
-    unsigned long currentTime = millis();
-    static unsigned long lastBreathUpdate = 0;
-    static uint8_t breathValue = 0;
-    static bool increasing = true;
-
-    if (currentTime - lastBreathUpdate >=
-        1) {  // Update every 1ms for very smooth fast breathing
-        lastBreathUpdate = currentTime;
-
-        if (increasing) {
-            breathValue += 20;  // Much larger step for faster breathing (10x
-                                // increase from 2)
-            if (breathValue >= 255) {
-                increasing = false;
-                breathValue = 255;
-            }
-        } else {
-            breathValue -= 20;  // Much larger step for faster breathing (10x
-                                // increase from 2)
-            if (breathValue <= 0) {
-                increasing = true;
-                breathValue = 0;
-            }
-        }
-
-        // Create blue color with breathing intensity
-        CRGB color = CRGB::Blue;
-        color.nscale8(breathValue);
-        setLEDColor(color);
-    }
-}
-
-void showBLEAdvertisingDimmed() {
-    // Dimmed breathing blue effect after 30 second timeout
-    unsigned long currentTime = millis();
-    static unsigned long lastBreathUpdateDimmed = 0;
-    static uint8_t breathValueDimmed = baseDimLevel;  // Start at base dim level
-    static bool increasingDimmed = true;
-
-    if (currentTime - lastBreathUpdateDimmed >=
-        8) {  // Update every 8ms for slower, more subtle breathing
-        lastBreathUpdateDimmed = currentTime;
-
-        // Pulse range: baseDimLevel (30) to baseDimLevel + 40 (70) - much
-        // smaller range
-        uint8_t minLevel = baseDimLevel;
-        uint8_t maxLevel =
-            baseDimLevel + 40;  // Only +40 brightness instead of full range
-
-        if (increasingDimmed) {
-            breathValueDimmed += 3;  // Slower step for gentler pulsing
-            if (breathValueDimmed >= maxLevel) {
-                increasingDimmed = false;
-                breathValueDimmed = maxLevel;
-            }
-        } else {
-            breathValueDimmed -= 3;  // Slower step for gentler pulsing
-            if (breathValueDimmed <= minLevel) {
-                increasingDimmed = true;
-                breathValueDimmed = minLevel;
-            }
-        }
-
-        // Create blue color with dimmed breathing intensity
-        CRGB color = CRGB::Blue;
-        color.nscale8(breathValueDimmed);
-        setLEDColor(color);
     }
 }
 
@@ -405,48 +328,24 @@ void setHomingActive(bool active) {
     }
 }
 
-bool isHomingActive() { return homingActiveFlag; }
+static bool updateActiveFlag = false;
 
-void updateLEDForMachineStatus() {
-    // Check if homing is active - this takes priority over BLE status
-    if (isHomingActive()) {
-        showHomingBreathing();
-    } else {
-        // Fall back to BLE status
-        updateLEDForBLEStatus();
+void setUpdateActive(bool active) {
+    if (updateActiveFlag != active) {
+        updateActiveFlag = active;
+        ESP_LOGI(TAG, "Update status changed: %s",
+                 active ? "ACTIVE" : "INACTIVE");
     }
 }
 
-void showHomingBreathing() {
-    // Breathing deep purple effect for homing
-    static unsigned long lastHomingUpdate = 0;
-    static uint8_t homingBreathValue = 0;
-    static bool homingIncreasing = true;
-
-    unsigned long currentTime = millis();
-
-    if (currentTime - lastHomingUpdate >=
-        15) {  // Update every 15ms for smooth breathing
-        lastHomingUpdate = currentTime;
-
-        if (homingIncreasing) {
-            homingBreathValue += 5;
-            if (homingBreathValue >= 255) {
-                homingIncreasing = false;
-                homingBreathValue = 255;
-            }
-        } else {
-            homingBreathValue -= 5;
-            if (homingBreathValue <=
-                baseDimLevel) {  // Don't go completely dark
-                homingIncreasing = true;
-                homingBreathValue = baseDimLevel;
-            }
-        }
-
-        // Create deep purple color with breathing intensity
-        CRGB color = COLOR_DEEP_PURPLE;
-        color.nscale8(homingBreathValue);
-        setLEDColor(color);
+void updateLEDForMachineStatus() {
+    // Check if homing is active - this takes priority over BLE status
+    if (homingActiveFlag) {
+        breatheLED(COLOR_DEEP_PURPLE, 20, 5);
+    } else if(updateActiveFlag) {
+        breatheLED(COLOR_YELLOW, 20, 5);
+    } else {
+        // Fall back to BLE status
+        updateLEDForBLEStatus();
     }
 }

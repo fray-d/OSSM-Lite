@@ -5,18 +5,37 @@ Others are welcome to [flash this firmware](https://fray-d.github.io/OSSM-Lite/)
 The hardware portions of the repository have been deleted in this fork and are not maintained. This firmware is built on the foundation that Research+Desire and KinkyMakers provided. Thanks to them and the community for their efforts.
 
 Key changes:
+- The function button on the reference board is now active.
+    - Single Click: TBD - Return to menu is proposed
+    - Double Click: TBD - Swaping rail ends is proposed
+    - Long Press: Pulls down the latest firmware from this repository.
+- LED status enabled:
+    - Slowly flashing purple: Device is homing
+    - Slowly flashing blue: Device is waiting for BLE connection
+    - Slowly flashing yellow: Device is pulling down an update
 - All modes now use Min and Max Depth... Not Depth and Stroke.
-- Advanced Penetration mode has been added. Requires wired remote or a custom firmware on the RADR remote. Other controllers may be added in the future.
+    - Depth and Stroke remain in BLE to support legacy controllers
+- Advanced Penetration mode has been added. 
+    - Requires wired remote or a custom firmware on the RADR remote.
+    - Other controllers may be added in the future.
 - Simple Penetration mode has been removed. 
-- Streaming mode has been further refined. A web simple web player is in the works, but you can use the original one on the R+D documents site in the meantime.
-- Stroke engine has been configured to use a linear speed instead of strokes per minute. In this way the length of the stroke no longer changes speed.
-- A configuration has been added to allow you to reverse the rail.
-- A configuration has been added to allow you to change how the device homes, and a second configuration to set the length of the rail. Rail length with be 180mm by default.
+- Streaming mode has been further refined. 
+    - An updated web simple web player is in the works to support min/max depth
+    - You can use the original one on the R+D documents site in the meantime.
+- Stroke engine has been configured to use a linear speed instead of strokes per minute. 
+    - The length of the stroke no longer changes speed.
+- User configurations are supported
+    - Docs to follow, but characteristics are avialable if you connect via BLE tools. They are named and describe their purpose.
+    - Rename device
+    - Reverse rail direction
+    - Set homing style (None, Default, Single-Sided, Double-Tap)
+    - Set rail length for None and Sinle-Sided homing (180mm default)
 
 Roadmap:
 - Add a replacement for the documentation site explaining the features of the firmware in detail. Then delete the reference to the exist incompatible docs.
 - Add a configuration tool for all user configurations.
 - Add a web player for funscripts.
 - Continue removing dead code from the source.
-
-
+- Add an issue to suggest a feature or if you find a bug. 
+    - Please be as detailed as you can so I can reproduce the issue. 
+    - Double check you're on the latest version, please. I may have already addressed it.

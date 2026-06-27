@@ -18,7 +18,7 @@ void initBoard() {
     pinMode(Pins::GPIO::pin4, OUTPUT);
 
     pinMode(Pins::Driver::motorEnablePin, OUTPUT);
-    pinMode(Pins::Wifi::resetPin, INPUT_PULLDOWN);
+    pinMode(Pins::ControlBoard::button, INPUT_PULLDOWN);
     pinMode(Pins::Remote::speedPotPin, INPUT);
     adcAttachPin(Pins::Remote::speedPotPin);
 
