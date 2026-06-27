@@ -3,11 +3,11 @@
 
 namespace stroke_engine {
 
-/**
- * Start the stroke engine motion task
- * Uses StrokeEngine library for complex motion patterns
- */
-void startStrokeEngine();
+    /**
+     * Start the stroke engine motion task
+     * Uses StrokeEngine library for complex motion patterns
+     */
+    void startStrokeEngine();
 
 }  // namespace stroke_engine
 

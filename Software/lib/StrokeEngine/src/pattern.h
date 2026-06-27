@@ -16,14 +16,6 @@
 
 #include "PatternMath.h"
 
-#define DEBUG_PATTERN  // Print some debug informations over Serial
-
-#ifndef STRING_LEN
-#define STRING_LEN \
-    64  // Bytes used to initialize char array. No path, topic, name, etc.
-        // should exceed this value
-#endif
-
 enum class StrokePatterns {
     SimpleStroke,
     TeasingPounding,
@@ -268,11 +260,9 @@ class TeasingPounding : public Pattern {
             _timeOfOutStroke = _timeOfFastStroke;
             _timeOfInStroke = _timeOfStroke * 2 - _timeOfFastStroke;
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("Speed: " + String(_speed));
-        Serial.println("TimeOfInStroke: " + String(_timeOfInStroke));
-        Serial.println("TimeOfOutStroke: " + String(_timeOfOutStroke));
-#endif
+        ESP_LOGV(SE,"Speed: %f", _speed);
+        ESP_LOGV(SE,"TimeOfInStroke: %f", _timeOfInStroke);
+        ESP_LOGV(SE,"TimeOfOutStroke: %f", _timeOfOutStroke);
     }
 };
 
@@ -294,10 +284,7 @@ class RoboStroke : public Pattern {
         } else {
             _x = fscale(0.0, 100.0, 1.0 / 3.0, 0.05, -sensation, 0.0);
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("Sensation:" + String(sensation, 0) + " --> " +
-                       String(_x, 6));
-#endif
+        ESP_LOGV(SE,"Sensation: %f -> %f", sensation,_x);
     }
     void setSpeed(float speed = 0) {
         _speed = speed;
@@ -405,10 +392,8 @@ class HalfnHalf : public Pattern {
             _timeOfOutStroke = _timeOfFastStroke;
             _timeOfInStroke = _timeOfStroke * 2 - _timeOfFastStroke;
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("TimeOfInStroke: " + String(_timeOfInStroke));
-        Serial.println("TimeOfOutStroke: " + String(_timeOfOutStroke));
-#endif
+        ESP_LOGV(SE,"TimeOfInStroke", _timeOfInStroke);
+        ESP_LOGV(SE,"TimeOfOutStroke", _timeOfOutStroke);
     }
 };
 
@@ -429,9 +414,7 @@ class Deeper : public Pattern {
         } else {
             _countStrokesForRamp = map(sensation, 0, 100, 11, 32);
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("_countStrokesForRamp: " + String(_countStrokesForRamp));
-#endif
+        ESP_LOGV(SE,"_countStrokesForRamp: %d", _countStrokesForRamp);
     }
     void setSpeed(float speed = 0) {
         _speed = speed;
@@ -462,10 +445,7 @@ class Deeper : public Pattern {
             // sensation is adjusted.
             // Amplitude is slope * cycleIndex
             int amplitude = slope * cycleIndex;
-#ifdef DEBUG_PATTERN
-            Serial.println("amplitude: " + String(amplitude) +
-                        " cycleIndex: " + String(cycleIndex));
-#endif
+            ESP_LOGV(SE,"Amplitude: %d, CycleIndex: %d", amplitude, cycleIndex);
             _nextMove.stroke = (_depth - std::min(_depth,_stroke)) + amplitude;
         }
         _index = index;
@@ -570,9 +550,7 @@ class Insist : public Pattern {
         } else {
             _countStrokesForRamp = map(sensation, 0, 100, 11, 32);
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("_countStrokesForRamp: " + String(_countStrokesForRamp));
-#endif
+        ESP_LOGV(SE,"_countStrokesForRamp: %d", _countStrokesForRamp);
     }
     void setSpeed(float speed = 0) {
         _speed = speed;
@@ -602,10 +580,7 @@ class Insist : public Pattern {
             // This might be not smooth, as the insertion depth may jump when
             // sensation is adjusted.
             int amplitude = slope * (_countStrokesForRamp - cycleIndex);
-#ifdef DEBUG_PATTERN
-            Serial.println("amplitude: " + String(amplitude) +
-                        " cycleIndex: " + String(cycleIndex));
-#endif
+            ESP_LOGV(SE,"Amplitude: %d, CycleIndex: %d", amplitude, cycleIndex);
             _nextMove.stroke = _depth - amplitude;
         }
         _index = index;
@@ -631,9 +606,7 @@ class ProgressiveStroke : public Pattern {
         } else {
             _countStrokesForRamp = map(sensation, 0, 100, 11, 32);
         }
-#ifdef DEBUG_PATTERN
-        Serial.println("_countStrokesForRamp: " + String(_countStrokesForRamp));
-#endif
+        ESP_LOGV(SE,"_countStrokesForRamp: %d", _countStrokesForRamp);
     }
     motionParameter nextTarget(unsigned int index) {
         _timeOfStroke = 1.5 * _stroke / _speed;
@@ -687,9 +660,7 @@ class RandomStroke : public Pattern {
             i++;//break after 10ish tries.
         }
         _lastTarget = _nextMove.stroke;
-#ifdef DEBUG_PATTERN
-        Serial.println("Target: " + String(_nextMove.stroke));
-#endif
+        ESP_LOGV(SE, "Target: %f", _nextMove.stroke);
         _timeOfStroke = std::max(1.5 * dist / _speed, 0.1);
         _nextMove.acceleration = int(3.0 * _nextMove.speed / _timeOfStroke);
         _index = index;

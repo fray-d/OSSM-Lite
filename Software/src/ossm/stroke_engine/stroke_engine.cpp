@@ -19,22 +19,16 @@ namespace stroke_engine {
 
 static void startStrokeEngineTask(void *pvParameters) {
     float measuredStrokeMm = calibration.measuredStrokeSteps / (1_mm);
+    properties.physicalTravel = measuredStrokeMm;
+    Stroker.begin(&properties, stepper);
 
-    machineGeometry strokingMachine = {
-        .physicalTravel = abs(calibration.measuredStrokeSteps / (1_mm)),
-        .keepoutBoundary = 6.0};
     SettingPercents lastSetting = settings;
-
-    servoMotor.invertDirection = UserConfig::getDirection();
-    Stroker.begin(&strokingMachine, &servoMotor, stepper);
-    Stroker.thisIsHome();
-
-    Stroker.setSensation(calculateSensation(settings.sensation), true);
 
     // Translate min/max percentages into StrokeEngine depth+stroke:
     // depth = max position; stroke length = max - min
     Stroker.setDepth(0.01f * settings.maxPosition * abs(measuredStrokeMm), true);
     Stroker.setStroke(0.01f * (settings.maxPosition - settings.minPosition) * abs(measuredStrokeMm), true);
+    Stroker.setSensation(calculateSensation(settings.sensation), true);
 
     auto isInCorrectState = []() {
         // Add any states that you want to support here.
@@ -82,22 +76,14 @@ static void startStrokeEngineTask(void *pvParameters) {
 
         if (lastSetting.pattern != settings.pattern) {
             ESP_LOGD("UTILS", "change pattern: %d", settings.pattern);
-
             Stroker.setPattern(settings.pattern, false);
-
             lastSetting.pattern = settings.pattern;
         }
 
-        if (bleState.hasActiveConnection) {
-            // When connected to BLE, update more frequently for improved responsiveness
-            vTaskDelay(100);
-        } else {
-            vTaskDelay(400);
-        }
+        vTaskDelay(100);
     }
 
     Stroker.stopMotion();
-
     vTaskDelete(nullptr);
 }
 

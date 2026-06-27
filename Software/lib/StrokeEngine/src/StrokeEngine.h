@@ -16,26 +16,6 @@
 #include "FastAccelStepper.h"
 #include "pattern.h"
 
-// Debug Levels
-// #define DEBUG_TALKATIVE             // Show debug messages from the
-// StrokeEngine on Serial #define DEBUG_STROKE                // Show debug
-// messaged for each individual stroke on Serial
-#define DEBUG_CLIPPING  // Show debug messages when motions violating the
-                        // machine physics are commanded
-
-/**************************************************************************/
-/*!
-  @brief  Struct defining the physical properties of the stroking machine.
-*/
-/**************************************************************************/
-typedef struct {
-    float physicalTravel;  /*> What is the maximum physical travel in mm */
-    float keepoutBoundary; /*> Soft endstop preventing hard crashes in mm. Will
-                            * be subtracted twice from physicalTravel. Should be
-                            *  sufficiently to completley drive clear from
-                            *  homing switch */
-} machineGeometry;
-
 /**************************************************************************/
 /*!
   @brief  Struct defining the motor (stepper or servo with STEP/DIR
@@ -46,18 +26,9 @@ typedef struct {
 typedef struct {
     float maxSpeed;           /*> What is the maximum speed in mm/s */
     float maxAcceleration;    /*> Maximum acceleration in mm/s^2 */
+    float physicalTravel;     /*> What is the maximum physical travel in mm */
     float stepsPerMillimeter; /*> Number of steps per millimeter */
-    bool invertDirection;     /*> Set to true to invert the direction signal
-                               *  The firmware expects the home switch to be located
-                               * at the     end of an retraction move. That way the
-                               * machine homes     itself away from the body. Home
-                               * position is -KEEPOUTBOUNDARY */
-    bool enableActiveLow;     /*> Polarity of the enable signal. True for active
-                                 low. */
-    int stepPin;              /*> Pin connected to the STEP input */
-    int directionPin;         /*> Pin connected to the DIR input */
-    int enablePin;            /*> Pin connected to the ENA input */
-} motorProperties;
+} machineProperties;
 
 /**************************************************************************/
 /*!
@@ -70,11 +41,6 @@ typedef enum {
     PATTERN      //!< Stroke Engine is running and servo is moving according to
                  //!< defined pattern.
 } ServoState;
-
-// Verbose strings of states for debugging purposes
-static String verboseState[] = {
-    "[0] Servo disabled", "[1] Servo ready", "[2] Servo pattern running",
-    "[3] Servo setup depth", "[4] Servo position streaming"};
 
 /**************************************************************************/
 /*!
@@ -95,8 +61,7 @@ class StrokeEngine {
       accordingly. StrokeEngine is in state UNDEFINED
     */
     /**************************************************************************/
-    void begin(machineGeometry *physics, motorProperties *motor,
-               FastAccelStepper *servo);
+    void begin(machineProperties *motor, FastAccelStepper *servo);
 
     /**************************************************************************/
     /*!
@@ -174,17 +139,6 @@ class StrokeEngine {
 
     /**************************************************************************/
     /*!
-      @brief  If no homing switch is present homing can be done manually. Push
-      the endeffector all the way in and call thisIsHome(). This enables the
-      the servo and sets the position to -KEEPOUT_BOUNDARY
-      @param speed  Speed in mm/s used for finding the homing switch.
-                    Defaults to 5.0 mm/s
-    */
-    /**************************************************************************/
-    void thisIsHome(float speed = 5.0);
-
-    /**************************************************************************/
-    /*!
       @brief  Retrieves the current servo state from the internal state machine.
       @return Current state of the state machine
     */
@@ -202,20 +156,17 @@ class StrokeEngine {
       void callbackTelemetry(float position, float speed, bool clipping)
     */
     /**************************************************************************/
-    void registerTelemetryCallback(void (*callbackTelemetry)(float, float,
-                                                             bool));
+    void registerTelemetryCallback(void (*callbackTelemetry)(float, float, bool));
 
   protected:
     ServoState _state = UNDEFINED;
-    motorProperties *_motor;
-    machineGeometry *_physics;
+    machineProperties *_machine;
     float _travel;
     int _minStep;
     int _maxStep;
     int _maxStepPerSecond;
     int _maxStepAcceleration;
     Pattern *pattern = Pattern::Create(StrokePatterns(0));
-    bool _isHomed = false;
     int _index = 0;
     int _depth;
     int _previousDepth;
@@ -229,15 +180,8 @@ class StrokeEngine {
     }
     void _stroking();
     TaskHandle_t _taskStrokingHandle = NULL;
-    TaskHandle_t _taskHomingHandle = NULL;
-    TaskHandle_t _taskStreamingHandle = NULL;
     SemaphoreHandle_t _patternMutex = xSemaphoreCreateMutex();
     void _applyMotionProfile(motionParameter *motion);
     void (*_callBackHomeing)(bool) = NULL;
     void (*_callbackTelemetry)(float, float, bool) = NULL;
-    int _homeingSpeed;
-    int _homeingPin;
-    int _homeingToBack;
-    bool _homeingActiveLow; /*> Polarity of the homing signal*/
-    bool _fancyAdjustment;
 };

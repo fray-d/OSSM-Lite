@@ -106,15 +106,11 @@ class FTSCallbacks : public NimBLECharacteristicCallbacks {
         }
     }
 
-    void onRead(NimBLECharacteristic* pCharacteristic,
-                NimBLEConnInfo& connInfo) override {
-        Serial.println("FTS read callback");
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         std::string value = pCharacteristic->getValue();
         String ftsValue = String(value.c_str());
         pCharacteristic->setValue(ftsValue);
         // Print everything that comes to this
-        Serial.print("FTS read: ");
-        Serial.println(ftsValue);
         ESP_LOGD("NIMBLE", "FTS read: %s", ftsValue.c_str());
     }
 

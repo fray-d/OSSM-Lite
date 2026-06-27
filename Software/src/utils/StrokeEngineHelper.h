@@ -16,17 +16,12 @@
 // enum of stroke engine states
 enum PlayControls { MAX_POSITION = 0, MIN_POSITION = 1, SENSATION = 2, BUFFER = 3 };
 
-static motorProperties servoMotor{
+static machineProperties properties{
     .maxSpeed = Config::Driver::maxSpeedMmPerSecond,
     .maxAcceleration = Config::Driver::maxAcceleration,
-    .stepsPerMillimeter =
-        Config::Driver::motorStepPerRevolution /
-        (Config::Driver::pulleyToothCount * Config::Driver::beltPitchMm),
-    .invertDirection = false,
-    .enableActiveLow = true,
-    .stepPin = Pins::Driver::motorStepPin,
-    .directionPin = Pins::Driver::motorDirectionPin,
-    .enablePin = Pins::Driver::motorEnablePin};
+    .stepsPerMillimeter = Config::Driver::motorStepPerRevolution /
+                    (Config::Driver::pulleyToothCount * Config::Driver::beltPitchMm)
+};
 
 static bool isChangeSignificant(float oldPct, float newPct) {
     return oldPct != newPct &&
