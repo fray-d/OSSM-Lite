@@ -7,7 +7,7 @@ The hardware portions of the repository have been deleted in this fork and are n
 Key changes:
 - The function button on the reference board is now active.
     - Single Click: TBD - Return to menu is proposed
-    - Double Click: TBD - Swaping rail ends is proposed
+    - Double Click: If in the menu (before entering any play modes), swap which end of the rail is the "front".
     - Long Press: Pulls down the latest firmware from this repository.
 - LED status enabled:
     - Slowly flashing purple: Device is homing

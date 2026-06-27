@@ -29,6 +29,10 @@ void ossmStartHoming() {
     homing::startHoming();
 }
 
+void ossmReverseRail() {
+    UserConfig::reverseDirection();
+}
+
 void ossmDrawPlayControls() {
     play_controls::drawPlayControls();
 }

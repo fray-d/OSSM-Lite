@@ -43,6 +43,10 @@ namespace UserConfig {
         ESP.restart();
     }
 
+    void reverseDirection() {
+        setDirection(!getDirection());
+    }
+
     HomingType getHomingType() {
         Preferences userConfig;
         userConfig.begin("UserConfig", true);

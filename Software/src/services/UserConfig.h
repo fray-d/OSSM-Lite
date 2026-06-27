@@ -11,6 +11,7 @@ namespace UserConfig {
 
     bool getDirection();
     void setDirection(bool value);
+    void reverseDirection();
 
     enum HomingType {None, Default, SingleSided, DoubleTap};
 

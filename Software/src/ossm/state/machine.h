@@ -39,6 +39,7 @@ struct OSSMStateMachine {
             "menu.idle"_s + buttonPress[isOption(Menu::Help)] = "help"_s,
             "menu.idle"_s + buttonPress[(isOption(Menu::Restart))] = "restart"_s,
             "menu.idle"_s + tryUpdate = "update"_s,
+            "menu.idle"_s + doubleBoardPress / reverseRail = "menu.idle"_s,
 
             "advancedPenetration"_s [isNotHomed] = "homing"_s,
             "advancedPenetration"_s [isPreflightSafe] / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
@@ -46,20 +47,20 @@ struct OSSMStateMachine {
 
             "advancedPenetration.preflight"_s + done / (startAdvancedPenetration) = "advancedPenetration.idle"_s,
             "advancedPenetration.preflight"_s + longPress / emergencyStop = "menu"_s,
-            "advancedPenetration.preflight"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "advancedPenetration.preflight"_s + returnToMenu/ emergencyStop = "menu"_s,
             "advancedPenetration.preflight"_s + tryUpdate / emergencyStop = "update"_s,
 
             "advancedPenetration.idle"_s + longPress / emergencyStop = "menu"_s,
             "advancedPenetration.idle"_s + buttonPress / advancedClick = "advancedPenetration.idle"_s,
             "advancedPenetration.idle"_s + doublePress = "advancedPenetration.presets"_s,
-            "advancedPenetration.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "advancedPenetration.idle"_s + returnToMenu / emergencyStop = "menu"_s,
             "advancedPenetration.idle"_s + tryUpdate / emergencyStop = "update"_s,
 
             "advancedPenetration.presets"_s + longPress / emergencyStop = "menu"_s,
             "advancedPenetration.presets"_s + buttonPress / advancedClick = "advancedPenetration.presets"_s,
             "advancedPenetration.presets"_s + doublePress / advancedClick = "advancedPenetration.idle"_s,
             "advancedPenetration.presets"_s + done = "advancedPenetration.idle"_s,
-            "advancedPenetration.presets"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "advancedPenetration.presets"_s + returnToMenu / emergencyStop = "menu"_s,
             "advancedPenetration.presets"_s + tryUpdate / emergencyStop = "update"_s,
 
             "strokeEngine"_s [isNotHomed] = "homing"_s,
@@ -68,19 +69,19 @@ struct OSSMStateMachine {
 
             "strokeEngine.preflight"_s + done / (resetSettingsStrokeEngine, drawPlayControls, startStrokeEngine) = "strokeEngine.idle"_s,
             "strokeEngine.preflight"_s + longPress / emergencyStop = "menu"_s,
-            "strokeEngine.preflight"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "strokeEngine.preflight"_s + returnToMenu / emergencyStop = "menu"_s,
             "strokeEngine.preflight"_s + tryUpdate / emergencyStop = "update"_s,
 
             "strokeEngine.idle"_s + buttonPress / incrementControlStrokeEngine = "strokeEngine.idle"_s,
             "strokeEngine.idle"_s + doublePress / drawPatternControls = "strokeEngine.pattern"_s,
             "strokeEngine.idle"_s + longPress / emergencyStop = "menu"_s,
-            "strokeEngine.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "strokeEngine.idle"_s + returnToMenu / emergencyStop = "menu"_s,
             "strokeEngine.idle"_s + tryUpdate / emergencyStop = "update"_s,
 
             "strokeEngine.pattern"_s + buttonPress / drawPlayControls = "strokeEngine.idle"_s,
             "strokeEngine.pattern"_s + doublePress / drawPlayControls = "strokeEngine.idle"_s,
             "strokeEngine.pattern"_s + longPress / emergencyStop = "menu"_s,
-            "strokeEngine.pattern"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "strokeEngine.pattern"_s + returnToMenu / emergencyStop = "menu"_s,
             "strokeEngine.pattern"_s + tryUpdate / emergencyStop = "update"_s,
 
             "streaming"_s [isNotHomed] = "homing"_s,
@@ -89,12 +90,12 @@ struct OSSMStateMachine {
 
             "streaming.preflight"_s + done / (resetSettingsStreaming, drawPlayControls, startStreaming) = "streaming.idle"_s,
             "streaming.preflight"_s + longPress = "menu"_s,
-            "streaming.preflight"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "streaming.preflight"_s + returnToMenu / emergencyStop = "menu"_s,
             "streaming.preflight"_s + tryUpdate / emergencyStop = "update"_s,
 
             "streaming.idle"_s + buttonPress / incrementControlStreaming = "streaming.idle"_s,
             "streaming.idle"_s + longPress / emergencyStop = "menu"_s,
-            "streaming.idle"_s + event<ReturnToMenu> / emergencyStop = "menu"_s,
+            "streaming.idle"_s + returnToMenu / emergencyStop = "menu"_s,
             "streaming.idle"_s + tryUpdate / emergencyStop = "update"_s,
 
             "update"_s [isOnline] / (drawUpdate, startUpdate) = "update.checking"_s,

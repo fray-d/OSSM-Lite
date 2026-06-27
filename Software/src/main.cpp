@@ -57,12 +57,8 @@ void __attribute__((weak)) setup() {
     remote.attachDoubleClick([]() { stateMachine->process_event(DoublePress{}); });
     remote.attachLongPressStart([]() { stateMachine->process_event(LongPress{}); });
 
-    button.attachClick([]() { 
-        ESP_LOGI("MAIN", "SINGLE CLICK");
-    });
-    button.attachDoubleClick([]() { 
-        ESP_LOGI("MAIN", "DOUBLE CLICK");
-    });
+    button.attachClick([]() { stateMachine->process_event(ReturnToMenu{}); });
+    button.attachDoubleClick([]() { stateMachine->process_event(DoubleBoardPress{}); });
     button.attachLongPressStart([]() { stateMachine->process_event(TryUpdate{}); });
 
     xTaskCreatePinnedToCore(

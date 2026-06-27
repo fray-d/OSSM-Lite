@@ -5,6 +5,7 @@
 void ossmDrawHello();
 void ossmDrawMenu();
 void ossmStartHoming();
+void ossmReverseRail();
 void ossmDrawPlayControls();
 void ossmStartStreaming();
 void ossmDrawPatternControls();
@@ -36,6 +37,8 @@ namespace actions {
     constexpr auto drawMenu = []() { ossmDrawMenu(); };
 
     constexpr auto startHoming = []() { ossmStartHoming(); };
+
+    constexpr auto reverseRail = []() { ossmReverseRail(); };
 
     constexpr auto drawPlayControls = []() { ossmDrawPlayControls(); };
 
