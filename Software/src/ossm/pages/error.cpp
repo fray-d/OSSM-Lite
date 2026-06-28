@@ -3,12 +3,14 @@
 #include "ossm/state/error.h"
 #include "components/HeaderBar.h"
 #include "services/display.h"
+#include "services/led.h"
 #include "services/stepper.h"
 #include "ui.h"
 
 namespace pages {
 
 void drawError() {
+    setErrorActive(true);
     stepper->forceStop();
     showHeaderIcons = true;
 

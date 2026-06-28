@@ -69,7 +69,7 @@ BleStatus getBleStatus() {
         return BleStatus::DISCONNECTED;
     }
 
-    if (pServer->getAdvertising() && pServer->getConnectedCount() == 0) {
+    if (pServer->getAdvertising()->isAdvertising() && pServer->getConnectedCount() == 0) {
         return BleStatus::ADVERTISING;
     }
 

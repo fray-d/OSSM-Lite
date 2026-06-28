@@ -27,12 +27,4 @@ inline void resetLastSpeedCommandWasFromBLE() {
     bleState.lastSpeedCommandWasFromBLE = false;
 }
 
-inline bool hasActiveBLE() {
-    return bleState.hasActiveConnection;
-}
-
-inline void setBLEConnectionStatus(bool isConnected) {
-    bleState.hasActiveConnection = isConnected;
-}
-
 #endif  // OSSM_STATE_BLE_H

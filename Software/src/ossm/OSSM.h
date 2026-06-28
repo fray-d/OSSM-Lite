@@ -32,22 +32,6 @@ class OSSM {
 
     // Get state fingerprint without timestamp (for change detection)
     String getStateFingerprint();
-
-    // Calibration accessors (deprecated - use calibration.* globals)
-    float currentSensorOffset = 0;
-    float measuredStrokeSteps = 0;
-
-    bool hasActiveBLE() const { return bleState.hasActiveConnection; }
-
-    void setBLEConnectionStatus(bool isConnected) {
-        bleState.hasActiveConnection = isConnected;
-    }
-
-  private:
-    bool isForward = true;
-    String errorMessage = "";
-    bool lastSpeedCommandWasFromBLE = false;
-    bool hasActiveBLEConnection = false;
 };
 
 extern OSSM *ossm;

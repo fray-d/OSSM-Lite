@@ -41,11 +41,6 @@ class ServerCallbacks : public NimBLEServerCallbacks {
         ESP_LOGI("NIMBLE", "Connection count: %d",
                  pServer->getConnectedCount());
 
-        // Set BLE connection status to true
-        if (ossm) {
-            ossm->setBLEConnectionStatus(true);
-        }
-
         lostConnectionTime = 0;
     }
 
@@ -56,23 +51,11 @@ class ServerCallbacks : public NimBLEServerCallbacks {
         ESP_LOGI("NIMBLE", "Connection count: %d",
                  pServer->getConnectedCount());
 
-        // Set BLE connection status to false when no connections remain
-        if (ossm && pServer->getConnectedCount() == 0) {
-            ossm->setBLEConnectionStatus(false);
-            ossm->ble_click("go:menu");
-        }
+        stateMachine->process_event(ReturnToMenu{});
 
         // Capture current speed when connection is lost
         speedOnLostConnection = settings.speed;
         ESP_LOGI("NIMBLE", "Speed on disconnect: %d", speedOnLostConnection);
-
-        // Restart advertising when client disconnects
-        if (pServer->getConnectedCount() == 0) {
-            ESP_LOGI("NIMBLE",
-                     "No connections remaining, restarting advertising");
-            NimBLEDevice::setDeviceName(UserConfig::getDeviceName());
-            pServer->startAdvertising();
-        }
 
         lostConnectionTime = millis();
     }
@@ -148,11 +131,15 @@ void nimbleLoop(void* pvParameters) {
         // Check if we should be advertising (no connections)
         if (pServer->getConnectedCount() == 0) {
             // If not advertising and no connections, restart advertising
-            if (!pServer->getAdvertising()) {
-                ESP_LOGI("NIMBLE",
-                         "No connections and not advertising, restarting "
-                         "advertising");
-                pServer->startAdvertising();
+            if (stateMachine->is("menu.idle"_s)) {
+                if (!pServer->getAdvertising()->isAdvertising()) {
+                    pServer->startAdvertising();
+                    ESP_LOGI("NIMBLE",
+                            "No connections and not advertising, restarting "
+                            "advertising");
+                }
+            } else {
+                pServer->stopAdvertising();
             }
 
             if (lostConnectionTime > 0) {
@@ -259,10 +246,9 @@ void nimbleLoop(void* pvParameters) {
             ESP_LOGD("NIMBLE", "State changed to: %s", currentState.c_str());
             pChr->setValue(currentState);
             pChr->notify();
+            // Trigger LED communication pulse for state update
+            pulseForCommunication();
         }
-
-        // Trigger LED communication pulse for state update
-        pulseForCommunication();
 
         lastState = fingerprint;
         vTaskDelay(1);
@@ -352,10 +338,6 @@ void initNimble() {
     pAdvertising->addServiceUUID(pFTS->getUUID());
 #endif
     pAdvertising->enableScanResponse(true);
-
-    // // Configure advertising parameters for better reliability
-    // pAdvertising->setMinInterval(0x20);  // 20ms minimum interval
-    // pAdvertising->setMaxInterval(0x40);  // 40ms maximum interval
 
     pAdvertising->start();
 

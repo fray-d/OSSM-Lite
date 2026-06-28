@@ -6,6 +6,8 @@
 #include "ossm/Events.h"
 #include "ossm/state/state.h"
 #include "services/display.h"
+#include "services/led.h"
+#include "services/UserConfig.h"
 #include "services/wm.h"
 #include "ui.h"
 
@@ -33,11 +35,13 @@ namespace pages {
 
         // Only start portal if not already connected
         if (WiFiClass::status() != WL_CONNECTED) {
+            setWifiSetupActive(true);
             wm.setConfigPortalBlocking(false);
             wm.setCleanConnect(true);
             wm.setConnectTimeout(30);
             wm.setConnectRetries(5);
-            wm.startConfigPortal(ui::strings::ossmSetup);
+            std::string portalName = UserConfig::getDeviceName() + " Setup";
+            wm.startConfigPortal(portalName.c_str());
 
             // wm process task
             xTaskCreatePinnedToCore(
@@ -63,6 +67,7 @@ namespace pages {
                     if (WiFiClass::status() != WL_CONNECTED) {
                         wm.stopConfigPortal();
                     }
+                    setWifiSetupActive(false);
                     vTaskDelete(nullptr);
                 },
                 "wmProcessTask", 4 * configMINIMAL_STACK_SIZE, nullptr,

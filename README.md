@@ -12,7 +12,12 @@ Key changes:
 - LED status enabled:
     - Slowly flashing purple: Device is homing
     - Slowly flashing blue: Device is waiting for BLE connection
-    - Slowly flashing yellow: Device is pulling down an update
+    - Slowly flashing green: Device is connected via BLE to a remote
+    - Blink bright green: Receiving communication over BLE
+    - Rapid flashing orange: Device is pulling down an update
+    - Slowly flashing yellow: Device is in WiFi setup mode. Join the "{device name} Setup" wifi to configure.
+    - Slowly flashing cyan: Device is in a play mode with wired remote (or at least without BLE connected)
+    - Rapid flashing red: Machine is in an error state. Likely homing related.
 - All modes now use Min and Max Depth... Not Depth and Stroke.
     - Depth and Stroke remain in BLE to support legacy controllers
 - Advanced Penetration mode has been added. 
