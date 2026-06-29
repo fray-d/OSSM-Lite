@@ -131,7 +131,7 @@ void nimbleLoop(void* pvParameters) {
         // Check if we should be advertising (no connections)
         if (pServer->getConnectedCount() == 0) {
             // If not advertising and no connections, restart advertising
-            if (stateMachine->is("menu.idle"_s)) {
+            if (stateMachine->is("menu.idle"_s) || stateMachine->is("error.idle"_s)) {
                 if (!pServer->getAdvertising()->isAdvertising()) {
                     pServer->startAdvertising();
                     ESP_LOGI("NIMBLE",

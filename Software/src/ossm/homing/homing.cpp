@@ -27,9 +27,6 @@ namespace homing {
     void clearHoming() {
         ESP_LOGD("Homing", "Homing started");
 
-        // Set homing active flag for LED indication
-        setHomingActive(true);
-
         // Set acceleration and deceleration in steps/s^2
         stepper->setAcceleration(1000_mm);
         // Set speed in steps/s
@@ -41,6 +38,9 @@ namespace homing {
 
     static void startHomingTask(void *pvParameters) {
         TickType_t xTaskStartTime = xTaskGetTickCount();
+
+        // Set homing active flag for LED indication
+        setHomingActive(true);
 
         stepper->enableOutputs();
         stepper->setDirectionPin(Pins::Driver::motorDirectionPin, UserConfig::getDirection());
@@ -56,12 +56,14 @@ namespace homing {
         if (isNone || (isSingle && stateMachine->is("measure.run"_s) )) {
             calibration.measuredStrokeSteps = Config::Driver::stepsPerMM * UserConfig::getRailLength();
             stateMachine->process_event(Done{});
+            setHomingActive(false);
             vTaskDelete(nullptr);
             return;
         }
 
         if (!UserConfig::getReHome() && !calibration.isFirstHomed) {
             stateMachine->process_event(Done{});
+            setHomingActive(false);
             vTaskDelete(nullptr);
             return;
         }
@@ -97,11 +99,10 @@ namespace homing {
             TickType_t xCurrentTickCount = xTaskGetTickCount();
             TickType_t xTicksPassed = xCurrentTickCount - xTaskStartTime;
             uint32_t msPassed = xTicksPassed * portTICK_PERIOD_MS;
-            if (msPassed > 40000) {
+            if (msPassed > 21000) { //500mm @ 25mm/s + buffer
                 ESP_LOGE("Homing", "Homing took too long. Check power and restart");
                 errorState.message = ui::strings::homingTookTooLong;
 
-                setHomingActive(false);
                 stateMachine->process_event(Error{});
                 break;
             }
@@ -129,7 +130,7 @@ namespace homing {
             calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,Config::Driver::maxStrokeSteps);
 
             if (!second && stateMachine->is("homing.run"_s) &&
-                        abs(stepper->getCurrentPosition()) < Config::Driver::minStrokeLengthMm) {
+                        abs(stepper->getCurrentPosition()) < Config::Driver::minStrokeLengthSteps) {
                 second = true;
                 stepper->setSpeedInHz(25_mm);
                 stepper->moveTo(targetPositionInSteps, false);
@@ -148,13 +149,11 @@ namespace homing {
                 stepper->moveTo(calibration.measuredStrokeSteps, true);
             }
 
-            // Clear homing active flag for LED indication
-            setHomingActive(false);
-
             stateMachine->process_event(Done{});
             break;
         };
-
+        
+        setHomingActive(false);
         vTaskDelete(nullptr);
     }
 
@@ -167,8 +166,8 @@ namespace homing {
     }
 
     bool isStrokeTooShort() {
-        if (calibration.measuredStrokeSteps >
-            Config::Driver::minStrokeLengthMm) {
+        if (calibration.measuredStrokeSteps >=
+            Config::Driver::minStrokeLengthSteps) {
             return false;
         }
         errorState.message = ui::strings::strokeTooShort;

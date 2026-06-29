@@ -3,85 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OSSM Lite Web Flasher</title>
-  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js"></script>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      max-width: 560px;
-      margin: 80px auto;
-      padding: 0 24px;
-      background: #0d1117;
-      color: #e6edf3;
-    }
-    h1 { font-size: 1.4rem; margin-bottom: 4px; }
-    .branch {
-      display: inline-block;
-      font-size: 0.8rem;
-      background: #21262d;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 2px 10px;
-      color: #79c0ff;
-      margin-bottom: 24px;
-    }
-    p { color: #8b949e; line-height: 1.6; }
-    .flash-row {
-      margin: 32px 0;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    esp-web-install-button::part(button) {
-      background: #238636;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    esp-web-install-button::part(button):hover {
-      background: #2ea043;
-    }
-    .note {
-      font-size: 0.8rem;
-      color: #6e7681;
-      margin-top: 32px;
-      border-top: 1px solid #21262d;
-      padding-top: 16px;
-    }
-    a { color: #79c0ff; }
-  </style>
+  <title>OSSM Lite Documentation</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+  <script src="script.js"></script>
 </head>
 <body>
-  <h1>OSSM Web Flasher</h1>
-  <span class="branch">Lite</span>
-
-  <p>
-    Flash the latest firmware directly from your browser.
-    No build tools required — just a USB-C cable and Chrome or Edge.
-  </p>
-
-  <p>Warning, flashing from the browser will erase your configurations and preferences on your device. Use the on-device over-the-air update functionality to maintain your configurations.</p>
-
-  <div class="flash-row">
-    <esp-web-install-button
-      manifest="https://fray-d.github.io/OSSM-Lite/manifest.json">
-      <button slot="activate">⚡ Connect &amp; Flash</button>
-    </esp-web-install-button>
-  </div>
-
-  <div class="note">
+  <main style="max-width: 800px;">
+      <hgroup>
+        <h2>OSSM Lite</h2>
+        <p>Documentation</p>
+      </hgroup>
     <p>
-      <strong>Requirements:</strong> Chrome or Edge on desktop (not mobile). Windows may need a
-      <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank">CP210x USB driver</a>.
+      The OSSM Lite firmware is intended to be both easy to use and empower the user to customize their experience. 
+      Read this documentation in order to commision a new device, or jump to the section you need with the links below.
+      You are encouraged to read the entire document before seeking support elsewhere. It's not terribly long and has most of the answers.
     </p>
+    <p>Steps to set up this OSSM firmware and it's features:</p>
     <p>
-      <a href="https://github.com/fray-d/OSSM-Lite/" target="_blank">
-        Source  
-      </a>
+      1. &nbsp; <a href="flash.html">Flash the firmware</a><br/>
+      2. &nbsp; <a href="led.html">Review the blink code information</a><br/>
+      3. &nbsp; <a href="homing.html">Choose a homing method</a><br/>
+      4. &nbsp; <a href="rail.html">Configure rail direction</a><br/>
+      5. &nbsp; <a href="name.html">Name your device</a><br/>
+      6. &nbsp; <a href="wifi.html">Setup WiFi for over-the-air updates</a><br/>
+      7. &nbsp; <a href="play.html">Learn about play modes</a><br/>
+      8. &nbsp; <a href="preset.html">Advanced Penetration Preset Tool</a><br/> 
+      9. &nbsp; <a href="funscript.html">Funscript Player</a><br/>
     </p>
-  </div>
+  </main>
 </body>
 </html>

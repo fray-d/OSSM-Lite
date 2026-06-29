@@ -1,23 +1,12 @@
 # OSSM Lite - Lite Firmware for Open Source Sex Machine
 
 This is a stripped down version of the OSSM firmware that I run on my personal device. It is a work in progress to add functionality I enjoy and test new features.
-Others are welcome to [flash this firmware](https://fray-d.github.io/OSSM-Lite/) but no warranty or support is guaranteed beyond what you find in the documentation. Use at your own risk.
+Others are welcome to [read the docs and flash this firmware](https://fray-d.github.io/OSSM-Lite/) but no warranty or support is guaranteed beyond what you find in the documentation. Use at your own risk.
 The hardware portions of the repository have been deleted in this fork and are not maintained. This firmware is built on the foundation that Research+Desire and KinkyMakers provided. Thanks to them and the community for their efforts.
 
 Key changes:
-- The function button on the reference board is now active.
-    - Single Click: TBD - Return to menu is proposed
-    - Double Click: If in the menu (before entering any play modes), swap which end of the rail is the "front".
-    - Long Press: Pulls down the latest firmware from this repository.
-- LED status enabled:
-    - Slowly flashing purple: Device is homing
-    - Slowly flashing blue: Device is waiting for BLE connection
-    - Slowly flashing green: Device is connected via BLE to a remote
-    - Blink bright green: Receiving communication over BLE
-    - Rapid flashing orange: Device is pulling down an update
-    - Slowly flashing yellow: Device is in WiFi setup mode. Join the "{device name} Setup" wifi to configure.
-    - Slowly flashing cyan: Device is in a play mode with wired remote (or at least without BLE connected)
-    - Rapid flashing red: Machine is in an error state. Likely homing related.
+- The function button on the reference board is now active with some assigned functions.
+- [LED status enabled](https://fray-d.github.io/OSSM-Lite/led.html) 
 - All modes now use Min and Max Depth... Not Depth and Stroke.
     - Depth and Stroke remain in BLE to support legacy controllers
 - Advanced Penetration mode has been added. 
@@ -26,19 +15,15 @@ Key changes:
 - Simple Penetration mode has been removed. 
 - Streaming mode has been further refined. 
     - An updated web simple web player is in the works to support min/max depth
-    - You can use the original one on the R+D documents site in the meantime.
 - Stroke engine has been configured to use a linear speed instead of strokes per minute. 
-    - The length of the stroke no longer changes speed.
-- User configurations are supported
-    - Docs to follow, but characteristics are avialable if you connect via BLE tools. They are named and describe their purpose.
-    - Rename device
-    - Reverse rail direction
+- User configurations are supported [See docs](https://fray-d.github.io/OSSM-Lite/) 
     - Set homing style (None, Default, Single-Sided, Double-Tap)
     - Set rail length for None and Sinle-Sided homing (180mm default)
+    - Reverse rail direction
+    - Rename device
 
 Roadmap:
-- Add a replacement for the documentation site explaining the features of the firmware in detail. Then delete the reference to the exist incompatible docs.
-- Add a configuration tool for all user configurations.
+- Add a tool for sharing advanced mode presets manually.
 - Add a web player for funscripts.
 - Continue removing dead code from the source.
 - Add an issue to suggest a feature or if you find a bug. 

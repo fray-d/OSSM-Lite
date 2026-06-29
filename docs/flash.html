@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+    <title>OSSM Lite Documentation</title>
+  </head>
+  <body>
+    <main style="max-width: 800px;">
+      <hgroup>
+        <h2>OSSM Lite</h2>
+        <p>1. Flash the firmware</p>
+      </hgroup>
+      <p>
+        The first step in this firmware journey is flashing it to your board.
+      </p>
+      <p>
+        Disconnect the power from the barrel jack connector and only use USB-C for this. It won't hurt anything either way, but we might as well not power the motor until later in the process.
+      </p>
+      <p>
+        You can come back here in the future to flash newer versions, but this acts like a factory reset. The preferences you set up in future steps will be erased. Later we will configure over-the-air updates that will preserve your settings.
+      </p>
+      <p>
+        Connect your device to your computer via USB cable. Click the connect button below and select the item that says 'UART Bridge Controller' on the screen that pops up. Then follow the instructions on the screen. Afterwards you can put the USB cable away. Future steps will connect to the OSSM wirelessly.
+      </p>
+      <esp-web-install-button manifest="https://fray-d.github.io/OSSM-Lite/manifest.json">
+        <button slot="activate">Connect and Flash</button>
+      </esp-web-install-button>
+      <p></p>
+      <p>
+        <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile). Windows may need a
+        <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank">CP210x USB driver</a>.
+      </p>
+
+      <a href="index.html">Previous</a> | 
+      <a href="led.html">Next</a>
+    </main>
+  </body>
+</html>

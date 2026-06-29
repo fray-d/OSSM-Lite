@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+    <script src="script.js"></script>
+    <title>OSSM Lite Documentation</title>
+  </head>
+  <body>
+    <main style="max-width: 800px;">
+      <hgroup>
+        <h2>OSSM Lite</h2>
+        <p>5. Name your device</p>
+      </hgroup>
+      <p>
+        You realize whenever you have this thing turned on it is broadcasting to the whole neighborhood that it exists, right? Maybe now's a good time to update the name of your device lest someone search the internet for OSSM and find themselves with a new kink.
+      </p>
+      <p>
+        Click the button below. Change the name to something with 8 characters or less. The device will reboot after you click save. It can take a little while for your computer or phone to learn the new name.
+      </p>
+      <button id="connect" onclick="connectNamePage();">Connect to Configure</button>
+      <article id="controls" style="display: none;">
+        <form>
+          <input type="text" maxlength="8" id="deviceName">
+          <input type="submit" onclick="writeDeviceName()">
+        </form>
+        <p></p>
+      </article>
+      <p></p>
+      <p>
+        <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
+      </p>
+      <a href="rail.html">Previous</a> | 
+      <a href="wifi.html">Next</a>
+    </main>
+  </body>
+</html>

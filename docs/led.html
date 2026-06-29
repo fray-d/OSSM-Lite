@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+    <title>OSSM Lite Documentation</title>
+  </head>
+  <body>
+    <main style="max-width: 800px;">
+      <hgroup>
+        <h2>OSSM Lite</h2>
+        <p>2. Review blink code information</p>
+      </hgroup>
+      <p>
+        I know what you're thinking... Really, next step is to learn about colors? 
+      </p>
+      <p>
+        Not every OSSM has the same remote connected, but they all have the status LED. It can give you clear indication of what is going on with your device. If this is your first boot it's probably already blinking angrily at you right now. The list below is in the order you are most likely to experience them.
+      </p>
+      <table>
+        <tr>
+          <th>Color</td>
+          <td>Pattern</td>
+          <td>Meaning</td>
+        </tr>
+        <tr>
+          <td>Purple</td>
+          <td>Slowly Pulsing</td>
+          <td>Device is attempting to home</td>
+        </tr>
+        <tr>
+          <td>Red</td>
+          <td>Rapid Flashing</td>
+          <td>Device is in an error state. Likely this means homing has failed. Check your power cable is connected and the belt tension. Then restart.</td>
+        </tr>
+        <tr>
+          <td>Dark Blue</td>
+          <td>Slowly Pulsing</td>
+          <td>Device is idle and waiting for a remote to connect over bluetooth</td>
+        </tr>
+        <tr>
+          <td>Dark Blue (Dim)</td>
+          <td>Slowly Pulsing</td>
+          <td>Same as above, but it's been a while...</td>
+        </tr>
+        <tr>
+          <td>Cyan</td>
+          <td>Slowly Pulsing</td>
+          <td>Device is in a play mode using only the wired remote.</td>
+        </tr>
+        <tr>
+          <td>Green (Dim)</td>
+          <td>Slowly Pulsing</td>
+          <td>Wireless remote connected</td>
+        </tr>
+        <tr>
+          <td>Green</td>
+          <td>Quick Flash</td>
+          <td>Wireless communication sent/received</td>
+        </tr>
+        <tr>
+          <td>Yellow</td>
+          <td>Slowly Pulsing</td>
+          <td>WiFi setup enabld. See wifi section of this documentation</td>
+        </tr>
+        <tr>
+          <td>Orange</td>
+          <td>Rapid Flashing</td>
+          <td>Device is pulling down an update. Do not power off. Will restart on it's own.</td>
+        </tr>
+      </table>
+      <a href="flash.html">Previous</a> | 
+      <a href="homing.html">Next</a>
+    </main>
+  </body>
+</html>

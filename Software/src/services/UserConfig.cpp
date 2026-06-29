@@ -1,4 +1,5 @@
 #include "UserConfig.h"
+#include "constants/Config.h"
 
 #include <Preferences.h>
 
@@ -76,12 +77,10 @@ namespace UserConfig {
     void setRailLength(float value) {
         Preferences userConfig;
         userConfig.begin("UserConfig", false);
-        userConfig.putFloat("RailLength", value);
+        
+        userConfig.putFloat("RailLength", constrain(value,Config::Driver::minStrokeLengthMm,Config::Driver::maxStrokeMm));
         userConfig.end();
         ESP_LOGI("USER CONFIG", "Rail length write: %d", value);
-        if (getHomingType() == HomingType::None || getHomingType() == HomingType::SingleSided) {
-            ESP.restart(); //Only restart if needed
-        }
     }
 
     bool getReHome() {

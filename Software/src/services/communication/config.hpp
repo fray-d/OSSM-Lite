@@ -6,6 +6,7 @@
 #include <services/board.h>
 
 #include "Arduino.h"
+#include "services/led.h"
 #include "services/UserConfig.h"
 
 void setBoolValue(bool value, NimBLECharacteristic* pCharacteristic) {
@@ -44,6 +45,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
                      configValue.c_str());
             pCharacteristic->setValue(String(FPSTR(error_invalid)));
         }
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic,
@@ -102,6 +104,7 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
                      configValue.c_str());
             pCharacteristic->setValue(String(FPSTR(error_invalid)));
         }
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic,
@@ -141,6 +144,7 @@ class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
             UserConfig::setDeviceName(value);
         }
         lastPresetCommand = currentTime;
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic,
@@ -176,6 +180,7 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
             ESP_LOGW("NIMBLE", "Invalid direction config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -201,6 +206,7 @@ class HomingTypeConfigCallbacks : public NimBLECharacteristicCallbacks {
         std::string value = pCharacteristic->getValue();
         UserConfig::HomingType type = static_cast<UserConfig::HomingType>(std::stoi(value)); 
         UserConfig::setHomingType(type);
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -224,6 +230,7 @@ class RailLengthConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setRailLength(value);
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -256,6 +263,7 @@ class ReHomeConfigCallbacks : public NimBLECharacteristicCallbacks {
             ESP_LOGW("NIMBLE", "Invalid home between modes config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
+        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
