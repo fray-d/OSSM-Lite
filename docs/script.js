@@ -1,15 +1,17 @@
-const OSSM_UUID = "522b443a-4f53-534d-0001-420badbabe69";
-const HOMING_TYPE_UUID = "522b443a-4f53-534d-1060-420badbabe69";
-const RAIL_LENGTH_UUID = "522b443a-4f53-534d-1070-420badbabe69";
-const HOME_BETWEEN_MODES_UUID = "522b443a-4f53-534d-1080-420badbabe69";
-const REVERSE_RAIL_UUID = "522b443a-4f53-534d-1050-420badbabe69";
-const DEVICE_NAME_UUID = "522b443a-4f53-534d-1040-420badbabe69";
-
-var serverRef, serviceRef, homeBetweenRef
+const LEGACY_OSSM_UUID = "522b443a-4f53-534d-0001-420badbabe69";
+const OSSM_UUID = "4f53534d-0000-0000-0000-000000000000";
+const HOMING_TYPE_UUID = "4f53534d-436f-6e66-6967-486f6d696e67";
+const RAIL_LENGTH_UUID = "4f53534d-436f-6e66-6967-4c656e677468";
+const HOME_BETWEEN_MODES_UUID = "4f53534d-436f-6e66-6967-5265486f6d65";
+const REVERSE_RAIL_UUID = "4f53534d-436f-6e66-6967-496e76657274";
+const DEVICE_NAME_UUID = "4f53534d-436f-6e66-6967-52656e616d65";
+const WIFI_UUID = "4f53534d-436f-6e66-6967-202057694669";
+const UPDATE_UUID = "4f53534d-436f-6e66-6967-557064617465";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+var serverRef, serviceRef
 async function handleConnect() {
     var connectButton = document.getElementById("connect");
     connectButton.ariaBusy = true;
@@ -20,7 +22,6 @@ async function handleConnect() {
         });
         bleDevice.addEventListener('gattserverdisconnected', handleDisconnect);
         console.log("Device Found");
-
 
         serverRef = await bleDevice.gatt.connect();
         console.log("Connected to server");
@@ -145,6 +146,43 @@ async function writeDeviceName() {
     deviceNameRef.writeValueWithoutResponse(value);
 }
 
+var wifiRef, ssidElement, passwordElement;
+async function initWiFi() {
+    ssidElement = document.getElementById("SSID");
+    passwordElement = document.getElementById("Password");
+    wifiRef = await serviceRef.getCharacteristic(WIFI_UUID);
+    console.log("WiFi characteristic connected");
+    readWiFi();
+}
+async function readWiFi() {
+    document.getElementById("Update").style.display = 'none';
+    var value = await wifiRef.readValue();
+    value = decoder.decode(value);
+    value = JSON.parse(value)
+    ssidElement.value = value['ssid'];
+    ssidElement.ariaInvalid = !value['connected'];
+    if (value['connected']) {
+        document.getElementById("Update").style.display = 'block';
+    }
+    passwordElement.value = "";
+    console.log(value['connected']);
+    console.log("WiFi: %o", value);
+}
+async function writeWiFi() {
+    var ssid = ssidElement.value;
+    var password = passwordElement.value;
+    var value = "set:wifi:" + ssid + "|" + password;
+    console.log("Write WiFi: " + ssid);
+    value = encoder.encode(value);
+    await wifiRef.writeValue(value);
+    readWiFi();
+}
+
+async function writeUpdate() {
+    var update = await serviceRef.getCharacteristic(UPDATE_UUID);
+    await update.writeValue(encoder.encode(true));
+}
+
 async function connectHomingPage() {
     await handleConnect();
     await initHomingType();
@@ -160,4 +198,9 @@ async function connectRailPage() {
 async function connectNamePage() {
     await handleConnect();
     await initDeviceName();
+}
+
+async function connectWiFiPage() {
+    await handleConnect();
+    await initWiFi();
 }

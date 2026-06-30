@@ -23,10 +23,11 @@
       <button id="connect" onclick="connectNamePage();">Connect to Configure</button>
       <article id="controls" style="display: none;">
         <form>
-          <input type="text" maxlength="8" id="deviceName">
-          <input type="submit" onclick="writeDeviceName()">
+          <fieldset role="group" style="margin-bottom: 0;">
+            <input type="text" maxlength="8" id="deviceName">
+            <input type="submit" value="Save" onclick="writeDeviceName()">
+          </fieldset>
         </form>
-        <p></p>
       </article>
       <p></p>
       <p>

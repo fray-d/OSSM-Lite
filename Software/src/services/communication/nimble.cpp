@@ -2,10 +2,10 @@
 
 #include <services/tasks.h>
 
-#include <queue>
-
+#include "constants/Version.h"
 #include "command.hpp"
 #include "config.hpp"
+#include "fleshy.hpp"
 #include "gpio.hpp"
 #include "ossm/OSSM.h"
 #include "ossm/advanced_penetration/advanced_penetration.h"
@@ -14,15 +14,9 @@
 #include "services/UserConfig.h"
 #include "state.hpp"
 #include "wifi.hpp"
-#include "constants/Version.h"
 
 // Define the global variables
 NimBLEServer* pServer = nullptr;
-
-NimBLECharacteristic* pStateCharacteristic = nullptr;
-NimBLECharacteristic* pSpeedKnobConfigCharacteristic = nullptr;
-NimBLECharacteristic* pLatencyCompensationConfigCharacteristic = nullptr;
-NimBLECharacteristic* pCommandCharacteristic = nullptr;
 
 static long lostConnectionTime = 0;
 static int speedOnLostConnection = 0;
@@ -36,20 +30,14 @@ double easeInOutSine(double t) {
 /** Handler class for server actions */
 class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
-        ESP_LOGI("NIMBLE", "Client connected: %s",
-                 connInfo.getAddress().toString().c_str());
-        ESP_LOGI("NIMBLE", "Connection count: %d",
-                 pServer->getConnectedCount());
-
+        ESP_LOGI("NIMBLE", "Client connected: %s", connInfo.getAddress().toString().c_str());
+        ESP_LOGI("NIMBLE", "Connection count: %d", pServer->getConnectedCount());
         lostConnectionTime = 0;
     }
 
-    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo,
-                      int reason) override {
-        ESP_LOGI("NIMBLE", "Client disconnected: %s, reason: %d",
-                 connInfo.getAddress().toString().c_str(), reason);
-        ESP_LOGI("NIMBLE", "Connection count: %d",
-                 pServer->getConnectedCount());
+    void onDisconnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo, int reason) override {
+        ESP_LOGI("NIMBLE", "Client disconnected: %s, reason: %d", connInfo.getAddress().toString().c_str(), reason);
+        ESP_LOGI("NIMBLE", "Connection count: %d", pServer->getConnectedCount());
 
         stateMachine->process_event(ReturnToMenu{});
 
@@ -66,60 +54,6 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     }
 } serverCallbacks;
 
-#ifdef PRETEND_TO_BE_FLESHY_THRUST_SYNC
-class FTSCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic,
-                 NimBLEConnInfo& connInfo) override {
-        std::string value = pCharacteristic->getValue();
-
-        // Expected format: [position, timeHigh, timeLow]
-        // position: uint8 (0-180), convert to 100
-        // time: uint16 big-endian (MSB first)
-        if (value.length() >= 3) {
-            uint8_t position = static_cast<uint8_t>(value[0] / 1.8);
-            uint16_t time = (static_cast<uint8_t>(value[1]) << 8) |
-                            static_cast<uint8_t>(value[2]);
-
-            ESP_LOGI("NIMBLE", "FTS Command - Position: %d, Time: %d ms", position, time);
-            targetQueue.push({position, time, std::chrono::steady_clock::now(), 0});
-
-        } else {
-            ESP_LOGW("NIMBLE", "FTS write - Invalid data length: %d bytes",
-                     value.length());
-        }
-    }
-
-    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        std::string value = pCharacteristic->getValue();
-        String ftsValue = String(value.c_str());
-        pCharacteristic->setValue(ftsValue);
-        // Print everything that comes to this
-        ESP_LOGD("NIMBLE", "FTS read: %s", ftsValue.c_str());
-    }
-
-    /** Peer subscribed to notifications/indications */
-    void onSubscribe(NimBLECharacteristic* pCharacteristic,
-                     NimBLEConnInfo& connInfo, uint16_t subValue) override {
-        std::string str = "Client ID: ";
-        str += connInfo.getConnHandle();
-        str += " Address: ";
-        str += connInfo.getAddress().toString();
-        if (subValue == 0) {
-            str += " Unsubscribed to ";
-        } else if (subValue == 1) {
-            str += " Subscribed to notifications for ";
-        } else if (subValue == 2) {
-            str += " Subscribed to indications for ";
-        } else if (subValue == 3) {
-            str += " Subscribed to notifications and indications for ";
-        }
-        str += std::string(pCharacteristic->getUUID());
-        ESP_LOGV("NIMBLE", "%s", str.c_str());
-    }
-
-} ftsCallbacks;
-#endif
-
 void nimbleLoop(void* pvParameters) {
     NimBLEServer* pServer = (NimBLEServer*)pvParameters;
     /** Loop here and send notifications to connected peers */
@@ -131,7 +65,7 @@ void nimbleLoop(void* pvParameters) {
         // Check if we should be advertising (no connections)
         if (pServer->getConnectedCount() == 0) {
             // If not advertising and no connections, restart advertising
-            if (stateMachine->is("menu.idle"_s) || stateMachine->is("error.idle"_s)) {
+            if (stateMachine->is("menu.idle"_s) || stateMachine->is("error.idle"_s) || stateMachine->is("wifi.idle"_s)) {
                 if (!pServer->getAdvertising()->isAdvertising()) {
                     pServer->startAdvertising();
                     ESP_LOGI("NIMBLE",
@@ -202,7 +136,7 @@ void nimbleLoop(void* pvParameters) {
             lastConnCount = currentConnCount;
         }
 
-        NimBLEService* pSvc = pServer->getServiceByUUID(SERVICE_UUID);
+        NimBLEService* pSvc = pServer->getServiceByUUID(LEGACY_SERVICE_UUID);
         if (!pSvc) {
             lastState = "";
             vTaskDelay(pdMS_TO_TICKS(1000));
@@ -225,7 +159,6 @@ void nimbleLoop(void* pvParameters) {
 
             // Trigger LED communication pulse for command processing
             pulseForCommunication();
-
             vTaskDelay(1);
         }
 
@@ -262,84 +195,51 @@ void initNimble() {
     NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_SC);
     pServer = NimBLEDevice::createServer();
     pServer->setCallbacks(&serverCallbacks);
-
+ 
     // Create Service
-    NimBLEService* pService = pServer->createService(SERVICE_UUID);
+    NimBLEService* ossmService = pServer->createService(OSSM_SERVICE_UUID);
+    NimBLEService* lecacyService = pServer->createService(LEGACY_SERVICE_UUID);
+    NimBLEService* infoService = pServer->createService(DEVICE_INFO_SERVICE_UUID);
+    NimBLEService* fleshyService = pServer->createService(FLESHY_UUID);
 
-    pCommandCharacteristic = initCommandCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_UUID));
+    // OSSM Service Items
+    advanced_penetration::initNimble(ossmService);
+    initHomingTypeConfigCharacteristic(ossmService, NimBLEUUID(HOMING_UUID));
+    initRailLengthConfigCharacteristic(ossmService, NimBLEUUID(LENGTH_UUID));
+    initReHomeConfigCharacteristic(ossmService, NimBLEUUID(REHOME_UUID));
+    initDirectionConfigCharacteristic(ossmService, NimBLEUUID(INVERT_UUID));
+    initRenameConfigCharacteristic(ossmService, NimBLEUUID(RENAME_UUID));
+    initGPIOCharacteristic(ossmService, NimBLEUUID(GPIO_UUID));
+    initUpdateCharacteristic(ossmService, NimBLEUUID(UPDATE_UUID));
+    initWiFiConfigCharacteristic(ossmService, NimBLEUUID(WIFI_UUID));
 
-    pSpeedKnobConfigCharacteristic = initSpeedKnobConfigCharacteristic(
-                        pService, NimBLEUUID(CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID));
+    // Lecacy Service Items
+    initCommandCharacteristic(lecacyService, NimBLEUUID(LEGACY_COMMAND_UUID));
+    initStateCharacteristic(lecacyService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
+    initSpeedKnobConfigCharacteristic(lecacyService, NimBLEUUID(SPEED_KNOB_UUID));
+    initLatencyCompensationConfigCharacteristic(lecacyService, NimBLEUUID(BUFFER_UUID));
+    initPatternsCharacteristic(lecacyService, NimBLEUUID(PATTERN_UUID));
+    initPatternDataCharacteristic(lecacyService, NimBLEUUID(PATTERN_DATA_UUID));
 
-    pLatencyCompensationConfigCharacteristic = initLatencyCompensationConfigCharacteristic(
-                        pService, NimBLEUUID(CHARACTERISTIC_LATENCY_COMPENSATION_CONFIG_UUID));
+    //Device info Service Items
+    NimBLECharacteristic* manufacturer = infoService->createCharacteristic(MANUFACTURER_NAME_UUID, NIMBLE_PROPERTY::READ);
+    manufacturer->setValue(ui::strings::kinkyMakers);
+    NimBLECharacteristic* model = infoService->createCharacteristic(MODEL_UUID, NIMBLE_PROPERTY::READ);
+    model->setValue(ui::strings::deviceName);
+    NimBLECharacteristic* version = infoService->createCharacteristic(FIRMWARE_VERSION_UUID, NIMBLE_PROPERTY::READ);
+    version->setValue(VERSION);
 
-    initWiFiConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_WIFI_CONFIG_UUID));
-
-    initRenameConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_RENAME_CONFIG_UUID));
-
-    initDirectionConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_DIRECTION_CONFIG_UUID));
-
-    pStateCharacteristic = initStateCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
-
-    initHomingTypeConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_HOMING_TYPE_CONFIG_UUID));
-    
-    initRailLengthConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_RAIL_LENGTH_CONFIG_UUID));
-
-    initReHomeConfigCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_HOME_BETWEEN_MODES_CONFIG_UUID));
-
-    pStateCharacteristic = initStateCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
-
-    initPatternsCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_PATTERNS_UUID));
-    initPatternDataCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_GET_PATTERN_DATA_UUID));
-
-    // GPIO write/read characteristic
-    initGPIOCharacteristic(pService, NimBLEUUID(CHARACTERISTIC_GPIO_UUID));
-
-    // Add Device Information Service
-    NimBLEService* pDeviceInfoService = pServer->createService(DEVICE_INFO_SERVICE_UUID);
-
-    // Add Manufacturer Name characteristic
-    NimBLECharacteristic* pManufacturerName = pDeviceInfoService->createCharacteristic(MANUFACTURER_NAME_UUID, NIMBLE_PROPERTY::READ);
-    pManufacturerName->setValue(ui::strings::kinkyMakers);
-
-    // Add Model 
-    NimBLECharacteristic* pModel = pDeviceInfoService->createCharacteristic(MODEL_UUID, NIMBLE_PROPERTY::READ);
-    pModel->setValue(ui::strings::deviceName);
-
-
-    // Add Firmware Version
-    NimBLECharacteristic* pVersion = pDeviceInfoService->createCharacteristic(FIRMWARE_VERSION_UUID, NIMBLE_PROPERTY::READ);
-    pVersion->setValue(VERSION);
-
-#ifdef PRETEND_TO_BE_FLESHY_THRUST_SYNC
-    // if this is true, then we'll start a service for the FTS
-    NimBLEService* pFTS = pServer->createService(
-        NimBLEUUID("0000ffe0-0000-1000-8000-00805f9b34fb"));
-    NimBLECharacteristic* pChar = pFTS->createCharacteristic(
-        NimBLEUUID("0000ffe1-0000-1000-8000-00805f9b34fb"),
-        NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE |
-            NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::INDICATE |
-            NIMBLE_PROPERTY::WRITE_NR);
-    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
-    pDesc->setValue("Fleshy thrust sync commands");
-    pChar->setCallbacks(&ftsCallbacks);
-#endif
-
-    NimBLEService* aService = advanced_penetration::initNimble();
+    initFleshyCharacteristic(fleshyService);
 
     // Update advertising to include new services
-    NimBLEAdvertising* pAdvertising = NimBLEDevice::getAdvertising();
-    pAdvertising->setName(UserConfig::getDeviceName());
-    pAdvertising->addServiceUUID(pService->getUUID());
-    pAdvertising->addServiceUUID(pDeviceInfoService->getUUID());
-    pAdvertising->addServiceUUID(aService->getUUID());
-#ifdef PRETEND_TO_BE_FLESHY_THRUST_SYNC
-    pAdvertising->addServiceUUID(pFTS->getUUID());
-#endif
-    pAdvertising->enableScanResponse(true);
-
-    pAdvertising->start();
+    NimBLEAdvertising* advert = NimBLEDevice::getAdvertising();
+    advert->setName(UserConfig::getDeviceName());
+    advert->addServiceUUID(ossmService->getUUID());
+    advert->addServiceUUID(lecacyService->getUUID());
+    advert->addServiceUUID(infoService->getUUID());
+    advert->addServiceUUID(fleshyService->getUUID());
+    advert->enableScanResponse(true);
+    advert->start();
 
     xTaskCreatePinnedToCore(
         nimbleLoop, "nimbleLoop", 5 * configMINIMAL_STACK_SIZE, pServer,

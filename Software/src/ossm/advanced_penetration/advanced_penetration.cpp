@@ -146,16 +146,12 @@ namespace advanced_penetration {
         return pChar;
     }
 
-    NimBLEService* initNimble() {
+    void initNimble(NimBLEService* service) {
         initPresets();
-        NimBLEService* as = pServer->createService(ADVANCED_SERVICE_UUID);
-        initCharacteristic(as, CHARACTERISTIC_ADVANCED_CONTROL_UUID,
-                           NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, &apComandCB,"Advanced Controls");
-        initCharacteristic(as, CHARACTERISTIC_ADVANCED_CONFIG_UUID, NIMBLE_PROPERTY::READ, &apConfigCB, "Advanced Configuration");
-        initCharacteristic(as, CHARACTERISTIC_ADVANCED_PRESETS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, &apPresetCB, "Advanced Preset List");
-        statusNotifier =
-            initCharacteristic(as, CHARACTERISTIC_ADVANCED_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, &apStatusCB, "Advanced Status");
-        return as;
+        initCharacteristic(service, CHARACTERISTIC_ADVANCED_CONTROL_UUID, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE_NR, &apComandCB,"Advanced Controls");
+        initCharacteristic(service, CHARACTERISTIC_ADVANCED_CONFIG_UUID, NIMBLE_PROPERTY::READ, &apConfigCB, "Advanced Configuration");
+        initCharacteristic(service, CHARACTERISTIC_ADVANCED_PRESETS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE, &apPresetCB, "Advanced Preset List");
+        statusNotifier = initCharacteristic(service, CHARACTERISTIC_ADVANCED_STATUS_UUID, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY, &apStatusCB, "Advanced Status"); 
     }
 
     void startAdvancedPenetration() {

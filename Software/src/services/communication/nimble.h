@@ -4,59 +4,32 @@
 #include <NimBLEServer.h>
 #include <NimBLEDevice.h>
 
-#define SERVICE_UUID "522b443a-4f53-534d-0001-420badbabe69"
+//OSSM************
+#define OSSM_SERVICE_UUID "4F53534D-0000-0000-0000-000000000000"
+//OSSMConfig******
+#define   WIFI_UUID "4F53534D-436F-6E66-6967-202057694669"
+#define RENAME_UUID "4F53534D-436F-6E66-6967-52656E616D65"
+#define HOMING_UUID "4F53534D-436F-6E66-6967-486F6D696E67"
+#define LENGTH_UUID "4F53534D-436F-6E66-6967-4C656E677468"
+#define INVERT_UUID "4F53534D-436F-6E66-6967-496E76657274"
+#define REHOME_UUID "4F53534D-436F-6E66-6967-5265486F6D65"
+#define GPIO_UUID   "4F53534D-436F-6E66-6967-20204750494F"
+#define UPDATE_UUID "4F53534D-436F-6E66-6967-557064617465"
 
-// **********************************************************
-// Command and Configuration Characteristics
-// - Range: 1000-1FFF
-// - Description: These are writable and change the config of the device.
-// **********************************************************
-#define CHARACTERISTIC_UUID "522b443a-4f53-534d-1000-420badbabe69"
-#define CHARACTERISTIC_SPEED_KNOB_CONFIG_UUID \
-    "522b443a-4f53-534d-1010-420badbabe69"
-#define CHARACTERISTIC_WIFI_CONFIG_UUID \
-    "522b443a-4f53-534d-1020-420badbabe69"
-#define CHARACTERISTIC_LATENCY_COMPENSATION_CONFIG_UUID \
-    "522b443a-4f53-534d-1030-420badbabe69"
-#define CHARACTERISTIC_RENAME_CONFIG_UUID \
-    "522b443a-4f53-534d-1040-420badbabe69"
-#define CHARACTERISTIC_DIRECTION_CONFIG_UUID \
-    "522b443a-4f53-534d-1050-420badbabe69"
-#define CHARACTERISTIC_HOMING_TYPE_CONFIG_UUID \
-    "522b443a-4f53-534d-1060-420badbabe69"
-#define CHARACTERISTIC_RAIL_LENGTH_CONFIG_UUID \
-    "522b443a-4f53-534d-1070-420badbabe69"
-#define CHARACTERISTIC_HOME_BETWEEN_MODES_CONFIG_UUID \
-    "522b443a-4f53-534d-1080-420badbabe69"
-// **********************************************************
-// State Characteristics
-// - Range: 2000-2FFF
-// - Description: Read and subscribe to the current state of the
-// device.
-// **********************************************************
-
-// Clients should read the current state from this char.
+//LEGACY UUIDS
+#define LEGACY_SERVICE_UUID "522b443a-4f53-534d-0001-420badbabe69"
+#define LEGACY_COMMAND_UUID "522b443a-4f53-534d-1000-420badbabe69"
+#define SPEED_KNOB_UUID "522b443a-4f53-534d-1010-420badbabe69"
+#define BUFFER_UUID "522b443a-4f53-534d-1030-420badbabe69"
 #define CHARACTERISTIC_STATE_UUID "522b443a-4f53-534d-2000-420badbabe69"
+#define PATTERN_UUID "522b443a-4f53-534d-3000-420badbabe69"
+#define PATTERN_DATA_UUID "522b443a-4f53-534d-3010-420badbabe69"
 
-// ************************************************
-// Pattern Characteristics
-// - Range: 3000-3FFF
-// - Description: Read and request information about patterns on this device.
-// ************************************************
-#define CHARACTERISTIC_PATTERNS_UUID "522b443a-4f53-534d-3000-420badbabe69"
-#define CHARACTERISTIC_GET_PATTERN_DATA_UUID \
-    "522b443a-4f53-534d-3010-420badbabe69"
+//FLESHY UUID
+#define FLESHY_UUID "0000ffe0-0000-1000-8000-00805f9b34fb"
+#define FLESHY_COMMAND_UUID "0000ffe1-0000-1000-8000-00805f9b34fb"
 
-// ************************************************
-// GPIO Characteristics
-// - Range: 4000-4FFF
-// - Description: Read and request information about patterns on this device.
-// ************************************************
-#define CHARACTERISTIC_GPIO_UUID "522b443a-4f53-534d-4000-420badbabe69"
-
-// ************************************************
-// ****************** ETC *************************
-// ************************************************
+//INFO UUIDS
 #define MANUFACTURER_NAME_UUID "2A29"    // Standard UUID for manufacturer name
 #define FIRMWARE_VERSION_UUID "2A26"    // Standard UUID for manufacturer name
 #define MODEL_UUID "2A24"            // Standard UUID for model

@@ -23,10 +23,23 @@
       <p>  
         If the LED flashes yellow then your device just started hosting a wifi network with a name like "OSSM Setup", or whatever you renamed your device to. Connect to it to complete configuration! You can figure this out, I have faith in you.
       </p>
-      <p></p>
-        If it blinks orange then you were already connected to wifi, and congratulations you're starting to pull down the latest firmware update. Click and hold that button whenever you want to check for a new update. The device does not check versions... it just updates to whatever it finds.
+      <p>
+        If it blinks orange then you were already connected to wifi, and now you're starting to pull down the latest firmware update. Click and hold that button whenever you want to check for a new update. The device does not check versions... it just updates to whatever it finds.
       </p>
       <p>You can also trigger either of these functions with the wired remote. If you read the previous pages you probably knew what those colors meant...and maybe that this button existed!</p>
+      <p>
+        Or... you can use this handy form. A green checkbox will appear when it is connected. A red exclaimation mark will appear if it is disconnected. When connected you can also trigger an OTA update via the provided button. Use this if you can't access the physical button on your device.
+      </p>
+      <button id="connect" onclick="connectWiFiPage();">Connect to Configure</button>
+      <article id="controls" style="display: none;">
+        <label for="SSID">SSID</label>
+        <input type="text" id="SSID">
+        <label for="Password">Password</label>
+        <input type="password" id="Password">
+        <input type="submit" value="Save" onclick="writeWiFi()">
+        <input type="submit" id="Update" aria-disabled="true" value="Update OSSM" onclick="writeUpdate()">
+      </article>
+      <p></p>
       <a href="name.html">Previous</a> | 
       <a href="play.html">Next</a>
     </main>

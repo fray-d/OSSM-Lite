@@ -11,8 +11,7 @@
 
 /** Handler class for WiFi configuration characteristic */
 class WiFiConfigCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic,
-                 NimBLEConnInfo& connInfo) override {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         std::string value = pCharacteristic->getValue();
         String wifiCommand = String(value.c_str());
 
@@ -99,6 +98,20 @@ inline NimBLECharacteristic* initWiFiConfigCharacteristic(NimBLEService* pServic
     // Set initial value to current WiFi status
     pChar->setValue(getWiFiStatus());
 
+    return pChar;
+}
+
+class UpdateCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        stateMachine->process_event(TryUpdate{});
+    }
+} inline updateCallbacks;
+
+inline NimBLECharacteristic* initUpdateCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+    pChar->setCallbacks(&updateCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Trigger an over-the-air update.");
     return pChar;
 }
 
