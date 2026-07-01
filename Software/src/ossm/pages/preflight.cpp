@@ -1,7 +1,6 @@
 #include "preflight.h"
 
 #include "components/HeaderBar.h"
-#include "constants/Config.h"
 #include "ossm/Events.h"
 #include "ossm/state/menu.h"
 #include "ossm/state/state.h"
@@ -29,7 +28,7 @@ namespace pages {
         do {
             speedPercentage = getAnalogAveragePercent(
                 SampleOnPin{Pins::Remote::speedPotPin, 50});
-            if (speedPercentage < Config::Advanced::commandDeadZonePercentage) {
+            if (speedPercentage < 1.0) {
                 stateMachine->process_event(Done{});
                 break;
             };

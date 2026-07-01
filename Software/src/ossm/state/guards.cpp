@@ -1,6 +1,5 @@
 #include "guards.h"
 
-#include "constants/Config.h"
 #include "constants/Pins.h"
 #include "ossm/homing/homing.h"
 #include "ossm/state/menu.h"
@@ -13,7 +12,7 @@ bool ossmIsNotHomed() { return !calibration.isHomed; }
 bool ossmIsPreflightSafe() {
     float potReading = getAnalogAveragePercent({Pins::Remote::speedPotPin, 50});
 
-    return potReading < Config::Advanced::commandDeadZonePercentage;
+    return potReading < 1.0; //Moved to static as this is never going to change.
 }
 
 Menu ossmGetMenuOption() { return menuState.currentOption; }

@@ -1,6 +1,5 @@
 #include "stroke_engine.h"
 
-#include "constants/Config.h"
 #include "ossm/OSSM.h"
 #include "ossm/state/ble.h"
 #include "ossm/state/calibration.h"
@@ -27,11 +26,10 @@ namespace stroke_engine {
     static void startStrokeEngineTask(void *pvParameters) {
         SettingPercents lastSetting = settings;
         machineProperties properties{
-            .maxSpeed = Config::Driver::maxSpeedMmPerSecond,
-            .maxAcceleration = Config::Driver::maxAcceleration,
-            .physicalTravel = calibration.measuredStrokeSteps / (1_mm),
-            .stepsPerMillimeter = Config::Driver::motorStepPerRevolution /
-                            (Config::Driver::pulleyToothCount * Config::Driver::beltPitchMm)
+            .maxSpeed = UserConfig::getMaxSpeedMMS(),
+            .maxAcceleration = UserConfig::getMaxAcceleration(),
+            .physicalTravel = calibration.measuredStrokeSteps / UserConfig::getStepsPerMM(),
+            .stepsPerMillimeter = UserConfig::getStepsPerMM()
         };
 
         Stroker.begin(&properties, stepper);

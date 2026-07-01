@@ -20,8 +20,8 @@ NimBLEServer* pServer = nullptr;
 
 static long lostConnectionTime = 0;
 static int speedOnLostConnection = 0;
-static const unsigned long RAMP_DURATION_MS =
-    2000;  // Duration for speed ramp to zero
+// Duration for speed ramp to zero
+static const unsigned long RAMP_DURATION_MS = 2000;  
 
 double easeInOutSine(double t) {
     return 0.5 * (1 + sin(3.1415926 * (t - 0.5)));
@@ -212,6 +212,11 @@ void initNimble() {
     initGPIOCharacteristic(ossmService, NimBLEUUID(GPIO_UUID));
     initUpdateCharacteristic(ossmService, NimBLEUUID(UPDATE_UUID));
     initWiFiConfigCharacteristic(ossmService, NimBLEUUID(WIFI_UUID));
+    initMaxAccelerationConfigCharacteristic(ossmService, NimBLEUUID(MACCEL_UUID));
+    initMotorRPMConfigCharacteristic(ossmService, NimBLEUUID(MAXRPM_UUID));
+    initMotorStepsConfigCharacteristic(ossmService, NimBLEUUID(STEPPR_UUID));
+    initPulleyTeethConfigCharacteristic(ossmService, NimBLEUUID(PULLEY_UUID));
+    initBeltPitchConfigCharacteristic(ossmService, NimBLEUUID(BPITCH_UUID));
 
     // Lecacy Service Items
     initCommandCharacteristic(lecacyService, NimBLEUUID(LEGACY_COMMAND_UUID));

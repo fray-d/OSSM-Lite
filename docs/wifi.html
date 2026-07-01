@@ -12,7 +12,7 @@
     <main style="max-width: 800px;">
       <hgroup>
         <h2>OSSM Lite</h2>
-        <p>6. Setup WiFi for over-the-air updates</p>
+        <p>7. Setup WiFi for over-the-air updates</p>
       </hgroup>
       <p>
         WiFi? I thought this thing connected to devices over bluetooth? It does, but if you want to get updates without coming back here (and overwriting all those configurations you just set up) then you should probably enable over-the-air updates.
@@ -42,6 +42,22 @@
       <p></p>
       <a href="name.html">Previous</a> | 
       <a href="play.html">Next</a>
+      <dialog id="oldFirmware">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+            <h3>Firmware out of date!</h3>
+          </header>
+          <p>
+            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
+          </p>
+          <footer>
+            <button autofocus="" onclick="firmareClose()">
+              Confirm
+            </button>
+          </footer>
+        </article>
+      </dialog>
     </main>
   </body>
 </html>

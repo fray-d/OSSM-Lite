@@ -2,7 +2,6 @@
 
 #include "Strings.h"
 #include "components/HeaderBar.h"
-#include "constants/Config.h"
 #include "constants/Pins.h"
 #include "constants/Version.h"
 #include "HelloAnimation.h"
@@ -23,14 +22,13 @@ namespace sml = boost::sml;
 using namespace sml;
 
 namespace homing {
-
     void clearHoming() {
         ESP_LOGD("Homing", "Homing started");
 
         // Set acceleration and deceleration in steps/s^2
-        stepper->setAcceleration(1000_mm);
+        stepper->setAcceleration(UserConfig::getStepsPerMM(1000));
         // Set speed in steps/s
-        stepper->setSpeedInHz(25_mm);
+        stepper->setSpeedInHz(UserConfig::getStepsPerMM(25));
 
         // Recalibrate the current sensor offset.
         calibration.currentSensorOffset = getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 1000});
@@ -50,11 +48,11 @@ namespace homing {
         bool isSingle = UserConfig::getHomingType() == UserConfig::HomingType::SingleSided;
 
         if (isNone && calibration.isFirstHomed) {
-            stepper->setCurrentPosition(-1 * Config::Driver::homingOffsetMm);
+            stepper->setCurrentPosition(-1 * UserConfig::getStepsPerMM(10));
         }
 
         if (isNone || (isSingle && stateMachine->is("measure.run"_s) )) {
-            calibration.measuredStrokeSteps = Config::Driver::stepsPerMM * UserConfig::getRailLength();
+            calibration.measuredStrokeSteps = UserConfig::getStepsPerMM(UserConfig::getRailLength());
             stateMachine->process_event(Done{});
             setHomingActive(false);
             vTaskDelete(nullptr);
@@ -79,7 +77,7 @@ namespace homing {
         }
 
         int16_t sign = stateMachine->is("homing.run"_s) ? -1 : 1;
-        int32_t targetPositionInSteps = round(sign * Config::Driver::maxStrokeSteps);
+        int32_t targetPositionInSteps = round(sign * UserConfig::getStepsPerMM(UserConfig::maxStrokeLengthMm));
 
         ESP_LOGD("Homing", "Target position in steps: %d",
                  targetPositionInSteps);
@@ -113,7 +111,7 @@ namespace homing {
 
             ESP_LOGV("Homing", "Current: %f", current);
 
-            if (current < Config::Driver::sensorlessCurrentLimit) {
+            if (current < UserConfig::sensorlessCurrentLimit) {
                 vTaskDelay(10);  // 10ms to reduce CPU load
                 continue;
             }
@@ -121,18 +119,18 @@ namespace homing {
             ESP_LOGD("Homing", "Current over limit: %f", current);
             stepper->stopMove();
 
-            stepper->setSpeedInHz(250_mm);
+            stepper->setSpeedInHz(UserConfig::getStepsPerMM(250));
             int32_t currentPosition = stepper->getCurrentPosition();
-            stepper->moveTo(currentPosition - sign * Config::Driver::homingOffsetMm, true);
+            stepper->moveTo(currentPosition - sign * UserConfig::getStepsPerMM(10), true);
 
             // measure and save the current position
             calibration.measuredStrokeSteps = std::max(std::abs(float(stepper->getCurrentPosition())),calibration.measuredStrokeSteps);
-            calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,Config::Driver::maxStrokeSteps);
+            calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,UserConfig::getStepsPerMM(UserConfig::maxStrokeLengthMm));
 
             if (!second && stateMachine->is("homing.run"_s) &&
-                        abs(stepper->getCurrentPosition()) < Config::Driver::minStrokeLengthSteps) {
+                        abs(stepper->getCurrentPosition()) < UserConfig::getStepsPerMM(UserConfig::minStrokeLengthMm)) {
                 second = true;
-                stepper->setSpeedInHz(25_mm);
+                stepper->setSpeedInHz(UserConfig::getStepsPerMM(25));
                 stepper->moveTo(targetPositionInSteps, false);
                 continue;
             }
@@ -143,7 +141,7 @@ namespace homing {
                 stepper->forceStopAndNewPosition(0);
             }
 
-            stepper->setSpeedInHz(250_mm);
+            stepper->setSpeedInHz(UserConfig::getStepsPerMM(250));
             stepper->moveTo(0, true);
             if (!isSingle && stateMachine->is("homing.run"_s) && calibration.isFirstHomed) {
                 stepper->moveTo(calibration.measuredStrokeSteps, true);
@@ -167,7 +165,7 @@ namespace homing {
 
     bool isStrokeTooShort() {
         if (calibration.measuredStrokeSteps >=
-            Config::Driver::minStrokeLengthSteps) {
+            UserConfig::getStepsPerMM(UserConfig::minStrokeLengthMm)) {
             return false;
         }
         errorState.message = ui::strings::strokeTooShort;

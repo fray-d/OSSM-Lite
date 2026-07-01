@@ -12,7 +12,7 @@
     <main style="max-width: 800px;">
       <hgroup>
         <h2>OSSM Lite</h2>
-        <p>3. Choose a homing method</p>
+        <p>4. Choose a homing method</p>
       </hgroup>
       <p>
         Now that you understand the color codes, and if you followed the advice to not power your motor when flashing the firmware, your device is probably flashing red indicating homing has failed. This was intended. Now you can configure how you want it to home before you power the motor for the first time. Homing fails if it takes longer then 21 seconds to traverse in either direction.
@@ -66,8 +66,24 @@
         <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
       </p>
 
-      <a href="led.html">Previous</a> | 
+      <a href="motor.html">Previous</a> | 
       <a href="rail.html">Next</a>
+      <dialog id="oldFirmware">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+            <h3>Firmware out of date!</h3>
+          </header>
+          <p>
+            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
+          </p>
+          <footer>
+            <button autofocus="" onclick="firmareClose()">
+              Confirm
+            </button>
+          </footer>
+        </article>
+      </dialog>
     </main>
   </body>
 </html>

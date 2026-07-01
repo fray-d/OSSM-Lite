@@ -3,7 +3,6 @@
 #include <chrono>
 #include <queue>
 
-#include "constants/Config.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/settings.h"
 #include "ossm/state/state.h"
@@ -12,6 +11,7 @@
 #include "services/communication/queue.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
+#include "services/UserConfig.h"
 
 namespace sml = boost::sml;
 using namespace sml;
@@ -33,8 +33,8 @@ namespace streaming {
         int16_t currentPosition = 0;
         int16_t targetPosition = 0;
 
-        uint16_t maxSpeed = Config::Driver::maxSpeedMmPerSecond * (1_mm);
-        uint32_t maxAccel = Config::Driver::maxAcceleration * (1_mm);
+        uint16_t maxSpeed = UserConfig::getStepsPerMM(UserConfig::getMaxSpeedMMS());
+        uint32_t maxAccel = UserConfig::getStepsPerMM(UserConfig::getMaxAcceleration());
 
         // Set initial max speed and acceleration
         stepper->setSpeedInHz(maxSpeed);
@@ -120,7 +120,7 @@ namespace streaming {
                         ESP_LOGI("Streaming",
                                  "Too fast, shortening distance: %.0f -> %.0f",
                                  distance, maxDistance);
-                        distance = maxDistance - (2_mm);
+                        distance = maxDistance - UserConfig::getStepsPerMM(2);
                         if (targetPosition > currentPosition) {
                             targetPosition = currentPosition + distance;
                         } else {

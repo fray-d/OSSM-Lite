@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+    <script src="script.js"></script>
+    <title>OSSM Lite Documentation</title>
+  </head>
+  <body>
+    <main style="max-width: 800px;">
+      <hgroup>
+        <h2>OSSM Lite</h2>
+        <p>3. Set motor constraints</p>
+      </hgroup>
+      <p>
+        If you're using the standard 57AIM30 "gold" motor you can <a href="homing.html">ignore this section and move on to the next step.</a> Otherise you might need to configure your motor constraints so the firmware can calculate distances and speeds accurately.</a>
+      </p>
+      <p>
+        Click the connect button and fill the form with settings that match your hardware. A chart is provided below with the settings for some motors. If yours is not in the list look it up from the manufacturer, and consider sending me a note with the details so I can update the chart.
+      </p>
+      <p>
+        You can also use this area to set a global speed limit by setting the motor RPM and/or max acceleration to lower values. Just because your motor can do 3000 RPM doesn't mean you want it to do so. If you find your device doesn't have enough low-end speed and tops out higher then you would like feel free to reduce the RPM.
+      </p>
+      <p>
+        Most motors should be programmed to 800 steps per revolution. They often don't come this way from the factory. This guide does not provide instructions or tools for motor flashing at this time. You can try using more then the recommended value, but the ESP32 can only send so many pulses per second before you reach it's limit. This is why 800 was choosen.
+      </p>
+      <p>
+        You can also modify the number of teeth on your pulley and the pitch of your belt. Technically even if you have changed these parts from the default you are not required to update these values. The machine will still work, it just will not measure the rail accurately. This could be a problem if you use a manual or semi-manual homing method.
+      </p>
+      <button id="connect" onclick="connectMotorPage();">Connect to Configure</button>
+      <article id="controls" style="display: none;">
+        <label for="maxAcceleration">Max Acceleration</label>
+        <input type="number" id="maxAcceleration" name="maxAcceleration" placeholder="50000" onchange="writeMaxAcceleration()">
+        <label for="motorRPM">Motor RPM</label>
+        <input type="number" id="motorRPM" name="motorRPM" placeholder="1500" onchange="writeMotorRPM()">
+        <label for="stepsPerRevolution">Steps per revolution</label>
+        <input type="number" id="stepsPerRevolution" name="stepsPerRevolution" placeholder="800" onchange="writeStepsPerRevolution()">
+        <label for="pulleyTeeth">Pulley Teeth</label>
+        <input type="number" id="pulleyTeeth" name="pulleyTeeth" placeholder="20" onchange="writePulleyTeeth()">
+        <label for="beltPitch">Belt Pitch</label>
+        <input type="number" id="beltPitch" name="beltPitch" placeholder="2" onchange="writeBeltPitch()">
+      </article>
+      <p></p>
+      <table>
+        <tr>
+          <th>Motor</th>
+          <th>Max RPM</th>
+          <th>Steps per revolution</th>
+        </tr>
+        <tr>
+          <th>57AIM30</th>
+          <th>1500</th>
+          <th>800</th>
+        </tr>
+        <tr>
+          <th>60AIM40</th>
+          <th>1500</th>
+          <th>800</th>
+        </tr>
+        <tr>
+          <th>IHSV</th>
+          <th>3500</th>
+          <th>800 or 2000</th>
+        </tr>
+      </table>
+      <a href="led.html">Previous</a> | 
+      <a href="homing.html">Next</a>
+      <dialog id="oldFirmware">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+            <h3>Firmware out of date!</h3>
+          </header>
+          <p>
+            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
+          </p>
+          <footer>
+            <button autofocus="" onclick="firmareClose()">
+              Confirm
+            </button>
+          </footer>
+        </article>
+      </dialog>
+    </main>
+  </body>
+</html>

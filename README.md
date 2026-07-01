@@ -21,6 +21,8 @@ Key changes:
     - Set rail length for None and Sinle-Sided homing (180mm default)
     - Reverse rail direction
     - Rename device
+    - WiFi
+    - Advanced motor params (RPM, Steps per Rev, Belt Pitch, etc)
 
 Roadmap:
 - Add a tool for sharing advanced mode presets manually.

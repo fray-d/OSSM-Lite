@@ -1,22 +1,49 @@
 #include "UserConfig.h"
-#include "constants/Config.h"
 
 #include <Preferences.h>
 
 namespace UserConfig {
+    std::string deviceName = "";
+    float railLength = -1;
+    float maxAcceleration = -1;
+    float maxRPM = -1;
+    float motorStepPerRevolution = -1;
+    float pulleyToothCount = -1;
+    float beltPitchMm = -1;
+    float stepsPerMM = -1;
+    float maxSpeedMMS = -1;
+
+    float readNVSFloat(char* key, float def) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", true);
+        float value = userConfig.getFloat(key, def);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG","%s read: %f", key, value);
+        return value;
+    }
+
+    void writeNVSFloat(char* key, float value) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", false);
+        userConfig.putFloat(key, value);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "%s write: %f", key, value);
+    }
+
     float getSpeedCurve() {
         return 0.8;
     }
 
     std::string getDeviceName() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        std::string output = userConfig.getString("DeviceName","OSSM").c_str();
-        userConfig.end();
-        ESP_LOGD("USER CONFIG", "Name read: %s", output.c_str());
-        return output;
+        if (deviceName.empty()) {
+            Preferences userConfig;
+            userConfig.begin("UserConfig", true);
+            deviceName = userConfig.getString("DeviceName","OSSM").c_str();
+            userConfig.end();
+            ESP_LOGD("USER CONFIG", "Name read: %s", deviceName.c_str());
+        }
+        return deviceName;
     }
-
     void setDeviceName(String value) {
         Preferences userConfig;
         userConfig.begin("UserConfig", false);
@@ -34,7 +61,6 @@ namespace UserConfig {
         ESP_LOGI("USER CONFIG", "Direction read: %d", output);
         return output;
     }
-
     void setDirection(bool value) {
         Preferences userConfig;
         userConfig.begin("UserConfig", false);
@@ -43,44 +69,8 @@ namespace UserConfig {
         ESP_LOGI("USER CONFIG", "Direction write: %d", value);
         ESP.restart();
     }
-
     void reverseDirection() {
         setDirection(!getDirection());
-    }
-
-    HomingType getHomingType() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        HomingType output = static_cast<HomingType>(userConfig.getInt("HomingType",1));
-        userConfig.end();
-        ESP_LOGI("USER CONFIG","Homing type read: %d", output);
-        return output;
-    }
-
-    void setHomingType(HomingType value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
-        userConfig.putInt("HomingType", value);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Homing type write: %d", value);
-    }
-
-    float getRailLength() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        float output = userConfig.getFloat("RailLength",180.0);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG","Rail length read: %f", output);
-        return output;
-    }
-
-    void setRailLength(float value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
-        
-        userConfig.putFloat("RailLength", constrain(value,Config::Driver::minStrokeLengthMm,Config::Driver::maxStrokeMm));
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Rail length write: %d", value);
     }
 
     bool getReHome() {
@@ -91,12 +81,122 @@ namespace UserConfig {
         ESP_LOGI("USER CONFIG", "Home between moodes read: %d", output);
         return output;
     }
-
     void setReHome(bool value) {
         Preferences userConfig;
         userConfig.begin("UserConfig", false);
         userConfig.putBool("ReHome", value);
         userConfig.end();
         ESP_LOGI("USER CONFIG", "Home between modes write: %d", value);
+    }
+
+    HomingType getHomingType() {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", true);
+        HomingType output = static_cast<HomingType>(userConfig.getInt("HomingType",1));
+        userConfig.end();
+        ESP_LOGI("USER CONFIG","Homing type read: %d", output);
+        return output;
+    }
+    void setHomingType(HomingType value) {
+        Preferences userConfig;
+        userConfig.begin("UserConfig", false);
+        userConfig.putInt("HomingType", value);
+        userConfig.end();
+        ESP_LOGI("USER CONFIG", "Homing type write: %d", value);
+    }
+
+    float getRailLength() {
+        if (railLength < 0) {
+            railLength = readNVSFloat("RailLength",180.0);
+        }
+        return railLength;
+    }
+    void setRailLength(float value) {
+        writeNVSFloat("RailLength", constrain(value,minStrokeLengthMm, maxStrokeLengthMm));
+        railLength = value;
+    }
+
+    float getMaxAcceleration() {
+        if (maxAcceleration < 0) {
+            maxAcceleration = readNVSFloat("MaxAcceleration",50000.0);
+        }
+        return maxAcceleration;
+    }
+    void setMaxAcceleration(float value) {
+        writeNVSFloat("MaxAcceleration", value);
+        maxAcceleration = value;
+    }
+
+    float getMotorRPM() {
+        if (maxRPM < 0) {
+            maxRPM = readNVSFloat("MaxRPM",1500.0);
+        }
+        return maxRPM;
+    }
+    void setMotorRPM(float value) {
+        writeNVSFloat("MaxRPM", value);
+        maxRPM = value;
+        setMaxSpeedMMS();
+    }
+
+    float getMotorStepsPR() {
+        if (motorStepPerRevolution < 0) {
+            motorStepPerRevolution = readNVSFloat("MotorSteps", 800.0);
+        }
+        return motorStepPerRevolution;
+    }
+    void setMotorStepsPR(float value) {
+        writeNVSFloat("MotorSteps", value);
+        motorStepPerRevolution = value;
+        setStepsPerMM();
+    }
+
+    float getPulleyTeeth(){
+        if (pulleyToothCount < 0) {
+            pulleyToothCount = readNVSFloat("PulleyTeeth",20.0);
+        }
+        return pulleyToothCount;
+    }
+    void setPulleyTeeth(float value){
+        writeNVSFloat("PulleyTeeth", value);
+        pulleyToothCount = value;
+        setMaxSpeedMMS();
+        setStepsPerMM();
+    }
+
+    float getBeltPitch(){
+        if (beltPitchMm < 0) {
+            beltPitchMm = readNVSFloat("BeltPitch",2.0);
+        }
+        return beltPitchMm;
+    }
+    void setBeltPitch(float value){
+        writeNVSFloat("BeltPitch", value);
+        beltPitchMm = value;
+        setMaxSpeedMMS();
+        setStepsPerMM();
+    }
+
+    float getStepsPerMM(float value){
+        if (stepsPerMM < 0) {
+            setStepsPerMM();
+        }
+        return stepsPerMM * value;
+    }
+    void setStepsPerMM() {
+        //cache this
+        stepsPerMM = (getMotorStepsPR() / (getPulleyTeeth() * getBeltPitch()));
+    }
+
+    float getMaxSpeedMMS() {
+        if (maxSpeedMMS < 0) {
+            setMaxSpeedMMS();
+        }
+        return maxSpeedMMS;
+    }
+
+    void setMaxSpeedMMS(){
+        //cache this
+        maxSpeedMMS = getMotorRPM() / 60.0 * getPulleyTeeth() * getBeltPitch();
     }
 }

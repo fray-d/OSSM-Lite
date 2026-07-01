@@ -12,7 +12,7 @@
     <main style="max-width: 800px;">
       <hgroup>
         <h2>OSSM Lite</h2>
-        <p>5. Name your device</p>
+        <p>6. Name your device</p>
       </hgroup>
       <p>
         You realize whenever you have this thing turned on it is broadcasting to the whole neighborhood that it exists, right? Maybe now's a good time to update the name of your device lest someone search the internet for OSSM and find themselves with a new kink.
@@ -35,6 +35,22 @@
       </p>
       <a href="rail.html">Previous</a> | 
       <a href="wifi.html">Next</a>
+      <dialog id="oldFirmware">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+            <h3>Firmware out of date!</h3>
+          </header>
+          <p>
+            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
+          </p>
+          <footer>
+            <button autofocus="" onclick="firmareClose()">
+              Confirm
+            </button>
+          </footer>
+        </article>
+      </dialog>
     </main>
   </body>
 </html>

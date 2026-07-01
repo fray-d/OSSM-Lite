@@ -12,7 +12,7 @@
     <main style="max-width: 800px;">
       <hgroup>
         <h2>OSSM Lite</h2>
-        <p>4. Configure rail direction</p>
+        <p>5. Configure rail direction</p>
       </hgroup>
       <p>
         Ok, your device is homing, or not if you so choose. But what if it is homing the wrong way? Oh crap, did you assemble it backwards? No, it can't be you...you're brilliant. It's gotta be those stupid instructions! Maybe you just think it is more aesthetically pleasing this way, or perhaps your device is double ended and you want an easy way to switch which end is the business end.
@@ -41,6 +41,22 @@
       </p>
       <a href="homing.html">Previous</a> | 
       <a href="name.html">Next</a>
+      <dialog id="oldFirmware">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+            <h3>Firmware out of date!</h3>
+          </header>
+          <p>
+            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
+          </p>
+          <footer>
+            <button autofocus="" onclick="firmareClose()">
+              Confirm
+            </button>
+          </footer>
+        </article>
+      </dialog>
     </main>
   </body>
 </html>

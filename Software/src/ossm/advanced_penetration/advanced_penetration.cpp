@@ -2,13 +2,13 @@
 
 #include "advanced_penetration_structs.h"
 #include "advanced_penetration_ui.h"
-#include "constants/Config.h"
 #include "ossm/state/calibration.h"
 #include "ossm/state/menu.h"
 #include "services/communication/nimble.h"
 #include "services/led.h"
 #include "services/stepper.h"
 #include "services/tasks.h"
+#include "services/UserConfig.h"
 
 namespace sml = boost::sml;
 using namespace sml;
@@ -39,7 +39,7 @@ namespace advanced_penetration {
                 strokeCount++;
             }
             currentSettings.changed = false;
-            float speed = Config::Driver::maxSpeedMmPerSecond * (1_mm) * currentSettings.speed.getRampValue();
+            float speed = UserConfig::getMaxSpeedMMS() * UserConfig::getStepsPerMM(currentSettings.speed.getRampValue());
             int32_t targetPosition = calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
                 speed = speed * currentSettings.inSpeed.getNormalizedModifiedValue(strokeCount);
@@ -59,7 +59,7 @@ namespace advanced_penetration {
             } else {
                 acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(0.6, strokeCount);
             }
-            acceleration = min(acceleration, u32_t(Config::Driver::maxAcceleration * (1_mm)));
+            acceleration = min(acceleration, u32_t(UserConfig::getStepsPerMM(UserConfig::getMaxAcceleration())));
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()) {
                 stepper->setAcceleration(acceleration);
                 stepper->applySpeedAcceleration();

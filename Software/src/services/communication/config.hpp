@@ -20,8 +20,7 @@ void setBoolValue(bool value, NimBLECharacteristic* pCharacteristic) {
 
 /** Handler class for speed knob config characteristic */
 class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic,
-                 NimBLEConnInfo& connInfo) override {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         std::string value = pCharacteristic->getValue();
         String configValue = String(value.c_str());
         configValue.toLowerCase();
@@ -48,8 +47,7 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
         pulseForCommunication();
     }
 
-    void onRead(NimBLECharacteristic* pCharacteristic,
-                NimBLEConnInfo& connInfo) override {
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         setBoolValue(USE_SPEED_KNOB_AS_LIMIT, pCharacteristic);
     }
 
@@ -61,10 +59,8 @@ class SpeedKnobConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline speedKnobConfigCallbacks;
 
-inline NimBLECharacteristic* initSpeedKnobConfigCharacteristic(NimBLEService* pService,
-                                                        NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
+inline NimBLECharacteristic* initSpeedKnobConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
         
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Use wired controller knob as speed limit.");
@@ -78,8 +74,7 @@ inline NimBLECharacteristic* initSpeedKnobConfigCharacteristic(NimBLEService* pS
 
 /** Handler class for latency compensation config characteristic */
 class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks {
-    void onWrite(NimBLECharacteristic* pCharacteristic,
-                 NimBLEConnInfo& connInfo) override {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         std::string value = pCharacteristic->getValue();
         String configValue = String(value.c_str());
         configValue.toLowerCase();
@@ -121,13 +116,10 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
 } inline latencyCompensationConfigCallbacks;
 
 inline NimBLECharacteristic* initLatencyCompensationConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Enable latency compensation for streaming mode.");
-
     pChar->setCallbacks(&latencyCompensationConfigCallbacks);
-
     setBoolValue(USE_LATENCY_COMPENSATION, pChar);
 
     return pChar;
@@ -147,8 +139,7 @@ class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
         pulseForCommunication();
     }
 
-    void onRead(NimBLECharacteristic* pCharacteristic,
-                NimBLEConnInfo& connInfo) override {
+    void onRead(NimBLECharacteristic* pCharacteristic,NimBLEConnInfo& connInfo) override {
         std::string name = UserConfig::getDeviceName();
         pCharacteristic->setValue(name);
         ESP_LOGD("NIMBLE_RENAME", "Name read: %s", name.c_str());
@@ -156,14 +147,10 @@ class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
 } inline renameConfigCallbacks;
 
 inline NimBLECharacteristic* initRenameConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
     pChar->setCallbacks(&renameConfigCallbacks);
-    pChar->setValue(UserConfig::getDeviceName());
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Name of the device. Changing will cause reboot.");
-
     return pChar;
 }
 
@@ -188,16 +175,12 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline directionConfigCallbacks;
 
-inline NimBLECharacteristic* initDirectionConfigCharacteristic(
-    NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-
+inline NimBLECharacteristic* initDirectionConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
     pChar->setCallbacks(&directionConfigCallbacks);
     setBoolValue(UserConfig::getDirection(), pChar);
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Reverse rail direction. Changing will cause reboot.");
-
     return pChar;
 }
 
@@ -214,13 +197,9 @@ class HomingTypeConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline homingTypeConfigCallbacks;
 
-inline NimBLECharacteristic* initHomingTypeConfigCharacteristic(
-    NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-
+inline NimBLECharacteristic* initHomingTypeConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
     pChar->setCallbacks(&homingTypeConfigCallbacks);
-    pChar->setValue(UserConfig::getHomingType());
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Homing Type: 0=None, 1=Default, 2=Single Sided, 3=Double Tap");
     return pChar;
@@ -238,13 +217,9 @@ class RailLengthConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline railLengthConfigCallbacks;
 
-inline NimBLECharacteristic* initRailLengthConfigCharacteristic(
-    NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-
+inline NimBLECharacteristic* initRailLengthConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
     pChar->setCallbacks(&railLengthConfigCallbacks);
-    pChar->setValue(UserConfig::getRailLength());
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Rail length. Used for single sided and disabled homing.");
     return pChar;
@@ -271,16 +246,113 @@ class ReHomeConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline ReHomeConfigCallbacks;
 
-inline NimBLECharacteristic* initReHomeConfigCharacteristic(
-    NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
-
+inline NimBLECharacteristic* initReHomeConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
     pChar->setCallbacks(&ReHomeConfigCallbacks);
     setBoolValue(UserConfig::getReHome(), pChar);
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue("Rehome the device between modes.");
 
+    return pChar;
+}
+
+class MotorRPMConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setMotorRPM(value);
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getMotorRPM()));
+    }
+} inline motorRPMConfigCallbacks;
+
+inline NimBLECharacteristic* initMotorRPMConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    pChar->setCallbacks(&motorRPMConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Max RPM of the motor. Limits top speed.");
+    return pChar;
+}
+
+class MotorStepsConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setMotorStepsPR(value);
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getMotorStepsPR()));
+    }
+} inline motorStepsConfigCallbacks;
+
+inline NimBLECharacteristic* initMotorStepsConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    pChar->setCallbacks(&motorStepsConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Motor steps per revolution.");
+    return pChar;
+}
+
+class PulleyTeethConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setPulleyTeeth(value);
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getPulleyTeeth()));
+    }
+} inline pulleyTeethConfigCallbacks;
+
+inline NimBLECharacteristic* initPulleyTeethConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    pChar->setCallbacks(&pulleyTeethConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Number of teeth on the drive pulley.");
+    return pChar;
+}
+
+class BeltPitchConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setBeltPitch(value);
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getBeltPitch()));
+    }
+} inline beltPitchConfigCallbacks;
+
+inline NimBLECharacteristic* initBeltPitchConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    pChar->setCallbacks(&beltPitchConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Belt pitch. Distance between the centers of two teeth in mm.");
+    return pChar;
+}
+
+class MaxAccelerationConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setMaxAcceleration(value);
+        pulseForCommunication();
+    }
+
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getMaxAcceleration()));
+    }
+} inline maxAccelerationConfigCallbacks;
+
+inline NimBLECharacteristic* initMaxAccelerationConfigCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    pChar->setCallbacks(&maxAccelerationConfigCallbacks);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Maximum acceleration in mm/s/s.");
     return pChar;
 }
 
