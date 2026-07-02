@@ -13,6 +13,11 @@ const STEPPR_UUID = "4f53534d-436f-6e66-6967-535445505052";
 const PULLEY_UUID = "4f53534d-436f-6e66-6967-50554c4c4559";
 const BPITCH_UUID = "4f53534d-436f-6e66-6967-425049544348";
 
+//AP Mode
+const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374"
+const STATUS_UUID = "4f53534d-6164-7661-6e63-656473746174"
+const CONTROL_UUID = "4f53534d-6164-7661-6e63-6564636f6e74"
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -364,6 +369,114 @@ async function writeWiFi() {
     readWiFi();
 }
 
+var presetRef, presetListElement;
+async function initPresets() {
+    presetListElement = document.getElementById("presetList");
+    try{
+        presetRef = await serviceRef.getCharacteristic(PRESETS_UUID);
+        console.log("Preset characteristic connected");
+        await readPresets();
+    } catch {
+        firmwareWarning();
+    }
+}
+async function readPresets() {
+    var value = await presetRef.readValue();
+    value = decoder.decode(value);
+    console.log("Presets: " + value);
+    presetListElement.innerHTML = "";
+    for(singleValue of value.split(",")){
+        var option = document.createElement("option");
+        option.text = singleValue;
+        option.value = singleValue;
+        presetListElement.add(option)
+    }
+    presetListElement.ariaInvalid = false;
+    setTimeout(function() {clearCheck(presetListElement);},2000);
+}
+async function writePresets(value) {
+    console.log("Write Preset: " + value);
+    value = encoder.encode(value);
+    await presetRef.writeValue(value);
+}
+async function runPreset() {
+    var value = presetListElement.value;
+    writePresets(":"+value);
+}
+async function savePreset() {
+    var value = document.getElementById("presetName").value;
+    await writePresets(">" + value);
+    await readPresets();
+    presetListElement.value = value;
+}
+async function deletePreset() {
+    var value = presetListElement.value;
+    await writePresets("<" + value);
+    await readPresets();
+}
+async function factoryReset() {
+    await writePresets("^");
+    await readPresets();
+}
+
+var statusRef, controlRef, speedElement, maxDepthElement, minDepthElement;
+async function initStatus() {
+    speedElement = document.getElementById("speed");
+    maxDepthElement = document.getElementById("maxDepth");
+    minDepthElement = document.getElementById("minDepth");
+    try{
+        statusRef = await serviceRef.getCharacteristic(STATUS_UUID);
+        await statusRef.startNotifications().then(function() {
+            statusRef.addEventListener('characteristicvaluechanged', handleStatus);
+        });
+        controlRef = await serviceRef.getCharacteristic(CONTROL_UUID);
+        console.log("Status and control characteristics connected");
+        readStatus();
+    } catch {
+        firmwareWarning();
+    }
+}
+function setStatus(value) {
+    value = decoder.decode(value);
+    console.log("Status: " + value);
+    speedElement.value = value.split(",")[6].split(":")[0];
+    maxDepthElement.value = value.split(",")[0].split(":")[0];
+    minDepthElement.value = value.split(",")[1].split(":")[0];
+}
+async function readStatus() {
+    var value = await statusRef.readValue();
+    setStatus(value);
+}
+function handleStatus(event) {
+    var value = event.target.value;
+    setStatus(value);
+}
+async function writeControl(value) {
+    console.log("Write Control: " + value);
+    value = encoder.encode(value);
+    await controlRef.writeValue(value);
+}
+async function setSpeed() {
+    writeControl("6:" + speedElement.value + ",");
+}
+async function setMaxDepth() {
+    var max = parseInt(maxDepthElement.value);
+    var min = parseInt(minDepthElement.value);
+    if (max < min) {
+        maxDepthElement.value = min + 1;
+    }
+    writeControl("0:" + maxDepthElement.value + ",");
+}
+async function setMinDepth() {
+    var max = parseInt(maxDepthElement.value);
+    var min = parseInt(minDepthElement.value);
+    if (min > max) {
+        minDepthElement.value = max - 1;
+    }
+    writeControl("1:" + minDepthElement.value + ",");
+}
+
+
 async function writeUpdate() {
     var update = await serviceRef.getCharacteristic(UPDATE_UUID);
     await update.writeValue(encoder.encode(true));
@@ -398,4 +511,10 @@ async function connectNamePage() {
 async function connectWiFiPage() {
     await handleConnect();
     await initWiFi();
+}
+
+async function connectPresets() {
+    await handleConnect();
+    await initPresets();
+    await initStatus();
 }

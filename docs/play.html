@@ -1,178 +1,229 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
-    <script src="script.js"></script>
-    <title>OSSM Lite Documentation</title>
-  </head>
-  <body>
-    <main style="max-width: 800px;">
-      <hgroup>
-        <h2>OSSM Lite</h2>
-        <p>8. Learn about play modes</p>
-      </hgroup>
-      <p>
-        At this point your OSSM should be usable, but there are a few things to know:
-      </p>
-      <h5>Depth/Stoke vs Min/Max</h5>
-      <p>
-        Depth and stroke are holdovers from prior firmwares. Depth was how far the rail should extend, and stroke was a percentage of that distance to retract from for each stroke. This meant that changing the depth would also change the effective minimum depth. Very unintuitive.
-      </p>
-      <p>
-        This firmware adds support for minimum and maximum depth instead. Max depth is functionaly the same as the the old depth was, but min depth doesn't change when max is updated. Much more intuitive. The wired remote will use min/max depth if you have one connected.
-      </p>
-      <p>
-        Both are avaiable in the wirless (BLE) protocol, which means broad support for wireless remotes. Developers are encouraged to use min/max in the future...please.
-      </p>
-      <h5>Stroke Engine</h5>
-      <p>
-        A heavily modified version of Elims' Stroke Engine is included in this firmware. A few additional patterns are included, but the biggest change is that it no longer uses strokes-per-minute (SPM) for it's speed setting. 
-      </p>
-      <p>
-        The stroke engine on this firmware uses linear speed in mm/s. Linear speed decouples the length of the stroke from how fast it needs to travel. With the old SPM setting doubling the length of the stroke would also double the effective speed of the rail.
-      </p>
-      <p>
-        Under the hood a bunch of other changes to stroke engine have also happened. Unless you're a developer you probably don't care. These changes are mostly removing orphaned code and making it behave the same way as the other modes on the device. Someday this mode will be replaced, but today is not that day.
-      </p>
-      <p>
-        Clicking the right encoder in stroke engine swaps between depth settings and "sensation" which is a catch-all setting for modifying the effect of a pattern. Double click the encoder to open the pattern menu. Single click to select the pattern and return to the other settings. Click and hold to exit the mode and return to the menu.
-      </p>
-      <h5>Advanced Penetration</h5>
-      <p>
-        This is a complicated, but very powerful, play mode on the device. Currently only the wired remote is fully supported, but other controllers may eventually be added. There are 7 major settings. On the wired remote you will see these settings listed down the sides of the screen. You can cycle through them with the right encoder knob. Click once to edit, click again to change settings.
-      </p>
-      <p>
-        In the middle of the screen you will see a visual representation of a single stroke in the pattern. Vertical space indicating depth, horizontal indicating time. As you adjust the settings it should become clear what the meaning is. The most confusing part is that in/out speed is slowing down the master speed... so adjusting these might feel unintuitive at first.
-      </p>
-      <table>
-        <tr>
-          <th>Setting</th>
-          <th>Description</th>
-        </tr>
-        <tr>
-          <td>Master Speed</td>
-          <td>Sets the velocity the rail will try to reach during it's stroke. This could be constrained by other settings.</td>
-        </tr>
-        <tr>
-          <td>Max Depth</td>
-          <td>Sets the maximum depth the rail will travel to for a stroke</td>
-        </tr>
-        <tr>
-          <td>Min Depth</td>
-          <td>Sets the minimum depth the rail will travel to for a stroke</td>
-        </tr>
-        <tr>
-          <td>In Speed</td>
-          <td>Sets a percentage of master speed to be used when traveling towards maximum depth</td>
-        </tr>
-        <tr>
-          <td>Out Speed</td>
-          <td>Sets a percentage of master speed to be used when traveling towards minimum depth</td>
-        </tr>
-        <tr>
-          <td>In Accel</td>
-          <td>Sets the rate of acceleration when traveling towards maximum depth. Lower values will be smoother, higher values more robotic.</td>
-        </tr>
-        <tr>
-          <td>Out Accel</td>
-          <td>I bet you can figure this one out...</td>
-        </tr>
-      </table>
-      <p>
-        By combining the above you can replicate many of the existing patterns in stroke engine. For example, setting the 'in speed' to 50% would be similar to the "teasing" pattern.
-      </p>
-      <p>
-        In addition to these settings, each one of them can also have a modifier applied to them. These modifiers cause the primary setting to change over time. To get to the modifiers scroll down past the last base setting to get to a second page of values. These will be listed as "off" until configured. Click to enter a sub-menu for the modifier.
-      </p>
-      <table>
-        <tr>
-          <th>Modifier</th>
-          <th>Description</th>
-        </tr>
-        <tr>
-          <td>Amplitude</td>
-          <td>How much should the setting change compared to it's base value. For depth values this will constrain between (and towards) the opposing setting. For all others it will evaluate between 0 and the base setting. You'll be locked out of other modifier settings until this value is set less then 100.</td>
-        </tr>
-        <tr>
-          <td>Steps to Min</td>
-          <td>This is the number of steps (strokes) it will take for the value to transition between the base value and the amplitude adjusted value. The default is 1, which would mean it instantly changes from base to the new value.</td>
-        </tr>
-        <tr>
-          <td>Steps at Min</td>
-          <td>This will set how long the device should continue using the fully amplitude adjusted value before transitioning back towards the base value.</td>
-        </tr>
-        <tr>
-          <td>Steps to Max</td>
-          <td>This is the number of steps to return to the base setting from he amplitude adjusted value</td>
-        </tr>
-        <tr>
-          <td>Steps at Max</td>
-          <td>This is how long the device should use the unmodified base value during the step cycle</td>
-        </tr>
-        <tr>
-          <td>Offset</td>
-          <td>If the steps settings above represent one cycle (to min, at min, to max, at max) this setting determines which step in that cycle it should start at.</td>
-        </tr>
-        <tr>
-          <td>Go Back</td>
-          <td>This isn't actually a setting, but if you loop the menu for modifiers it will eventaully say 'go back' which is how you return to the base settings screen with a single click.</td>
-        </tr>
-      </table>
-      <p>
-        With a modifier turned on you will see a second, dotted, line on the visual representation of the stroke. This is an aggregate of all of the maximum values of the modifiers to show approximately what the "maximum possible change" from your original stroke would be. Depending on how complicated your settings are and how the cycles align this may not ever actually happen at the same time...but it should give you a little bit of a clue as to what is happening.
-      </p>
-      <p>
-        You'll also notice that when changing the step and offset values you see a different interface. This is meant to show you approximately what that setting will look like in steps over time. It is represented as a bar graph. The setting you are currently modifying should be highlighted.
-      </p>
-      <p>
-        Yes, yes... it's all quite complicated, but it gets easier the more you use it. You can also choose from a large number of presets and even save your own right on the device! If you find yourself a bit stumped maybe load up an existing preset and look through the settings to try to understand how it is working.
-      </p>
-      <p>
-        To access presets on the wired remote, double click the right encoder at any time. A menu will pop up allowing you to select a preset or save your existing settings to a new preset. Sorry, there is no keyboard on the device so you can't name them with the wired remote. You also can't delete them via the wired remote. A configuration tool will be added at some point so you can save and share these with your friends.
-      </p>
-      <p>Would pictures have helped the above? For certain, but I really have no desire to try and sort out all of that.</p> 
-      <h5>Streaming Mode</h5>
-      <p>
-        Streaming mode allows the OSSM to receive commands to directly control the position of the rail. This comes as a pair of values. A postion between 0.0 and 100.0 and a time value in miliseconds. The OSSM will do its best to reach the target destination in the given time, but if the desired move breaks any laws of physics it will intentionally come up short. The device will shorten the stroke automatically based on the furthest position it can reach in the allotted time. It stops short instead of arriving late to keep itself in sync with the player.
-      </p>
-      <p>
-        In streaming mode the settings are used as limits rather then direct play settings.
-      </p>
-      <table>
-        <tr>
-          <th>Setting</th>
-          <th>Description</th>
-        </tr>
-        <tr>
-          <td>Speed</td>
-          <td>Maximum speed the rail can travel during a position stream. Initially starts at 0 for safety.</td>
-        </tr>
-        <tr>
-          <td>Max Depth</td>
-          <td>Maximum depth to be used at position 100.0</td>
-        </tr>
-        <tr>
-          <td>Min Depth</td>
-          <td>Minimum depth to be used at position 0.0</td>
-        </tr>
-        <tr>
-          <td>Acceleration</td>
-          <td>Maximum acceleration to be used to reach the postions. Turn this down to make things a little smoother.</td>
-        </tr>
-        <tr>
-          <td>Buffer</td>
-          <td>Streaming mode can help smoooth out motion for certain supported players. A high buffer will make latency less obvious if there is a hiccup in communication over bluetooth.</td>
-        </tr>
-        <tr>
-          <td>Offset</td>
-          <td>This is often a clientside setting for video playback to help adjust if it is slightly out of sync.</td>
-        </tr>
-      </table>
-      <a href="wifi.html">Previous</a> | 
-      <a href="preset.html">Next</a>
-    </main>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+  <script src="script.js"></script>
+  <title>OSSM Lite Documentation</title>
+</head>
+
+<body>
+  <main style="max-width: 800px;">
+    <hgroup>
+      <h2>OSSM Lite</h2>
+      <p>8. Learn about play modes</p>
+    </hgroup>
+    <p>
+      At this point your OSSM should be usable, but there are a few things to know:
+    </p>
+    <h5>Depth/Stoke vs Min/Max</h5>
+    <p>
+      Depth and stroke are holdovers from prior firmwares. Depth was how far the rail should extend, and stroke was a
+      percentage of that distance to retract from for each stroke. This meant that changing the depth would also change
+      the effective minimum depth. Very unintuitive.
+    </p>
+    <p>
+      This firmware adds support for minimum and maximum depth instead. Max depth is functionaly the same as the the old
+      depth was, but min depth doesn't change when max is updated. Much more intuitive. The wired remote will use
+      min/max depth if you have one connected.
+    </p>
+    <p>
+      Both are avaiable in the wirless (BLE) protocol, which means broad support for wireless remotes. Developers are
+      encouraged to use min/max in the future...please.
+    </p>
+    <h5>Stroke Engine</h5>
+    <p>
+      A heavily modified version of Elims' Stroke Engine is included in this firmware. A few additional patterns are
+      included, but the biggest change is that it no longer uses strokes-per-minute (SPM) for it's speed setting.
+    </p>
+    <p>
+      The stroke engine on this firmware uses linear speed in mm/s. Linear speed decouples the length of the stroke from
+      how fast it needs to travel. With the old SPM setting doubling the length of the stroke would also double the
+      effective speed of the rail.
+    </p>
+    <p>
+      Under the hood a bunch of other changes to stroke engine have also happened. Unless you're a developer you
+      probably don't care. These changes are mostly removing orphaned code and making it behave the same way as the
+      other modes on the device. Someday this mode will be replaced, but today is not that day.
+    </p>
+    <p>
+      Clicking the right encoder in stroke engine swaps between depth settings and "sensation" which is a catch-all
+      setting for modifying the effect of a pattern. Double click the encoder to open the pattern menu. Single click to
+      select the pattern and return to the other settings. Click and hold to exit the mode and return to the menu.
+    </p>
+    <h5>Advanced Penetration</h5>
+    <p>
+      This is a complicated, but very powerful, play mode on the device. Currently only the wired remote is fully
+      supported, but other controllers may eventually be added. There are 7 major settings. On the wired remote you will
+      see these settings listed down the sides of the screen. You can cycle through them with the right encoder knob.
+      Click once to edit, click again to change settings.
+    </p>
+    <p>
+      In the middle of the screen you will see a visual representation of a single stroke in the pattern. Vertical space
+      indicating depth, horizontal indicating time. As you adjust the settings it should become clear what the meaning
+      is. The most confusing part is that in/out speed is slowing down the master speed... so adjusting these might feel
+      unintuitive at first.
+    </p>
+    <table>
+      <tr>
+        <th>Setting</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>Master Speed</td>
+        <td>Sets the velocity the rail will try to reach during it's stroke. This could be constrained by other
+          settings.</td>
+      </tr>
+      <tr>
+        <td>Max Depth</td>
+        <td>Sets the maximum depth the rail will travel to for a stroke</td>
+      </tr>
+      <tr>
+        <td>Min Depth</td>
+        <td>Sets the minimum depth the rail will travel to for a stroke</td>
+      </tr>
+      <tr>
+        <td>In Speed</td>
+        <td>Sets a percentage of master speed to be used when traveling towards maximum depth</td>
+      </tr>
+      <tr>
+        <td>Out Speed</td>
+        <td>Sets a percentage of master speed to be used when traveling towards minimum depth</td>
+      </tr>
+      <tr>
+        <td>In Accel</td>
+        <td>Sets the rate of acceleration when traveling towards maximum depth. Lower values will be smoother, higher
+          values more robotic.</td>
+      </tr>
+      <tr>
+        <td>Out Accel</td>
+        <td>I bet you can figure this one out...</td>
+      </tr>
+    </table>
+    <p>
+      By combining the above you can replicate many of the existing patterns in stroke engine. For example, setting the
+      'in speed' to 50% would be similar to the "teasing" pattern.
+    </p>
+    <p>
+      In addition to these settings, each one of them can also have a modifier applied to them. These modifiers cause
+      the primary setting to change over time. To get to the modifiers scroll down past the last base setting to get to
+      a second page of values. These will be listed as "off" until configured. Click to enter a sub-menu for the
+      modifier.
+    </p>
+    <table>
+      <tr>
+        <th>Modifier</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>Amplitude</td>
+        <td>How much should the setting change compared to it's base value. For depth values this will constrain between
+          (and towards) the opposing setting. For all others it will evaluate between 0 and the base setting. You'll be
+          locked out of other modifier settings until this value is set less then 100.</td>
+      </tr>
+      <tr>
+        <td>Steps to Min</td>
+        <td>This is the number of steps (strokes) it will take for the value to transition between the base value and
+          the amplitude adjusted value. The default is 1, which would mean it instantly changes from base to the new
+          value.</td>
+      </tr>
+      <tr>
+        <td>Steps at Min</td>
+        <td>This will set how long the device should continue using the fully amplitude adjusted value before
+          transitioning back towards the base value.</td>
+      </tr>
+      <tr>
+        <td>Steps to Max</td>
+        <td>This is the number of steps to return to the base setting from he amplitude adjusted value</td>
+      </tr>
+      <tr>
+        <td>Steps at Max</td>
+        <td>This is how long the device should use the unmodified base value during the step cycle</td>
+      </tr>
+      <tr>
+        <td>Offset</td>
+        <td>If the steps settings above represent one cycle (to min, at min, to max, at max) this setting determines
+          which step in that cycle it should start at.</td>
+      </tr>
+      <tr>
+        <td>Go Back</td>
+        <td>This isn't actually a setting, but if you loop the menu for modifiers it will eventaully say 'go back' which
+          is how you return to the base settings screen with a single click.</td>
+      </tr>
+    </table>
+    <p>
+      With a modifier turned on you will see a second, dotted, line on the visual representation of the stroke. This is
+      an aggregate of all of the maximum values of the modifiers to show approximately what the "maximum possible
+      change" from your original stroke would be. Depending on how complicated your settings are and how the cycles
+      align this may not ever actually happen at the same time...but it should give you a little bit of a clue as to
+      what is happening.
+    </p>
+    <p>
+      You'll also notice that when changing the step and offset values you see a different interface. This is meant to
+      show you approximately what that setting will look like in steps over time. It is represented as a bar graph. The
+      setting you are currently modifying should be highlighted.
+    </p>
+    <p>
+      Yes, yes... it's all quite complicated, but it gets easier the more you use it. You can also choose from a large
+      number of presets and even save your own right on the device! If you find yourself a bit stumped maybe load up an
+      existing preset and look through the settings to try to understand how it is working.
+    </p>
+    <p>
+      To access presets on the wired remote, double click the right encoder at any time. A menu will pop up allowing you
+      to select a preset or save your existing settings to a new preset. Sorry, there is no keyboard on the device so
+      you can't name them with the wired remote. You also can't delete them via the wired remote. A configuration tool
+      will be added at some point so you can save and share these with your friends.
+    </p>
+    <p>Would pictures have helped the above? For certain, but I really have no desire to try and sort out all of that.
+    </p>
+    <h5>Streaming Mode</h5>
+    <p>
+      Streaming mode allows the OSSM to receive commands to directly control the position of the rail. This comes as a
+      pair of values. A postion between 0.0 and 100.0 and a time value in miliseconds. The OSSM will do its best to
+      reach the target destination in the given time, but if the desired move breaks any laws of physics it will
+      intentionally come up short. The device will shorten the stroke automatically based on the furthest position it
+      can reach in the allotted time. It stops short instead of arriving late to keep itself in sync with the player.
+    </p>
+    <p>
+      In streaming mode the settings are used as limits rather then direct play settings.
+    </p>
+    <table>
+      <tr>
+        <th>Setting</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td>Speed</td>
+        <td>Maximum speed the rail can travel during a position stream. Initially starts at 0 for safety.</td>
+      </tr>
+      <tr>
+        <td>Max Depth</td>
+        <td>Maximum depth to be used at position 100.0</td>
+      </tr>
+      <tr>
+        <td>Min Depth</td>
+        <td>Minimum depth to be used at position 0.0</td>
+      </tr>
+      <tr>
+        <td>Acceleration</td>
+        <td>Maximum acceleration to be used to reach the postions. Turn this down to make things a little smoother.</td>
+      </tr>
+      <tr>
+        <td>Buffer</td>
+        <td>Streaming mode can help smoooth out motion for certain supported players. A high buffer will make latency
+          less obvious if there is a hiccup in communication over bluetooth.</td>
+      </tr>
+      <tr>
+        <td>Offset</td>
+        <td>This is often a clientside setting for video playback to help adjust if it is slightly out of sync.</td>
+      </tr>
+    </table>
+    <a href="wifi.html">Previous</a> |
+    <a href="preset.html">Next</a>
+  </main>
+</body>
+
 </html>

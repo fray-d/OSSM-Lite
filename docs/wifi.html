@@ -1,63 +1,77 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
-    <script src="script.js"></script>
-    <title>OSSM Lite Documentation</title>
-  </head>
-  <body>
-    <main style="max-width: 800px;">
-      <hgroup>
-        <h2>OSSM Lite</h2>
-        <p>7. Setup WiFi for over-the-air updates</p>
-      </hgroup>
-      <p>
-        WiFi? I thought this thing connected to devices over bluetooth? It does, but if you want to get updates without coming back here (and overwriting all those configurations you just set up) then you should probably enable over-the-air updates.
-      </p>
-      <p>
-        On the control board there are two buttons. One near the LED restarts the device, the other is a function button. Click and hold this second button.
-      </p>
-      <p>  
-        If the LED flashes yellow then your device just started hosting a wifi network with a name like "OSSM Setup", or whatever you renamed your device to. Connect to it to complete configuration! You can figure this out, I have faith in you.
-      </p>
-      <p>
-        If it blinks orange then you were already connected to wifi, and now you're starting to pull down the latest firmware update. Click and hold that button whenever you want to check for a new update. The device does not check versions... it just updates to whatever it finds.
-      </p>
-      <p>You can also trigger either of these functions with the wired remote. If you read the previous pages you probably knew what those colors meant...and maybe that this button existed!</p>
-      <p>
-        Or... you can use this handy form. A green checkbox will appear when it is connected. A red exclaimation mark will appear if it is disconnected. When connected you can also trigger an OTA update via the provided button. Use this if you can't access the physical button on your device.
-      </p>
-      <button id="connect" onclick="connectWiFiPage();">Connect to Configure</button>
-      <article id="controls" style="display: none;">
-        <label for="SSID">SSID</label>
-        <input type="text" id="SSID">
-        <label for="Password">Password</label>
-        <input type="password" id="Password">
-        <input type="submit" value="Save" onclick="writeWiFi()">
-        <input type="submit" id="Update" aria-disabled="true" value="Update OSSM" onclick="writeUpdate()">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+  <script src="script.js"></script>
+  <title>OSSM Lite Documentation</title>
+</head>
+
+<body>
+  <main style="max-width: 800px;">
+    <hgroup>
+      <h2>OSSM Lite</h2>
+      <p>7. Setup WiFi for over-the-air updates</p>
+    </hgroup>
+    <p>
+      WiFi? I thought this thing connected to devices over bluetooth? It does, but if you want to get updates without
+      coming back here (and overwriting all those configurations you just set up) then you should probably enable
+      over-the-air updates.
+    </p>
+    <p>
+      On the control board there are two buttons. One near the LED restarts the device, the other is a function button.
+      Click and hold this second button.
+    </p>
+    <p>
+      If the LED flashes yellow then your device just started hosting a wifi network with a name like "OSSM Setup", or
+      whatever you renamed your device to. Connect to it to complete configuration! You can figure this out, I have
+      faith in you.
+    </p>
+    <p>
+      If it blinks orange then you were already connected to wifi, and now you're starting to pull down the latest
+      firmware update. Click and hold that button whenever you want to check for a new update. The device does not check
+      versions... it just updates to whatever it finds.
+    </p>
+    <p>You can also trigger either of these functions with the wired remote. If you read the previous pages you probably
+      knew what those colors meant...and maybe that this button existed!</p>
+    <p>
+      Or... you can use this handy form. A green checkbox will appear when it is connected. A red exclaimation mark will
+      appear if it is disconnected. When connected you can also trigger an OTA update via the provided button. Use this
+      if you can't access the physical button on your device.
+    </p>
+    <button id="connect" onclick="connectWiFiPage();">Connect to Configure</button>
+    <article id="controls" style="display: none;">
+      <label for="SSID">SSID</label>
+      <input type="text" id="SSID">
+      <label for="Password">Password</label>
+      <input type="password" id="Password">
+      <input type="submit" value="Save" onclick="writeWiFi()">
+      <input type="submit" id="Update" aria-disabled="true" value="Update OSSM" onclick="writeUpdate()">
+    </article>
+    <p></p>
+    <a href="name.html">Previous</a> |
+    <a href="play.html">Next</a>
+    <dialog id="oldFirmware">
+      <article>
+        <header>
+          <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+          <h3>Firmware out of date!</h3>
+        </header>
+        <p>
+          The firmware on your OSSM is out of date, or completely incompatble. Go back to the 
+          <a href="index.html">beginning</a> of this guide and start over.
+        </p>
+        <footer>
+          <button autofocus="" onclick="firmareClose()">
+            Confirm
+          </button>
+        </footer>
       </article>
-      <p></p>
-      <a href="name.html">Previous</a> | 
-      <a href="play.html">Next</a>
-      <dialog id="oldFirmware">
-        <article>
-          <header>
-            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
-            <h3>Firmware out of date!</h3>
-          </header>
-          <p>
-            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
-          </p>
-          <footer>
-            <button autofocus="" onclick="firmareClose()">
-              Confirm
-            </button>
-          </footer>
-        </article>
-      </dialog>
-    </main>
-  </body>
+    </dialog>
+  </main>
+</body>
+
 </html>

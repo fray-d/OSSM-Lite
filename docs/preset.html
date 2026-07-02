@@ -1,38 +1,78 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
-    <script src="script.js"></script>
-    <title>OSSM Lite Documentation</title>
-  </head>
-  <body>
-    <main style="max-width: 800px;">
-      <hgroup>
-        <h2>OSSM Lite</h2>
-        <p>9. Advanced Penetration Preset Tool</p>
-      </hgroup>
-      <p>Coming Soon.</p>
-      <a href="play.html">Previous</a> | 
-      <a href="funscript.html">Next</a>
-      <dialog id="oldFirmware">
-        <article>
-          <header>
-            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
-            <h3>Firmware out of date!</h3>
-          </header>
-          <p>
-            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
-          </p>
-          <footer>
-            <button autofocus="" onclick="firmareClose()">
-              Confirm
-            </button>
-          </footer>
-        </article>
-      </dialog>
-    </main>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+  <script src="script.js"></script>
+  <title>OSSM Lite Documentation</title>
+</head>
+
+<body>
+  <main style="max-width: 800px;">
+    <hgroup>
+      <h2>OSSM Lite</h2>
+      <p>9. Advanced Penetration Preset Tool</p>
+    </hgroup>
+    <p>With this tool you can manage your presets. It is not meant for play or authoring new presets as it does not
+      expose all of the settings in a user friendly way. A minimum set of controls are offered.</p>
+    <p>Speed and depth are available so you can view a preset while you choose a name. Set the active preset by
+      selecting it from the dropdown. </p>
+    <h6>Renaming is possible through a three step process:</h6>
+    <ul>
+      <li>Pick the old pattern from the dropdown setting it as active.</li>
+      <li>Type the new name in the box and save it with those existing settings.</li>
+      <li>Reselect the old pattern by name and click delete.</li>
+    </ul>
+    <p>Factory reset will delete all presets and load the default library of presets.</p>
+    <button id="connect" onclick="connectPresets();">Connect to Configure</button>
+    <article id="controls" style="display: none;">
+      <label for="speed">Speed</label>
+      <input type="range" min="0" max="100" value="0" id="speed" name="speed" onchange="setSpeed()">
+      <label for="maxDepth">Max Depth</label>
+      <input type="range" min="0" max="100" value="0" id="maxDepth" onchange="setMaxDepth()">
+      <label for="minDepth">Min Depth</label>
+      <input type="range" min="0" max="100" value="0" id="minDepth" onchange="setMinDepth()">
+      <label for="presetList">Presets</label>
+      <fieldset role="group">
+        <select id="presetList" onchange="runPreset()">
+        </select>
+        <button onclick="deletePreset()"">Delete</button>
+        </fieldset>
+        <label for=" presetName">Preset Name</label>
+          <fieldset role="group" style="margin-bottom: 0;">
+            <input type="text" maxlength="20" id="presetName">
+            <input type="submit" value="Save" onclick="savePreset()">
+          </fieldset>
+          <p></p>
+          <button onclick="factoryReset()"">Factory Reset</button>
+      </article>
+      <p></p>
+      <p>
+        <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
+      </p>
+      <a href=" rail.html">Previous</a> |
+            <a href="wifi.html">Next</a>
+            <dialog id="oldFirmware">
+              <article>
+                <header>
+                  <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+                  <h3>Firmware out of date!</h3>
+                </header>
+                <p>
+                  The firmware on your OSSM is out of date, or completely incompatble. Go back to the 
+                  <a href="index.html">beginning</a> of this guide and start over.
+                </p>
+                <footer>
+                  <button autofocus="" onclick="firmareClose()">
+                    Confirm
+                  </button>
+                </footer>
+              </article>
+            </dialog>
+  </main>
+</body>
+
 </html>

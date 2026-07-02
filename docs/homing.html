@@ -1,89 +1,109 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
-    <script src="script.js"></script>
-    <title>OSSM Lite Documentation</title>
-  </head>
-  <body>
-    <main style="max-width: 800px;">
-      <hgroup>
-        <h2>OSSM Lite</h2>
-        <p>4. Choose a homing method</p>
-      </hgroup>
-      <p>
-        Now that you understand the color codes, and if you followed the advice to not power your motor when flashing the firmware, your device is probably flashing red indicating homing has failed. This was intended. Now you can configure how you want it to home before you power the motor for the first time. Homing fails if it takes longer then 21 seconds to traverse in either direction.
-      </p>
-      <p>
-        There are four homing types to choose from, and two optional settings. Click the button below to connect to your device, then select the options of your choice. Now's a good time to power your device so the motor can move. Be ready to unplug it if you misconfigure something. Values are saved automatically. Restart to see effect.
-      </p>
-      <button id="connect" onclick="connectHomingPage();">Connect to Configure</button>
-      <article id="controls" style="display: none;">
-        <label for="homingType">Homing Type</label>
-        <select id="homingType" onchange="writeHomingType()">
-          <option value="1">Default</option>
-          <option value="3">Double Tap</option>
-          <option value="2">Single Sided</option>
-          <option value="0">None</option>
-        </select>
-        <label for="railLength">Rail Length</label>
-        <input type="number" id="railLength" name="railLength" placeholder="180" onchange="writeRailLength()">
-        <label for="homeBetweenModes">Home between modes</label>
-        <input type="checkbox" id="homeBetweenModes" name="homeBetweenModes" role="switch" onchange="writeHomeBetwee()">
-        <p></p>
-      </article>
-      <p></p>
-      <h5>Homing Modes</h5>
-      <p>
-        <strong>Default: </strong>
-        <small>The device will retract to its minimum depth and tap the housing to find home. It will then extend fully to measure the rail before returning again to home. It will move rapidly between points it has previously been.</small>
-      </p>
-      <p>
-        <strong>Double Tap: </strong>
-        <small>This is the same as default, except the device will attempt to home inwards twice if it the first tap was very short. This is mostly useful when attaching accessories that might cause an initial home to trigger falsely.</small>
-      </p>
-      <p>
-        <strong>Single Sided: </strong>
-        <small>The device will retract to its minimum depth and tap the housing to find home. Instead of measuring, the rail length setting is used. Take care to set it appropriately to avoid crashing.</small>
-      </p>
-      <p>
-        <strong>None: </strong>
-        <small>Some devices don't have the required components for homing. This option uses the same user specified value for rail length, but assumes the user has manually parked the rail at home before powering on the device. It will add a safety buffer of 10mm from the initial position. Also useful for developers who want to turn off homing for certain tests.</small>
-      </p>
-      <h5>Optional Settings</h5>
-      <p>
-        <strong>Rail Length: </strong>
-        <small>This is where you manually specify the length of the rail for modes that require it. The 180mm default works well enough for a standard OSSM. Be sure to leave a safety margin!</small>
-      </p>
-      <p>
-        <strong>Rehoming: </strong>
-        <small>You can also set whether the device should home between modes. Setting this will tell the device to return home when switching modes. For IHSV motors this is required for the OSSM to function. For the AIM motors you can disable this feature if you choose.</small>
-      </p>
-      <p>
-        <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
-      </p>
 
-      <a href="motor.html">Previous</a> | 
-      <a href="rail.html">Next</a>
-      <dialog id="oldFirmware">
-        <article>
-          <header>
-            <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
-            <h3>Firmware out of date!</h3>
-          </header>
-          <p>
-            The firmware on your OSSM is out of date, or completely incompatble. Go back to the <a href="index.html">beginning</a> of this guide and start over. 
-          </p>
-          <footer>
-            <button autofocus="" onclick="firmareClose()">
-              Confirm
-            </button>
-          </footer>
-        </article>
-      </dialog>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.pumpkin.min.css">
+  <script src="script.js"></script>
+  <title>OSSM Lite Documentation</title>
+</head>
+
+<body>
+  <main style="max-width: 800px;">
+    <hgroup>
+      <h2>OSSM Lite</h2>
+      <p>4. Choose a homing method</p>
+    </hgroup>
+    <p>
+      Now that you understand the color codes, and if you followed the advice to not power your motor when flashing the
+      firmware, your device is probably flashing red indicating homing has failed. This was intended. Now you can
+      configure how you want it to home before you power the motor for the first time. Homing fails if it takes longer
+      then 21 seconds to traverse in either direction.
+    </p>
+    <p>
+      There are four homing types to choose from, and two optional settings. Click the button below to connect to your
+      device, then select the options of your choice. Now's a good time to power your device so the motor can move. Be
+      ready to unplug it if you misconfigure something. Values are saved automatically. Restart to see effect.
+    </p>
+    <button id="connect" onclick="connectHomingPage();">Connect to Configure</button>
+    <article id="controls" style="display: none;">
+      <label for="homingType">Homing Type</label>
+      <select id="homingType" onchange="writeHomingType()">
+        <option value="1">Default</option>
+        <option value="3">Double Tap</option>
+        <option value="2">Single Sided</option>
+        <option value="0">None</option>
+      </select>
+      <label for="railLength">Rail Length</label>
+      <input type="number" id="railLength" name="railLength" placeholder="180" onchange="writeRailLength()">
+      <label for="homeBetweenModes">Home between modes</label>
+      <input type="checkbox" id="homeBetweenModes" name="homeBetweenModes" role="switch" onchange="writeHomeBetwee()">
+      <p></p>
+    </article>
+    <p></p>
+    <h5>Homing Modes</h5>
+    <p>
+      <strong>Default: </strong>
+      <small>The device will retract to its minimum depth and tap the housing to find home. It will then extend fully to
+        measure the rail before returning again to home. It will move rapidly between points it has previously
+        been.</small>
+    </p>
+    <p>
+      <strong>Double Tap: </strong>
+      <small>This is the same as default, except the device will attempt to home inwards twice if it the first tap was
+        very short. This is mostly useful when attaching accessories that might cause an initial home to trigger
+        falsely.</small>
+    </p>
+    <p>
+      <strong>Single Sided: </strong>
+      <small>The device will retract to its minimum depth and tap the housing to find home. Instead of measuring, the
+        rail length setting is used. Take care to set it appropriately to avoid crashing.</small>
+    </p>
+    <p>
+      <strong>None: </strong>
+      <small>Some devices don't have the required components for homing. This option uses the same user specified value
+        for rail length, but assumes the user has manually parked the rail at home before powering on the device. It
+        will add a safety buffer of 10mm from the initial position. Also useful for developers who want to turn off
+        homing for certain tests.</small>
+    </p>
+    <h5>Optional Settings</h5>
+    <p>
+      <strong>Rail Length: </strong>
+      <small>This is where you manually specify the length of the rail for modes that require it. The 180mm default
+        works well enough for a standard OSSM. Be sure to leave a safety margin!</small>
+    </p>
+    <p>
+      <strong>Rehoming: </strong>
+      <small>You can also set whether the device should home between modes. Setting this will tell the device to return
+        home when switching modes. For IHSV motors this is required for the OSSM to function. For the AIM motors you can
+        disable this feature if you choose.</small>
+    </p>
+    <p>
+      <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
+    </p>
+
+    <a href="motor.html">Previous</a> |
+    <a href="rail.html">Next</a>
+    <dialog id="oldFirmware">
+      <article>
+        <header>
+          <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+          <h3>Firmware out of date!</h3>
+        </header>
+        <p>
+          The firmware on your OSSM is out of date, or completely incompatble. Go back to the
+          <a href="index.html">beginning</a> of this guide and start over.
+        </p>
+        <footer>
+          <button autofocus="" onclick="firmareClose()">
+            Confirm
+          </button>
+        </footer>
+      </article>
+    </dialog>
+  </main>
+</body>
+
 </html>
