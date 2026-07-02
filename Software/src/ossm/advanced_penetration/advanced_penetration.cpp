@@ -17,17 +17,21 @@ namespace advanced_penetration {
 
     NimBLECharacteristic* statusNotifier = nullptr;
 
+    void notify() {
+        if (currentSettings.changed && statusNotifier != nullptr) {
+            statusNotifier->setValue(currentSettings.getStatus());
+            statusNotifier->notify();
+            currentSettings.changed = false;
+        }
+    }
+
     static void startAdvancedPenetrationMotionTask(void* pvParameters) {
         u32_t strokeCount = 1;
         while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
                stateMachine->is("advancedPenetration.presets"_s)) {
-            if (currentSettings.changed && statusNotifier != nullptr) {
-                statusNotifier->setValue(currentSettings.getStatus());
-                statusNotifier->notify();
-            }
             if (currentSettings.speed.value == 0.0) {
                 stepper->stopMove();
-                currentSettings.changed = false;
+                notify();
                 vTaskDelay(100);
                 continue;
             }
@@ -38,7 +42,7 @@ namespace advanced_penetration {
             if (!stepper->isRunning()) {
                 strokeCount++;
             }
-            currentSettings.changed = false;
+            notify();
             float speed = UserConfig::getMaxSpeedMMS() * UserConfig::getStepsPerMM(currentSettings.speed.getRampValue());
             int32_t targetPosition = calibration.measuredStrokeSteps;
             if (strokeCount % 2 == 0) {
