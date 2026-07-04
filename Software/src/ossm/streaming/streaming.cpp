@@ -150,7 +150,7 @@ namespace streaming {
 
                     ESP_LOGI(
                         "Streaming",
-                        "P(%d): %d -> %d = %d, T: %.3f, S: %d, A: %d, Q: %d",
+                        "P(%f): %d -> %d = %d, T: %.3f, S: %d, A: %d, Q: %d",
                         targetPositionTime.position, currentPosition,
                         targetPosition, distance, timeSeconds, requiredSpeed,
                         requiredAccel, targetQueue.size());

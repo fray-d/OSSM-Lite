@@ -62,8 +62,8 @@ void ossmResetSettingsStrokeEngine() {
 }
 void ossmResetSettingsStreaming() {
     settings.speed = 0;
-    settings.minPosition = 50;
-    settings.maxPosition = 50;
+    settings.minPosition = 40;
+    settings.maxPosition = 60;
     settings.sensation = 50;
     settings.buffer = 100;
 

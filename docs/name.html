@@ -27,18 +27,17 @@
     </p>
     <button id="connect" onclick="connectNamePage();">Connect to Configure</button>
     <article id="controls" style="display: none;">
-      <form>
-        <fieldset role="group" style="margin-bottom: 0;">
-          <input type="text" maxlength="8" id="deviceName">
-          <input type="submit" value="Save" onclick="writeDeviceName()">
-        </fieldset>
-      </form>
+      <fieldset role="group" style="margin-bottom: 0;">
+        <input type="text" maxlength="8" id="deviceName">
+        <input type="submit" value="Save" id="save">
+      </fieldset>
     </article>
     <p></p>
     <p>
       <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
     </p>
     <a href="rail.html">Previous</a> |
+    <a href="index.html">Home</a> |
     <a href="wifi.html">Next</a>
     <dialog id="oldFirmware">
       <article>
@@ -47,8 +46,8 @@
           <h3>Firmware out of date!</h3>
         </header>
         <p>
-          The firmware on your OSSM is out of date, or completely incompatble. Go back to the
-          <a href="index.html">beginning</a> of this guide and start over.
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
         </p>
         <footer>
           <button autofocus="" onclick="firmareClose()">

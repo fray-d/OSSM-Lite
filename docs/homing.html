@@ -31,16 +31,16 @@
     <button id="connect" onclick="connectHomingPage();">Connect to Configure</button>
     <article id="controls" style="display: none;">
       <label for="homingType">Homing Type</label>
-      <select id="homingType" onchange="writeHomingType()">
+      <select id="homingType">
         <option value="1">Default</option>
         <option value="3">Double Tap</option>
         <option value="2">Single Sided</option>
         <option value="0">None</option>
       </select>
       <label for="railLength">Rail Length</label>
-      <input type="number" id="railLength" name="railLength" placeholder="180" onchange="writeRailLength()">
+      <input type="number" id="railLength" placeholder="180">
       <label for="homeBetweenModes">Home between modes</label>
-      <input type="checkbox" id="homeBetweenModes" name="homeBetweenModes" role="switch" onchange="writeHomeBetwee()">
+      <input type="checkbox" id="homeBetweenModes" role="switch">
       <p></p>
     </article>
     <p></p>
@@ -86,6 +86,7 @@
     </p>
 
     <a href="motor.html">Previous</a> |
+    <a href="index.html">Home</a> |
     <a href="rail.html">Next</a>
     <dialog id="oldFirmware">
       <article>
@@ -94,8 +95,8 @@
           <h3>Firmware out of date!</h3>
         </header>
         <p>
-          The firmware on your OSSM is out of date, or completely incompatble. Go back to the
-          <a href="index.html">beginning</a> of this guide and start over.
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
         </p>
         <footer>
           <button autofocus="" onclick="firmareClose()">

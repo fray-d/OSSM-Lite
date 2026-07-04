@@ -18,13 +18,30 @@ const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374"
 const STATUS_UUID = "4f53534d-6164-7661-6e63-656473746174"
 const CONTROL_UUID = "4f53534d-6164-7661-6e63-6564636f6e74"
 
+//Common Settings
+const SPEED_UUID = "4f53534d-436f-6d6d-6f6e-005370656564";
+const MAXDEP_UUID = "4f53534d-436f-6d6d-6f6e-4d6178446570";
+const MINDEP_UUID = "4f53534d-436f-6d6d-6f6e-4d696e446570";
+const BUFFER_UUID = "4f53534d-436f-6d6d-6f6e-427566666572";
+const OFFSET_UUID = "4f53534d-436f-6d6d-6f6e-4f6666736574";
+const STREAM_UUID = "4f53534d-436f-6d6d-6f6e-53747265616d";
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+
+function decodeHex(value) {
+    value = value.replaceAll("-","");
+    value = Uint8Array.fromHex(value);
+    value = new TextDecoder().decode(value);
+    return value;
+}
+
 
 function clearCheck(element) {
     element.removeAttribute('aria-invalid');
 }
 
+// Main server/service
 var serverRef, serviceRef
 async function handleConnect() {
     var connectButton = document.getElementById("connect");
@@ -47,6 +64,7 @@ async function handleConnect() {
         document.getElementById("controls").style.display = "block";
     } catch (e){
         console.log("Error: " + e);
+        firmwareWarning();
     }
     connectButton.ariaBusy = false;
     connectButton.ariaDisabled = false;
@@ -58,310 +76,67 @@ function handleDisconnect(){
 }
 
 function firmwareWarning(){
-    serverRef.device.gatt.disconnect();
-    document.getElementById("oldFirmware").open = true;
+    try {
+        serverRef.device.gatt.disconnect();
+        document.getElementById("oldFirmware").open = true;
+    } catch {
+        console.log("Nothing to disconnect");
+    }
 }
 function firmareClose() {
     document.getElementById("oldFirmware").open = false;
 }
 
-var accelRef, accelElement;
-async function initMaxAcceleration() {
-    accelElement = document.getElementById("maxAcceleration");
-    try{
-        accelRef = await serviceRef.getCharacteristic(MACCEL_UUID);
-        console.log("Accel characteristic connected");
-        readMaxAcceleration();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readMaxAcceleration() {
-    var value = await accelRef.readValue();
-    value = decoder.decode(value);
-    console.log("Max Acceleration: " + value);
-    accelElement.value = value;
-    accelElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(accelElement);},2000);
-}
-async function writeMaxAcceleration() {
-    var value = accelElement.value;
-    console.log("Write max acceleration: " + value);
-    value = encoder.encode(value);
-    accelRef.writeValueWithoutResponse(value);
-    readMaxAcceleration();
-}
-
-var rpmRef, rpmElement;
-async function initMotorRPM() {
-    rpmElement = document.getElementById("motorRPM");
-    try{
-        rpmRef = await serviceRef.getCharacteristic(MAXRPM_UUID);
-        console.log("RPM characteristic connected");
-        readMotorRPM();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readMotorRPM() {
-    var value = await rpmRef.readValue();
-    value = decoder.decode(value);
-    console.log("RPM: " + value);
-    rpmElement.value = value;
-    rpmElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(rpmElement);},2000);
-}
-async function writeMotorRPM() {
-    var value = rpmElement.value;
-    console.log("Write RPM: " + value);
-    value = encoder.encode(value);
-    rpmRef.writeValueWithoutResponse(value);
-    readMotorRPM();
-}
-
-var stepsRef, stepsElement;
-async function initStepsPerRevolution() {
-    stepsElement = document.getElementById("stepsPerRevolution");
-    try{
-        stepsRef = await serviceRef.getCharacteristic(STEPPR_UUID);
-        console.log("Steps per revolution characteristic connected");
-        readStepsPerRevolution();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readStepsPerRevolution() {
-    var value = await stepsRef.readValue();
-    value = decoder.decode(value);
-    console.log("Steps per revolution:" + value);
-    stepsElement.value = value;
-    stepsElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(stepsElement);},2000);
-}
-async function writeStepsPerRevolution() {
-    var value = stepsElement.value;
-    console.log("Write steps per revolution: " + value);
-    value = encoder.encode(value);
-    stepsRef.writeValueWithoutResponse(value);
-    readStepsPerRevolution();
-}
-
-var pulleyRef, pulleyElement;
-async function initPulleyTeeth() {
-    pulleyElement = document.getElementById("pulleyTeeth");
-    try{
-        pulleyRef = await serviceRef.getCharacteristic(PULLEY_UUID);
-        console.log("Pulley teeth characteristic connected");
-        readPulleyTeeth();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readPulleyTeeth() {
-    var value = await pulleyRef.readValue();
-    value = decoder.decode(value);
-    console.log("Pulley teeth:" + value);
-    pulleyElement.value = value;
-    pulleyElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(pulleyElement);},2000);
-}
-async function writePulleyTeeth() {
-    var value = pulleyElement.value;
-    console.log("Write pulley teeth: " + value);
-    value = encoder.encode(value);
-    pulleyRef.writeValueWithoutResponse(value);
-    readPulleyTeeth();
-}
-
-var beltPitchRef, beltPitchElement;
-async function initBeltPitch() {
-    beltPitchElement = document.getElementById("beltPitch");
-    try{
-        beltPitchRef = await serviceRef.getCharacteristic(BPITCH_UUID);
-        console.log("Belt pitch characteristic connected");
-        readBeltPitch();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readBeltPitch() {
-    var value = await beltPitchRef.readValue();
-    value = decoder.decode(value);
-    console.log("Belt Pitch: " + value);
-    beltPitchElement.value = value;
-    beltPitchElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(beltPitchElement);},2000);
-}
-async function writeBeltPitch() {
-    var value = beltPitchElement.value;
-    console.log("Write belt pitch: " + value);
-    value = encoder.encode(value);
-    beltPitchRef.writeValueWithoutResponse(value);
-    readBeltPitch();
-}
-
-var homingTypeRef, homingElement;
-async function initHomingType() {
-    homingElement = document.getElementById("homingType");
-    try{
-        homingTypeRef = await serviceRef.getCharacteristic(HOMING_TYPE_UUID);
-        console.log("Homing characteristic connected");
-        readHomingType();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readHomingType() {
-    var value = await homingTypeRef.readValue();
-    value = decoder.decode(value);
-    console.log("Homing Type: " + value);
-    homingElement.value = value;
-    homingElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(homingElement);},2000);
-}
-async function writeHomingType() {
-    var value = homingElement.value;
-    console.log("Write homing type: " + value);
-    value = encoder.encode(value);
-    homingTypeRef.writeValueWithoutResponse(value);
-    readHomingType();
-}
-
-var railLengthRef, railLengthElement;
-async function initRailLength() {
-    railLengthElement = document.getElementById("railLength");
-    try{
-        railLengthRef = await serviceRef.getCharacteristic(RAIL_LENGTH_UUID);
-        console.log("Rail Length characteristic connected");
-        readRailLength();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readRailLength() {
-    var value = await railLengthRef.readValue();
-    value = decoder.decode(value);
-    console.log("Rail Length: " + value);
-    railLengthElement.value = value;
-    railLengthElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(railLengthElement);},2000);
-}
-async function writeRailLength() {
-    var value = railLengthElement.value;
-    console.log("Write Rail Length: " + value);
-    value = encoder.encode(value);
-    railLengthRef.writeValueWithoutResponse(value);
-    readRailLength();
-}
-
-var homeBetweenRef, homeBetweenElement;
-async function initHomeBetween() {
-    homeBetweenElement = document.getElementById("homeBetweenModes");
-    try{
-        homeBetweenRef = await serviceRef.getCharacteristic(HOME_BETWEEN_MODES_UUID);
-        console.log("Home between modes characteristic connected");
-        readHomeBetween();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readHomeBetween() {
-    var value = await homeBetweenRef.readValue();
-    value = decoder.decode(value);
-    console.log("Homing Between Modes: " + value);
-    homeBetweenElement.checked = value.toLowerCase() === "true";
-    homeBetweenElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(homeBetweenElement);},2000);
-}
-async function writeHomeBetwee() {
-    var value = homeBetweenElement.checked;
-    console.log("Write homing between: " + value);
-    value = encoder.encode(value);
-    homeBetweenRef.writeValueWithoutResponse(value);
-    readHomeBetween()
-}
-
-var reverseRailRef, reverseRailElement;
-async function initReverseRail() {
-    reverseRailElement = document.getElementById("reverseRail");
-    try{
-        reverseRailRef = await serviceRef.getCharacteristic(REVERSE_RAIL_UUID);
-        console.log("Reverse rail characteristic connected");
-        readReverseRail();
-    } catch {
-        firmwareWarning();
-    }
-}
-async function readReverseRail() {
-    var value = await reverseRailRef.readValue();
-    value = decoder.decode(value);
-    console.log("Reverse rail: " + value);
-    reverseRailElement.checked = value.toLowerCase() === "true";
-    reverseRailElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(reverseRailElement);},2000);
-}
-async function writeReverseRail() {
-    var value = reverseRailElement.checked;
-    console.log("Write reverse rail: " + value);
-    value = encoder.encode(value);
-    reverseRailRef.writeValueWithoutResponse(value);
-}
-
-var deviceNameRef, deviceNameElement;
+// Device Name
 async function initDeviceName() {
-    deviceNameElement = document.getElementById("deviceName");
+    let deviceNameElement = document.getElementById("deviceName");
+    let saveButton = document.getElementById("save");
     try{
-        deviceNameRef = await serviceRef.getCharacteristic(DEVICE_NAME_UUID);
-        console.log("Device name characteristic connected");
-        readDeviceName();
+        let deviceNameRef = await serviceRef.getCharacteristic(DEVICE_NAME_UUID);
+
+        console.log("Characteristic " + decodeHex(DEVICE_NAME_UUID) + " connected.")
+        saveButton.onclick = function() {
+            writeSetting(deviceNameElement, deviceNameRef);
+        }
+        readSetting(null, deviceNameElement, deviceNameRef);
     } catch {
         firmwareWarning();
     }
-}
-async function readDeviceName() {
-    var value = await deviceNameRef.readValue();
-    value = decoder.decode(value);
-    console.log("Device Name: " + value);
-    deviceNameElement.value = value;
-    deviceNameElement.ariaInvalid = false;
-    setTimeout(function() {clearCheck(deviceNameElement);},2000);
-}
-async function writeDeviceName() {
-    var value = deviceNameElement.value;
-    console.log("Write Device Name: " + value);
-    value = encoder.encode(value);
-    deviceNameRef.writeValueWithoutResponse(value);
 }
 
-var wifiRef, ssidElement, passwordElement;
+// Wifi
 async function initWiFi() {
-    ssidElement = document.getElementById("SSID");
-    passwordElement = document.getElementById("Password");
     try{
-        wifiRef = await serviceRef.getCharacteristic(WIFI_UUID);
-        console.log("WiFi characteristic connected");
-        readWiFi();
+        let wifiRef = await serviceRef.getCharacteristic(WIFI_UUID);
+        console.log("Characteristic " + decodeHex(WIFI_UUID) + " connected.")
+        document.getElementById("save").onclick = function() {
+            writeWiFi(wifiRef);
+        }
+        document.getElementById("update").onclick = function() {
+            writeUpdate();
+        }
+        readWiFi(wifiRef);
     } catch {
         firmwareWarning();
     }
 }
-async function readWiFi() {
-    document.getElementById("Update").style.display = 'none';
+async function readWiFi(wifiRef) {
+    document.getElementById("update").style.display = 'none';
+    let ssidElement = document.getElementById("SSID");
+    let passwordElement = document.getElementById("Password");
     var value = await wifiRef.readValue();
     value = decoder.decode(value);
     value = JSON.parse(value)
     ssidElement.value = value['ssid'];
     ssidElement.ariaInvalid = !value['connected'];
     if (value['connected']) {
-        document.getElementById("Update").style.display = 'block';
+        document.getElementById("update").style.display = 'block';
     }
     passwordElement.value = "";
-    console.log(value['connected']);
-    console.log("WiFi: %o", value);
 }
 async function writeWiFi() {
-    var ssid = ssidElement.value;
-    var password = passwordElement.value;
+    var ssid = document.getElementById("SSID").value;
+    var password = document.getElementById("Password").value;
     var value = "set:wifi:" + ssid + "|" + password;
     console.log("Write WiFi: " + ssid);
     value = encoder.encode(value);
@@ -369,12 +144,18 @@ async function writeWiFi() {
     readWiFi();
 }
 
+async function writeUpdate() {
+    var update = await serviceRef.getCharacteristic(UPDATE_UUID);
+    await update.writeValue(encoder.encode(true));
+}
+
+// Presets
 var presetRef, presetListElement;
 async function initPresets() {
     presetListElement = document.getElementById("presetList");
     try{
         presetRef = await serviceRef.getCharacteristic(PRESETS_UUID);
-        console.log("Preset characteristic connected");
+        console.log("Characteristic " + decodeHex(PRESETS_UUID) + " connected");
         await readPresets();
     } catch {
         firmwareWarning();
@@ -426,11 +207,12 @@ async function initStatus() {
     minDepthElement = document.getElementById("minDepth");
     try{
         statusRef = await serviceRef.getCharacteristic(STATUS_UUID);
+        console.log("Characteristic " + decodeHex(STATUS_UUID) + " connected.")
         await statusRef.startNotifications().then(function() {
             statusRef.addEventListener('characteristicvaluechanged', handleStatus);
         });
         controlRef = await serviceRef.getCharacteristic(CONTROL_UUID);
-        console.log("Status and control characteristics connected");
+        console.log("Characteristic " + decodeHex(CONTROL_UUID) + " connected.")
         readStatus();
     } catch {
         firmwareWarning();
@@ -456,10 +238,10 @@ async function writeControl(value) {
     value = encoder.encode(value);
     await controlRef.writeValue(value);
 }
-async function setSpeed() {
+async function setASpeed() {
     writeControl("6:" + speedElement.value + ",");
 }
-async function setMaxDepth() {
+async function setAMaxDepth() {
     var max = parseInt(maxDepthElement.value);
     var min = parseInt(minDepthElement.value);
     if (max < min) {
@@ -467,7 +249,7 @@ async function setMaxDepth() {
     }
     writeControl("0:" + maxDepthElement.value + ",");
 }
-async function setMinDepth() {
+async function setAMinDepth() {
     var max = parseInt(maxDepthElement.value);
     var min = parseInt(minDepthElement.value);
     if (min > max) {
@@ -476,31 +258,224 @@ async function setMinDepth() {
     writeControl("1:" + minDepthElement.value + ",");
 }
 
+// Shared Settings
+async function initSetting(element, uuid) {
+    try {
+        let characteristicRef = await serviceRef.getCharacteristic(uuid);
+        console.log("Characteristic " + decodeHex(uuid) + " connected.")
+        if (characteristicRef.properties.notification) {
+            await characteristicRef.startNotifications().then(
+                function() {
+                    characteristicRef.addEventListener('characteristicvaluechanged', (event) => readSetting(event, element, characteristicRef));
+                }
+            )
+        }
+        element.onchange = function() {
+            writeSetting(element, characteristicRef);
+        };
+        await readSetting(null, element, characteristicRef);
+    } catch {
+       firmwareWarning();
+    }
+}
 
-async function writeUpdate() {
-    var update = await serviceRef.getCharacteristic(UPDATE_UUID);
-    await update.writeValue(encoder.encode(true));
+async function readSetting(event, element, characteristicRef) {
+    var value;
+    if (event != null) {
+        value = event.target.value;
+    } else {
+        value = await characteristicRef.readValue();
+    }
+    value = decoder.decode(value);
+    console.log("Received: " + value);
+    switch (element.type) {
+        case "checkbox":
+            element.checked = value.toLocaleLowerCase() == "true";
+            break;
+        default:
+            element.value = value;
+            break;
+    }
+    element.focus();
+    element.ariaInvalid = false;
+    setTimeout(function() {clearCheck(element);}, 2000);
+}
+
+async function writeSetting(element,characteristicRef) {
+    var value;
+    switch (element.type) {
+        case "checkbox":
+            value = element.checked;
+            break;
+        default:
+            value = element.value;
+            break;
+    }
+    console.log("Sent: " + value);
+    value = encoder.encode(value);
+    await characteristicRef.writeValueWithoutResponse(value);
+
+    const videoPlayer = document.getElementById("video");
+    if (videoPlayer != null) {
+        if (videoPlayer.paused || videoPlayer.currentTime == 0) {
+            switch (element.id) {
+                case "minDepth":
+                    sendStream(100,2000);
+                    break;
+                case "maxDepth":
+                    sendStream(0,2000);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    if (!characteristicRef.properties.notification) {
+        await readSetting(null, element, characteristicRef);
+    }
+}
+
+let streamRef;
+async function initStream() {
+    try {
+        streamRef = await serviceRef.getCharacteristic(STREAM_UUID);
+        console.log("Characteristic " + decodeHex(STREAM_UUID) + " connected.")
+        await streamRef.readValue();
+    } catch {
+        firmwareWarning();
+    }
+}
+
+async function loadVideo(element) {
+    const file = element.files[0];
+    if (file) {
+        const fileURL = URL.createObjectURL(file); 
+        document.getElementById("video").src = fileURL;
+    }
+}
+
+async function loadFunscript(element) {
+    const file = element.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            if (parseFunscript(event.target.result)) {
+           //     resetPlayback();
+            }
+        };
+        reader.readAsText(file);
+    }
+}
+
+var funscriptData = {};
+var currentAction = 0;
+async function parseFunscript(content) {
+    funscriptData = {};
+    var csv = content.split("\n");
+    if (csv.length > 0) {
+        funscriptData.actions = csv.map(item => ({
+            pos: Number(item.split(",")[1]),
+            at: Number(item.split(",")[0])
+        }));
+    }
+    if (!funscriptData.actions || !Array.isArray(funscriptData.actions)) {
+        console.log("Could not parse funscript");
+        return false;
+    }
+    var lastDirection = 0;
+    funscriptData.simpleActions = [];
+    funscriptData.actions.forEach(
+      function(value,index){
+        var nextValue = funscriptData.actions[index+1];
+        if (nextValue){
+          var direction = (value.pos-nextValue.pos)/Math.abs(value.pos-nextValue.pos);
+          if (direction != lastDirection){
+            funscriptData.simpleActions.push(funscriptData.actions[index]);
+          }
+          lastDirection = direction;
+        }
+      }
+    )
+    return true;
+}
+
+async function sendStream(pos, dur) {
+    let value = pos + ":" + dur;
+    console.log("Stream: " + value);
+    value = encoder.encode(value);
+    streamRef.writeValueWithoutResponse(value);
+
+    let dist = pos - document.getElementById("progress").value;
+    let count = dur/100;
+    step = dist/count;
+    const id = setInterval(() => {
+        count--;
+        document.getElementById("progress").value += step;
+        if (count < 0) {
+            clearInterval(id);
+        }
+    }, 100);
+}
+
+async function syncFunscript() {
+    var actions = funscriptData.actions;
+    // if (isSimple) {
+    //     actions = funscriptData.simpleActions;
+    // }
+    const currentTime = document.getElementById("video").currentTime * 1000;
+    const action = actions[currentAction];
+    if (action.at > currentTime) {
+        return;
+    }
+    if (currentAction < actions.length) {
+        const nextAction = actions[currentAction + 1];
+        let duration = nextAction.at - action.at;
+        sendStream(nextAction.pos, duration);
+    }
+    currentAction++;
+}
+
+let intervalTracker;
+async function playStream() {
+    console.log("play");
+    intervalTracker = setInterval(syncFunscript, 2);
+}
+
+async function pauseStream() {
+    console.log("pause");
+    clearInterval(intervalTracker);
+}
+
+async function seekStream() {
+    const currentTime = document.getElementById("video").currentTime * 1000;
+    var actions = funscriptData.actions;
+    currentAction = actions.findIndex(a => a.at > currentTime);
+    if (currentAction === -1) {
+        currentAction = actions.length;
+    }
+    console.log("Current action: " + currentAction);
 }
 
 async function connectMotorPage() {
     await handleConnect();
-    await initMaxAcceleration();
-    await initMotorRPM();
-    await initStepsPerRevolution();
-    await initPulleyTeeth();
-    await initBeltPitch();
+    await initSetting(document.getElementById("maxAcceleration"), MACCEL_UUID);
+    await initSetting(document.getElementById("motorRPM"), MAXRPM_UUID);
+    await initSetting(document.getElementById("stepsPerRevolution"), STEPPR_UUID);
+    await initSetting(document.getElementById("pulleyTeeth"), PULLEY_UUID);
+    await initSetting(document.getElementById("beltPitch"), BPITCH_UUID);
 }
 
 async function connectHomingPage() {
     await handleConnect();
-    await initHomingType();
-    await initRailLength();
-    await initHomeBetween();
+    await initSetting(document.getElementById("homingType"), HOMING_TYPE_UUID);
+    await initSetting(document.getElementById("railLength"), RAIL_LENGTH_UUID);
+    await initSetting(document.getElementById("homeBetweenModes"), HOME_BETWEEN_MODES_UUID);
 }
 
 async function connectRailPage() {
     await handleConnect();
-    await initReverseRail();
+    await initSetting(document.getElementById("reverseRail"), REVERSE_RAIL_UUID);
 }
 
 async function connectNamePage() {
@@ -517,4 +492,12 @@ async function connectPresets() {
     await handleConnect();
     await initPresets();
     await initStatus();
+}
+
+async function connectFunscript() {
+    await handleConnect();
+    await initStream();
+    await initSetting(document.getElementById('speed'),SPEED_UUID);
+    await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID);
+    await initSetting(document.getElementById('minDepth'), MINDEP_UUID);
 }

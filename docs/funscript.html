@@ -16,9 +16,53 @@
       <h2>OSSM Lite</h2>
       <p>10. Funscript Player</p>
     </hgroup>
-    <p>Coming Soon.</p>
+    <p>Select a video file, and a funscript. Set speed and depth limits. While the video is paused, min and max depth will move the OSSM to those positions. Device will not move if the speed limit is not set.</p>
+    <button id="connect" onclick="connectFunscript();">Connect to OSSM</button>
+    <article id="controls" style="display: none;">
+      <video loop id="video" controls muted style="width: 100%;"
+              onplay="playStream()" onpause="pauseStream()" onseeked="seekStream()">
+      </video>
+      <progress id="progress" value="0" max="100"></progress>
+      <fieldset style="text-align: center;"">
+        <label type="button" style="display: inline;">
+          <input type="file" accept="video/*,.m4b" onChange=loadVideo(this) style="display: none;"/>
+          Load Video
+        </label>
+        <label type="button" style="display: inline;">
+          <input type="file" accept=".funscript,.csv" onChange=loadFunscript(this) style="display: none;"/>
+          Load Funscript
+        </label>
+      </fieldset>
+      <label for="speed">Max Speed</label>
+      <input type="range" min="0" max="100" value="0" id="speed">
+      <label for="maxDepth">Max Depth</label>
+      <input type="range" min="0" max="100" value="0" id="maxDepth">
+      <label for="minDepth">Min Depth</label>
+      <input type="range" min="0" max="100" value="0" id="minDepth">
+    </article>
+    <p></p>
+    <p>
+      <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
+    </p>
     <a href="preset.html">Previous</a> |
     <a href="index.html">Home</a>
+    <dialog id="oldFirmware">
+      <article>
+        <header>
+          <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+          <h3>Firmware out of date!</h3>
+        </header>
+        <p>
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
+        </p>
+        <footer>
+          <button autofocus="" onclick="firmareClose()">
+            Confirm
+          </button>
+        </footer>
+      </article>
+    </dialog>
   </main>
 </body>
 

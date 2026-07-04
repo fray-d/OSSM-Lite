@@ -79,12 +79,10 @@ namespace advanced_penetration {
     class AdvancedCommandCallbacks : public NimBLECharacteristicCallbacks {
         void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
             if (!(stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
-                  stateMachine->is("advancedPenetration.presets"_s))) {
+                stateMachine->is("advancedPenetration.presets"_s))) {
                 stateMachine->process_event(LongPress{});
                 menuState.currentOption = Menu::AdvancedPenetration;
-                if (stateMachine != nullptr) {
-                    stateMachine->process_event(ButtonPress{});
-                }
+                stateMachine->process_event(ButtonPress{});
             }
             String cmd = pCharacteristic->getValue();
             bool saved = currentSettings.processStringCommand(cmd);

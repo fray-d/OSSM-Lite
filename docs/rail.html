@@ -39,7 +39,7 @@
     <button id="connect" onclick="connectRailPage();">Connect to Configure</button>
     <article id="controls" style="display: none;">
       <label for="reverseRail">Reverse Rail Direction</label>
-      <input type="checkbox" id="reverseRail" name="reverseRail" role="switch" onchange="writeReverseRail()">
+      <input type="checkbox" id="reverseRail" role="switch">
       <p></p>
     </article>
     <p></p>
@@ -47,6 +47,7 @@
       <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
     </p>
     <a href="homing.html">Previous</a> |
+    <a href="index.html">Home</a> |
     <a href="name.html">Next</a>
     <dialog id="oldFirmware">
       <article>
@@ -55,8 +56,8 @@
           <h3>Firmware out of date!</h3>
         </header>
         <p>
-          The firmware on your OSSM is out of date, or completely incompatble. Go back to the
-          <a href="index.html">beginning</a> of this guide and start over.
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
         </p>
         <footer>
           <button autofocus="" onclick="firmareClose()">

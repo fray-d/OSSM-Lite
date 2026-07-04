@@ -356,4 +356,11 @@ inline NimBLECharacteristic* initMaxAccelerationConfigCharacteristic(NimBLEServi
     return pChar;
 }
 
+NimBLECharacteristic* initBufferCharacteristic(NimBLEService* pService, std::string uuid) {
+    NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ);
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Enable buffer");
+    pChar->setCallbacks(&latencyCompensationConfigCallbacks);
+    return pChar;
+}
 #endif  // OSSM_CONFIG_HPP

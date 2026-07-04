@@ -19,7 +19,7 @@
     <p>With this tool you can manage your presets. It is not meant for play or authoring new presets as it does not
       expose all of the settings in a user friendly way. A minimum set of controls are offered.</p>
     <p>Speed and depth are available so you can view a preset while you choose a name. Set the active preset by
-      selecting it from the dropdown. </p>
+      selecting it from the dropdown. Setting speed will not work if you have a wired controller attached.</p>
     <h6>Renaming is possible through a three step process:</h6>
     <ul>
       <li>Pick the old pattern from the dropdown setting it as active.</li>
@@ -30,48 +30,48 @@
     <button id="connect" onclick="connectPresets();">Connect to Configure</button>
     <article id="controls" style="display: none;">
       <label for="speed">Speed</label>
-      <input type="range" min="0" max="100" value="0" id="speed" name="speed" onchange="setSpeed()">
+      <input type="range" min="0" max="100" value="0" id="speed" name="speed" onchange="setASpeed()">
       <label for="maxDepth">Max Depth</label>
-      <input type="range" min="0" max="100" value="0" id="maxDepth" onchange="setMaxDepth()">
+      <input type="range" min="0" max="100" value="0" id="maxDepth" onchange="setAMaxDepth()">
       <label for="minDepth">Min Depth</label>
-      <input type="range" min="0" max="100" value="0" id="minDepth" onchange="setMinDepth()">
+      <input type="range" min="0" max="100" value="0" id="minDepth" onchange="setAMinDepth()">
       <label for="presetList">Presets</label>
       <fieldset role="group">
-        <select id="presetList" onchange="runPreset()">
-        </select>
+        <select id="presetList" onchange="runPreset()"></select>
         <button onclick="deletePreset()"">Delete</button>
-        </fieldset>
-        <label for=" presetName">Preset Name</label>
-          <fieldset role="group" style="margin-bottom: 0;">
-            <input type="text" maxlength="20" id="presetName">
-            <input type="submit" value="Save" onclick="savePreset()">
-          </fieldset>
-          <p></p>
-          <button onclick="factoryReset()"">Factory Reset</button>
-      </article>
+      </fieldset>
+      <label for=" presetName">Preset Name</label>
+      <fieldset role="group" style="margin-bottom: 0;">
+        <input type="text" maxlength="20" id="presetName">
+        <input type="submit" value="Save" onclick="savePreset()">
+      </fieldset>
       <p></p>
-      <p>
-        <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
-      </p>
-      <a href=" rail.html">Previous</a> |
-            <a href="wifi.html">Next</a>
-            <dialog id="oldFirmware">
-              <article>
-                <header>
-                  <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
-                  <h3>Firmware out of date!</h3>
-                </header>
-                <p>
-                  The firmware on your OSSM is out of date, or completely incompatble. Go back to the 
-                  <a href="index.html">beginning</a> of this guide and start over.
-                </p>
-                <footer>
-                  <button autofocus="" onclick="firmareClose()">
-                    Confirm
-                  </button>
-                </footer>
-              </article>
-            </dialog>
+      <button onclick="factoryReset()"">Factory Reset</button>
+    </article>
+    <p></p>
+    <p>
+      <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
+    </p>
+    <a href="play.html">Previous</a> |
+    <a href="index.html">Home</a> |
+    <a href="funscript.html">Next</a>
+    <dialog id="oldFirmware">
+      <article>
+        <header>
+          <button aria-label="Close" rel="prev" data-target="modal-example" onclick="firmareClose()"></button>
+          <h3>Firmware out of date!</h3>
+        </header>
+        <p>
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
+        </p>
+        <footer>
+          <button autofocus="" onclick="firmareClose()">
+            Confirm
+          </button>
+        </footer>
+      </article>
+    </dialog>
   </main>
 </body>
 

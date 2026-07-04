@@ -46,17 +46,15 @@
     <button id="connect" onclick="connectMotorPage();">Connect to Configure</button>
     <article id="controls" style="display: none;">
       <label for="maxAcceleration">Max Acceleration</label>
-      <input type="number" id="maxAcceleration" name="maxAcceleration" placeholder="50000"
-        onchange="writeMaxAcceleration()">
+      <input type="number" id="maxAcceleration" placeholder="50000">
       <label for="motorRPM">Motor RPM</label>
-      <input type="number" id="motorRPM" name="motorRPM" placeholder="1500" onchange="writeMotorRPM()">
+      <input type="number" id="motorRPM" placeholder="1500">
       <label for="stepsPerRevolution">Steps per revolution</label>
-      <input type="number" id="stepsPerRevolution" name="stepsPerRevolution" placeholder="800"
-        onchange="writeStepsPerRevolution()">
+      <input type="number" id="stepsPerRevolution" placeholder="800">
       <label for="pulleyTeeth">Pulley Teeth</label>
-      <input type="number" id="pulleyTeeth" name="pulleyTeeth" placeholder="20" onchange="writePulleyTeeth()">
+      <input type="number" id="pulleyTeeth" placeholder="20">
       <label for="beltPitch">Belt Pitch</label>
-      <input type="number" id="beltPitch" name="beltPitch" placeholder="2" onchange="writeBeltPitch()">
+      <input type="number" id="beltPitch" placeholder="2">
     </article>
     <p></p>
     <table>
@@ -85,6 +83,7 @@
       <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
     </p>
     <a href="led.html">Previous</a> |
+    <a href="index.html">Home</a> |
     <a href="homing.html">Next</a>
     <dialog id="oldFirmware">
       <article>
@@ -93,8 +92,8 @@
           <h3>Firmware out of date!</h3>
         </header>
         <p>
-          The firmware on your OSSM is out of date, or completely incompatble. Go back to the
-          <a href="index.html">beginning</a> of this guide and start over.
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
         </p>
         <footer>
           <button autofocus="" onclick="firmareClose()">

@@ -288,15 +288,14 @@ namespace ui {
                     drawShape::settingBar(u8g2, strings::buffer, data.buffer,
                                           128, 0, RIGHT_ALIGNED, 15);
                     drawShape::settingBarSmall(u8g2, data.sensation, 113);
-                    drawShape::settingBarSmall(u8g2, data.maxPosition, 108);
-                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
+                drawShape::rangeBarSmall(u8g2, data.minPosition, data.maxPosition, 108);
                     break;
                 case PlayControls::MIN_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
-                    drawShape::settingBarSmall(u8g2, data.maxPosition, 115);
-                    drawShape::settingBar(u8g2, minLabel, data.minPosition, 113,
-                                          0, RIGHT_ALIGNED);
+                    drawShape::rangeBar(u8g2, strings::min, data.minPosition,
+                                    data.maxPosition, false, 118, 0,
+                                    RIGHT_ALIGNED);
                     break;
                 case PlayControls::SENSATION: {
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
@@ -306,16 +305,13 @@ namespace ui {
                     const char* accelLabel = strings::accel;
                     int sw = u8g2_GetUTF8Width(u8g2, accelLabel);
                     u8g2_DrawUTF8(u8g2, 99 - sw, 36, accelLabel);
-                    drawShape::settingBarSmall(u8g2, data.maxPosition, 108);
-                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
+                    drawShape::rangeBarSmall(u8g2, data.minPosition, data.maxPosition, 108);
                     break;
                 }
                 case PlayControls::MAX_POSITION:
                     drawShape::settingBarSmall(u8g2, data.buffer, 125);
                     drawShape::settingBarSmall(u8g2, data.sensation, 120);
-                    drawShape::settingBar(u8g2, strings::max, data.maxPosition, 118,
-                                          0, RIGHT_ALIGNED, 5);
-                    drawShape::settingBarSmall(u8g2, data.minPosition, 103);
+                    drawShape::rangeBar(u8g2, strings::max, data.minPosition, data.maxPosition, true, 118, 0, RIGHT_ALIGNED);
                     break;
             }
         } else {

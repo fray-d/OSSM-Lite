@@ -54,6 +54,14 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     }
 } serverCallbacks;
 
+void notifyValue(char* uuid, String value) {
+    NimBLEService* ossmService = pServer->getServiceByUUID(OSSM_SERVICE_UUID);
+    NimBLECharacteristic* speedChar = ossmService->getCharacteristic(uuid);
+    speedChar->setValue(value);
+    speedChar->notify();
+    pulseForCommunication();
+}
+
 void nimbleLoop(void* pvParameters) {
     NimBLEServer* pServer = (NimBLEServer*)pvParameters;
     /** Loop here and send notifications to connected peers */
@@ -180,6 +188,10 @@ void nimbleLoop(void* pvParameters) {
             pChr->setValue(currentState);
             pChr->notify();
             // Trigger LED communication pulse for state update
+
+            notifyValue(SPEED_UUID, String(settings.speed));
+            notifyValue(MAXDEP_UUID, String(settings.maxPosition));
+            notifyValue(MINDEP_UUID, String(settings.minPosition));
             pulseForCommunication();
         }
 
@@ -217,6 +229,13 @@ void initNimble() {
     initMotorStepsConfigCharacteristic(ossmService, NimBLEUUID(STEPPR_UUID));
     initPulleyTeethConfigCharacteristic(ossmService, NimBLEUUID(PULLEY_UUID));
     initBeltPitchConfigCharacteristic(ossmService, NimBLEUUID(BPITCH_UUID));
+    //Shared OSSM Settings
+    initCommonCharacteristic(ossmService, NimBLEUUID(SPEED_UUID), &speedCallbacks, "Common setting for speed");
+    initCommonCharacteristic(ossmService, NimBLEUUID(MAXDEP_UUID), &maxDepthCallbacks, "Common setting for maximum depth");
+    initCommonCharacteristic(ossmService, NimBLEUUID(MINDEP_UUID), &minDepthCallbacks, "Common setting for minimum depth");
+    initOffsetCharacteristic(ossmService, NimBLEUUID(OFFSET_UUID));
+    initBufferCharacteristic(ossmService, NimBLEUUID(BUFFER_UUID));
+    initCommonCharacteristic(ossmService, NimBLEUUID(STREAM_UUID), &streamCallbacks, "Streaming commands for the device. pos:ms");
 
     // Lecacy Service Items
     initCommandCharacteristic(lecacyService, NimBLEUUID(LEGACY_COMMAND_UUID));

@@ -48,11 +48,12 @@
       <input type="text" id="SSID">
       <label for="Password">Password</label>
       <input type="password" id="Password">
-      <input type="submit" value="Save" onclick="writeWiFi()">
-      <input type="submit" id="Update" aria-disabled="true" value="Update OSSM" onclick="writeUpdate()">
+      <input type="submit" value="Save" id="save">
+      <input type="submit" id="update" aria-disabled="true" value="Trigger OTA OSSM Lite Update">
     </article>
     <p></p>
     <a href="name.html">Previous</a> |
+    <a href="index.html">Home</a> |
     <a href="play.html">Next</a>
     <dialog id="oldFirmware">
       <article>
@@ -61,8 +62,8 @@
           <h3>Firmware out of date!</h3>
         </header>
         <p>
-          The firmware on your OSSM is out of date, or completely incompatble. Go back to the 
-          <a href="index.html">beginning</a> of this guide and start over.
+          The firmware on your OSSM is out of date and doesn't support this feature. Go back to the 
+          <a href="index.html">beginning</a> of this guide and update your device.
         </p>
         <footer>
           <button autofocus="" onclick="firmareClose()">

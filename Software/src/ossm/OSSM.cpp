@@ -88,7 +88,7 @@ void OSSM::ble_click(String commandString) {
         case Commands::streamPosition:
             // Position (0-100)
             targetQueue.push({
-                static_cast<uint8_t>(command.value),
+                static_cast<float>(command.value),
                 static_cast<uint16_t>(command.time),
                 std::chrono::steady_clock::now(), 0});
             break;
