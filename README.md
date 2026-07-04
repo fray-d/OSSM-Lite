@@ -14,11 +14,12 @@ Key changes:
     - Other controllers may be added in the future.
 - Simple Penetration mode has been removed. 
 - Streaming mode has been further refined. 
-    - An updated web simple web player is in the works to support min/max depth
+    - An funscript player is provided in [the documentation.](https://fray-d.github.io/OSSM-Lite/funscript.html)
 - Stroke engine has been configured to use a linear speed instead of strokes per minute. 
 - User configurations are supported [See docs](https://fray-d.github.io/OSSM-Lite/) 
     - Set homing style (None, Default, Single-Sided, Double-Tap)
     - Set rail length for None and Sinle-Sided homing (180mm default)
+    - Supports even the largest of rails...
     - Reverse rail direction
     - Rename device
     - WiFi
@@ -26,8 +27,9 @@ Key changes:
 
 Roadmap:
 - Add a tool for sharing advanced mode presets manually.
-- Add a web player for funscripts.
 - Continue removing dead code from the source.
-- Add an issue to suggest a feature or if you find a bug. 
+
+Feature suggestions:
+- Add an issue or ping me on discord to suggest a feature or if you find a bug. 
     - Please be as detailed as you can so I can reproduce the issue. 
     - Double check you're on the latest version, please. I may have already addressed it.
