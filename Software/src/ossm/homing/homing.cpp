@@ -76,8 +76,9 @@ namespace homing {
             xSemaphoreGive(displayMutex);
         }
 
+        float maxRail = UserConfig::getMaxRailLength();
         int16_t sign = stateMachine->is("homing.run"_s) ? -1 : 1;
-        int32_t targetPositionInSteps = round(sign * UserConfig::getStepsPerMM(UserConfig::maxStrokeLengthMm));
+        int32_t targetPositionInSteps = round(sign * UserConfig::getStepsPerMM(maxRail));
 
         ESP_LOGD("Homing", "Target position in steps: %d",
                  targetPositionInSteps);
@@ -97,7 +98,7 @@ namespace homing {
             TickType_t xCurrentTickCount = xTaskGetTickCount();
             TickType_t xTicksPassed = xCurrentTickCount - xTaskStartTime;
             uint32_t msPassed = xTicksPassed * portTICK_PERIOD_MS;
-            if (msPassed > 21000) { //500mm @ 25mm/s + buffer
+            if (msPassed > maxRail / .025) { //500mm @ 25mm/s + buffer
                 ESP_LOGE("Homing", "Homing took too long. Check power and restart");
                 errorState.message = ui::strings::homingTookTooLong;
 
@@ -125,7 +126,7 @@ namespace homing {
 
             // measure and save the current position
             calibration.measuredStrokeSteps = std::max(std::abs(float(stepper->getCurrentPosition())),calibration.measuredStrokeSteps);
-            calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,UserConfig::getStepsPerMM(UserConfig::maxStrokeLengthMm));
+            calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,UserConfig::getStepsPerMM(maxRail));
 
             if (!second && stateMachine->is("homing.run"_s) &&
                         abs(stepper->getCurrentPosition()) < UserConfig::getStepsPerMM(UserConfig::minStrokeLengthMm)) {

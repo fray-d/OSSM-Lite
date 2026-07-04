@@ -47,7 +47,7 @@ namespace UserConfig {
     float getMaxSpeedMMS();
     void setMaxSpeedMMS();
 
-    constexpr float maxStrokeLengthMm = 500.0;
+    float getMaxRailLength();
     constexpr float minStrokeLengthMm = 50.0;
 }
 #endif  // OSSM_SOFTWARE_USERCONFIG_H

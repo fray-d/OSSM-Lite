@@ -112,7 +112,7 @@ namespace UserConfig {
         return railLength;
     }
     void setRailLength(float value) {
-        writeNVSFloat("RailLength", constrain(value,minStrokeLengthMm, maxStrokeLengthMm));
+        writeNVSFloat("RailLength", constrain(value,minStrokeLengthMm, getMaxRailLength()));
         railLength = value;
     }
 
@@ -198,5 +198,13 @@ namespace UserConfig {
     void setMaxSpeedMMS(){
         //cache this
         maxSpeedMMS = getMotorRPM() / 60.0 * getPulleyTeeth() * getBeltPitch();
+    }
+
+    float getMaxRailLength(){
+        float rail = getRailLength();
+        if (rail > 500.0) {
+            return rail;
+        }
+        return 500.0;
     }
 }
