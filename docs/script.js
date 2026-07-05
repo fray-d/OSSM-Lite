@@ -12,6 +12,8 @@ const MAXRPM_UUID = "4f53534d-436f-6e66-6967-4d415852504d";
 const STEPPR_UUID = "4f53534d-436f-6e66-6967-535445505052";
 const PULLEY_UUID = "4f53534d-436f-6e66-6967-50554c4c4559";
 const BPITCH_UUID = "4f53534d-436f-6e66-6967-425049544348";
+const SENSOR_UUID = "4f53534d-436f-6e66-6967-53656e736f72";
+const SPDCRV_UUID = "4f53534d-436f-6e66-6967-537064437276";
 
 //AP Mode
 const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374"
@@ -258,6 +260,62 @@ async function setAMinDepth() {
     writeControl("1:" + minDepthElement.value + ",");
 }
 
+function drawChart() {
+const canvas = document.getElementById("speedCurveChart");
+    const ctx = canvas.getContext("2d");
+    const exp = document.getElementById("speedCurve").value;
+    ctx.reset();
+    chartOffset = 25;
+    chartWidth = canvas.width - chartOffset;
+    chartHeight = canvas.height -  chartOffset;
+    ctx.strokeStyle = 'rgb(228, 133, 0)';
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+
+    ctx.beginPath();
+    ctx.moveTo(chartOffset, 0);
+    ctx.lineTo(chartOffset, chartHeight);
+    ctx.lineTo(canvas.width, chartHeight);
+    ctx.moveTo(chartOffset, chartHeight);
+
+    for (let step = 0; step < chartWidth; step++) {
+        const rat = step/chartWidth;
+        const value = Math.pow(1-Math.pow(1-rat, exp), 1 / exp);         
+        const h = chartHeight - (value * chartHeight);
+        ctx.lineTo(step+chartOffset,h);
+    }
+    ctx.stroke();
+    ctx.fillText("Speed Effect", chartWidth/2 + 20, canvas.height - 5);
+    ctx.translate(20,  chartHeight / 2 - 20);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText("Speed Knob", 0,0);
+}
+
+// Shared Settings
+async function initCurve() {
+    const element = document.getElementById("speedCurve");
+    try {
+        let characteristicRef = await serviceRef.getCharacteristic(SPDCRV_UUID);
+        console.log("Characteristic " + decodeHex(SPDCRV_UUID) + " connected.")
+        if (characteristicRef.properties.notification) {
+            await characteristicRef.startNotifications().then(
+                function() {
+                    characteristicRef.addEventListener('characteristicvaluechanged', (event) => readSetting(event, element, characteristicRef));
+                }
+            )
+        }
+        element.onchange = function() {
+            writeSetting(element, characteristicRef);
+            drawChart();
+        };
+        await readSetting(null, element, characteristicRef);
+        drawChart();
+    } catch {
+       firmwareWarning();
+    }
+}
+
 // Shared Settings
 async function initSetting(element, uuid) {
     try {
@@ -470,6 +528,7 @@ async function connectHomingPage() {
     await handleConnect();
     await initSetting(document.getElementById("homingType"), HOMING_TYPE_UUID);
     await initSetting(document.getElementById("railLength"), RAIL_LENGTH_UUID);
+    await initSetting(document.getElementById("currentLimit"), SENSOR_UUID);
     await initSetting(document.getElementById("homeBetweenModes"), HOME_BETWEEN_MODES_UUID);
 }
 
@@ -481,6 +540,11 @@ async function connectRailPage() {
 async function connectNamePage() {
     await handleConnect();
     await initDeviceName();
+}
+
+async function connectCurvePage() {
+    await handleConnect();
+    await initCurve();
 }
 
 async function connectWiFiPage() {

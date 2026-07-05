@@ -1,6 +1,7 @@
 #ifndef OSSM_ADVANCED_PENETRATION_STRUCTS_H
 #define OSSM_ADVANCED_PENETRATION_STRUCTS_H
 #include "advanced_penetration_strings.h"
+#include "services/UserConfig.h"
 
 namespace advanced_penetration {
 
@@ -16,7 +17,7 @@ namespace advanced_penetration {
         u8_t maxValue = 100;
         String name;
         float getNormalized() { return value / 100.0; }
-        float getRampValue(float exp = 0.8) { return pow(1 - pow(1 - getNormalized(), exp), 1 / exp); };
+        float getRampValue(float exp = UserConfig::getSpeedCurve()) { return pow(1 - pow(1 - getNormalized(), exp), 1 / exp); };
     };
 
     struct ModifierControl : public Control {
@@ -141,7 +142,7 @@ namespace advanced_penetration {
             return value - difference * (1 - modifier->getModification(cycle));
         }
         float getNormalizedModifiedValue(int strokeCount = -1) { return getModifiedValue(strokeCount) / 100.0; }
-        float getRampedModifiedValue(float exp = 0.8, int strokeCount = -1) {
+        float getRampedModifiedValue(float exp = UserConfig::getSpeedCurve(), int strokeCount = -1) {
             return pow(1 - pow(1 - getNormalizedModifiedValue(strokeCount), exp), 1 / exp);
         }
         String encodeString(bool details = false) {

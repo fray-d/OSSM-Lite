@@ -24,7 +24,7 @@
       extra time to the homing procedure.
     </p>
     <p>
-      There are four homing types to choose from, and two optional settings. Click the button below to connect to your
+      There are four homing types to choose from, and three optional settings. Click the button below to connect to your
       device, then select the options of your choice. Now's a good time to power your device so the motor can move. Be
       ready to unplug it if you misconfigure something. Values are saved automatically. Restart to see effect.
     </p>
@@ -42,6 +42,8 @@
       <label for="homeBetweenModes">Home between modes</label>
       <input type="checkbox" id="homeBetweenModes" role="switch">
       <p></p>
+      <label for="currentLimit">Homing sensor current limit</label>
+      <input type="number" id="currentLimit" placeholder="2.5" min="1.5" max="5.0" step="0.25">
     </article>
     <p></p>
     <h5>Homing Modes</h5>
@@ -73,13 +75,20 @@
     <p>
       <strong>Rail Length: </strong>
       <small>This is where you manually specify the length of the rail for modes that require it. The 180mm default
-        works well enough for a standard OSSM. Be sure to leave a safety margin!</small>
+        works well enough for a standard OSSM. This is the usable rail length between endstops. If you're using an OSSM 
+        that doesn't have a belt this may not be an accurate measurement. Use caution and be sure to leave a safety margin!
+      </small>
     </p>
     <p>
       <strong>Rehoming: </strong>
       <small>You can also set whether the device should home between modes. Setting this will tell the device to return
         home when switching modes. For IHSV motors this is required for the OSSM to function. For the AIM motors you can
         disable this feature if you choose.</small>
+    </p>
+    <p>
+      <strong>Homing sensor current limit: </strong>
+      <small>This value represents how sensitive the limit sensor will be during homing. This value may trip a safety limit 
+        on your power supply if set too high, but homing mail be unreliable if set too low. Tune this to your OSSM.</small>
     </p>
     <p>
       <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).

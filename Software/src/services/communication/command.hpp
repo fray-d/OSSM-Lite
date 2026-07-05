@@ -43,7 +43,7 @@ inline NimBLECharacteristic* initCommandCharacteristic(NimBLEService* pService, 
     return pChar;
 }
 
-NimBLECharacteristic* initCommonCharacteristic(NimBLEService* pService, std::string uuid, NimBLECharacteristicCallbacks* callbacks, String description) {
+NimBLECharacteristic* initCharacteristic(NimBLEService* pService, std::string uuid, NimBLECharacteristicCallbacks* callbacks, String description) {
     NimBLECharacteristic* pChar = pService->createCharacteristic(uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR | NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
     NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
     pDesc->setValue(description);

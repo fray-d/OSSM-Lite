@@ -112,7 +112,7 @@ namespace homing {
 
             ESP_LOGV("Homing", "Current: %f", current);
 
-            if (current < UserConfig::sensorlessCurrentLimit) {
+            if (current < UserConfig::getSensorLimit()) {
                 vTaskDelay(10);  // 10ms to reduce CPU load
                 continue;
             }
@@ -129,7 +129,7 @@ namespace homing {
             calibration.measuredStrokeSteps = std::min(calibration.measuredStrokeSteps,UserConfig::getStepsPerMM(maxRail));
 
             if (!second && stateMachine->is("homing.run"_s) &&
-                        abs(stepper->getCurrentPosition()) < UserConfig::getStepsPerMM(UserConfig::minStrokeLengthMm)) {
+                        abs(stepper->getCurrentPosition()) < UserConfig::getStepsPerMM(UserConfig::getMinRailLength())) {
                 second = true;
                 stepper->setSpeedInHz(UserConfig::getStepsPerMM(25));
                 stepper->moveTo(targetPositionInSteps, false);
@@ -166,7 +166,7 @@ namespace homing {
 
     bool isStrokeTooShort() {
         if (calibration.measuredStrokeSteps >=
-            UserConfig::getStepsPerMM(UserConfig::minStrokeLengthMm)) {
+            UserConfig::getStepsPerMM(UserConfig::getMinRailLength())) {
             return false;
         }
         errorState.message = ui::strings::strokeTooShort;

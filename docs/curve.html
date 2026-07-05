@@ -14,41 +14,28 @@
   <main style="max-width: 800px;">
     <hgroup>
       <h2>OSSM Lite</h2>
-      <p>5. Configure rail direction</p>
+      <p>6. Define speed curve</p>
     </hgroup>
     <p>
-      Ok, your device is homing, or not if you so choose. But what if it is homing the wrong way? Oh crap, did you
-      assemble it backwards? No, it can't be you...you're brilliant. It's gotta be those stupid instructions! Maybe you
-      just think it is more aesthetically pleasing this way, or perhaps your device is double ended and you want an easy
-      way to switch which end is the business end.
+      Different people have different priorities when it comes to the speed of the OSSM. Some are looking for the fastest device they can possibly get, 
+      others would prioritize granular control of low-end speed. This setting adjusts the ramp-up curve that governs the speed setting of the OSSM.
+      All settings will allow for max speed based on motor RPM. If you wish to limit max speed see the motor parameters configuration. 
     </p>
-    <p>
-      You've got two options:
-    </p>
-    <p>
-      1. Use the connect button below and toggle the switch.
-    </p>
-    <p>
-      2. While the device is blinking it's blue LED (after homing, but before entering any play modes), double click the
-      function button on the control board. This is the one further from the LED.
-    </p>
-    <p>
-      In either case the OSSM will restart, and home itself in the new orientation...unless you have it set to not home,
-      in which case... be careful!
-    </p>
-    <button id="connect" onclick="connectRailPage();">Connect to Configure</button>
+    <button id="connect" onclick="connectCurvePage();">Connect to Configure</button>
     <article id="controls" style="display: none;">
-      <label for="reverseRail">Reverse Rail Direction</label>
-      <input type="checkbox" id="reverseRail" role="switch">
-      <p></p>
+      <label for="speedCurve">Speed curve</label>
+      <input type="range" min="0.5" max="1.0" value="0.8" step=0.01 id="speedCurve" onchange="drawChart()">
+      <div style="text-align: center;">
+        <canvas id="speedCurveChart" width="425" height="425"></canvas>
+      </div>
     </article>
     <p></p>
     <p>
       <strong>Requirements:</strong> Chrome, Edge, or Opera on desktop (not mobile).
     </p>
-    <a href="homing.html">Previous</a> |
+    <a href="rail.html">Previous</a> |
     <a href="index.html">Home</a> |
-    <a href="curve.html">Next</a>
+    <a href="name.html">Next</a>
     <dialog id="oldFirmware">
       <article>
         <header>

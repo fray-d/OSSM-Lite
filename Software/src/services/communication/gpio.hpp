@@ -72,18 +72,5 @@ class GPIOCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline gpioCallbacks;
 
-inline NimBLECharacteristic* initGPIOCharacteristic(NimBLEService* pService, NimBLEUUID uuid) {
-    NimBLECharacteristic* pChar = pService->createCharacteristic(
-        uuid, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::READ);
-
-    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
-    pDesc->setValue("GPIO");
-
-    pChar->setCallbacks(&gpioCallbacks);
-    // Seed with capabilities text on init
-    static const char caps[] PROGMEM = "pins:[1,2,3,4]";
-    pChar->setValue(String(FPSTR(caps)));
-    return pChar;
-}
 
 #endif  // OSSM_GPIO_HPP

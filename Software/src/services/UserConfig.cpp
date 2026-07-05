@@ -12,6 +12,8 @@ namespace UserConfig {
     float beltPitchMm = -1;
     float stepsPerMM = -1;
     float maxSpeedMMS = -1;
+    float sensorLimit = -1;
+    float speedCurve = -1;
 
     float readNVSFloat(char* key, float def) {
         Preferences userConfig;
@@ -31,7 +33,27 @@ namespace UserConfig {
     }
 
     float getSpeedCurve() {
-        return 0.8;
+        if (speedCurve < 0) {
+            speedCurve = readNVSFloat("SpeedCurve", 0.8);
+        }
+        return speedCurve;
+    }
+    void setSpeedCurve(float value) {
+        value = constrain(value, 0.5, 1.0);
+        writeNVSFloat("SpeedCurve", value);
+        speedCurve = value;
+    }
+
+    float getSensorLimit() {
+        if (sensorLimit < 0) {
+            sensorLimit = readNVSFloat("SensorLimit", 2.5);
+        }
+        return sensorLimit;
+    }
+    void setSensorLimit(float value){
+        value = constrain(value, 1.5, 5.0);
+        writeNVSFloat("SensorLimit", value);
+        sensorLimit = value;
     }
 
     std::string getDeviceName() {
@@ -112,7 +134,8 @@ namespace UserConfig {
         return railLength;
     }
     void setRailLength(float value) {
-        writeNVSFloat("RailLength", constrain(value,minStrokeLengthMm, getMaxRailLength()));
+        value = constrain(value, getMinRailLength(), getMaxRailLength());
+        writeNVSFloat("RailLength", value);
         railLength = value;
     }
 
@@ -206,5 +229,9 @@ namespace UserConfig {
             return rail;
         }
         return 500.0;
+    }
+
+    float getMinRailLength() {
+        return 50.0;
     }
 }

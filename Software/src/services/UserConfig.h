@@ -4,11 +4,13 @@
 #include "Arduino.h"
 
 namespace UserConfig {
-    constexpr float sensorlessCurrentLimit = 1.5f;
-
     enum HomingType {None, Default, SingleSided, DoubleTap};
 
     float getSpeedCurve();
+    void setSpeedCurve(float value);
+
+    float getSensorLimit();
+    void setSensorLimit(float value);
 
     std::string getDeviceName();
     void setDeviceName(String value);
@@ -48,6 +50,6 @@ namespace UserConfig {
     void setMaxSpeedMMS();
 
     float getMaxRailLength();
-    constexpr float minStrokeLengthMm = 50.0;
+    float getMinRailLength();
 }
 #endif  // OSSM_SOFTWARE_USERCONFIG_H
