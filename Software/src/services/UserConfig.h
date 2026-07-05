@@ -4,7 +4,7 @@
 #include "Arduino.h"
 
 namespace UserConfig {
-    constexpr float sensorlessCurrentLimit = 6.0f;
+    constexpr float sensorlessCurrentLimit = 1.5f;
 
     enum HomingType {None, Default, SingleSided, DoubleTap};
 
