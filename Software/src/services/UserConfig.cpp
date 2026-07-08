@@ -12,6 +12,7 @@ namespace UserConfig {
     float beltPitchMm = -1;
     float stepsPerMM = -1;
     float maxSpeedMMS = -1;
+    float homingSpeed = -1;
     float sensorLimit = -1;
     float speedCurve = -1;
 
@@ -233,5 +234,17 @@ namespace UserConfig {
 
     float getMinRailLength() {
         return 50.0;
+    }
+
+    float getHomingSpeed(){
+        if (homingSpeed < 0) {
+            homingSpeed = readNVSFloat("HomingSpeed",25);
+        }
+        return homingSpeed;
+    }
+    void setHomingSpeed(float value){
+        value = constrain(value,10,40);
+        writeNVSFloat("HomingSpeed", value);
+        homingSpeed = value;
     }
 }

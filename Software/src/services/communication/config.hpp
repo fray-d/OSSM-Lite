@@ -264,4 +264,15 @@ class MaxAccelerationConfigCallbacks : public NimBLECharacteristicCallbacks {
     }
 } inline maxAccelerationConfigCallbacks;
 
+class HomingSpeedConfigCallbacks : public NimBLECharacteristicCallbacks {
+    void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        float value = std::stof(pCharacteristic->getValue());
+        UserConfig::setHomingSpeed(value);
+        pulseForCommunication();
+    }
+    void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
+        pCharacteristic->setValue(String(UserConfig::getHomingSpeed()));
+    }
+} inline homingSpeedConfigCallbacks;
+
 #endif  // OSSM_CONFIG_HPP

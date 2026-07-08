@@ -51,5 +51,8 @@ namespace UserConfig {
 
     float getMaxRailLength();
     float getMinRailLength();
+
+    float getHomingSpeed();
+    void setHomingSpeed(float value);
 }
 #endif  // OSSM_SOFTWARE_USERCONFIG_H

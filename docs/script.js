@@ -14,6 +14,7 @@ const PULLEY_UUID = "4f53534d-436f-6e66-6967-50554c4c4559";
 const BPITCH_UUID = "4f53534d-436f-6e66-6967-425049544348";
 const SENSOR_UUID = "4f53534d-436f-6e66-6967-53656e736f72";
 const SPDCRV_UUID = "4f53534d-436f-6e66-6967-537064437276";
+const SPDHOM_UUID = "4f53534d-436f-6e66-6967-537064486f6d";
 
 //AP Mode
 const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374"
@@ -529,6 +530,7 @@ async function connectHomingPage() {
     await initSetting(document.getElementById("homingType"), HOMING_TYPE_UUID);
     await initSetting(document.getElementById("railLength"), RAIL_LENGTH_UUID);
     await initSetting(document.getElementById("currentLimit"), SENSOR_UUID);
+    await initSetting(document.getElementById("homingSpeed"), SPDHOM_UUID);
     await initSetting(document.getElementById("homeBetweenModes"), HOME_BETWEEN_MODES_UUID);
 }
 

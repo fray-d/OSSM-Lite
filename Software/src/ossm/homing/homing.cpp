@@ -28,7 +28,7 @@ namespace homing {
         // Set acceleration and deceleration in steps/s^2
         stepper->setAcceleration(UserConfig::getStepsPerMM(1000));
         // Set speed in steps/s
-        stepper->setSpeedInHz(UserConfig::getStepsPerMM(25));
+        stepper->setSpeedInHz(UserConfig::getStepsPerMM(UserConfig::getHomingSpeed()));
 
         // Recalibrate the current sensor offset.
         calibration.currentSensorOffset = getAnalogAveragePercent(SampleOnPin{Pins::Driver::currentSensorPin, 1000});
@@ -98,7 +98,7 @@ namespace homing {
             TickType_t xCurrentTickCount = xTaskGetTickCount();
             TickType_t xTicksPassed = xCurrentTickCount - xTaskStartTime;
             uint32_t msPassed = xTicksPassed * portTICK_PERIOD_MS;
-            if (msPassed > maxRail / .025) { //500mm @ 25mm/s + buffer
+            if (msPassed > maxRail / (UserConfig::getHomingSpeed() / 1000.0)) {
                 ESP_LOGE("Homing", "Homing took too long. Check power and restart");
                 errorState.message = ui::strings::homingTookTooLong;
 
@@ -120,7 +120,7 @@ namespace homing {
             ESP_LOGD("Homing", "Current over limit: %f", current);
             stepper->stopMove();
 
-            stepper->setSpeedInHz(UserConfig::getStepsPerMM(250));
+            stepper->setSpeedInHz(UserConfig::getStepsPerMM(UserConfig::getHomingSpeed() * 10.0));
             int32_t currentPosition = stepper->getCurrentPosition();
             stepper->moveTo(currentPosition - sign * UserConfig::getStepsPerMM(10), true);
 
@@ -131,7 +131,7 @@ namespace homing {
             if (!second && stateMachine->is("homing.run"_s) &&
                         abs(stepper->getCurrentPosition()) < UserConfig::getStepsPerMM(UserConfig::getMinRailLength())) {
                 second = true;
-                stepper->setSpeedInHz(UserConfig::getStepsPerMM(25));
+                stepper->setSpeedInHz(UserConfig::getStepsPerMM(UserConfig::getHomingSpeed()));
                 stepper->moveTo(targetPositionInSteps, false);
                 continue;
             }
@@ -142,7 +142,7 @@ namespace homing {
                 stepper->forceStopAndNewPosition(0);
             }
 
-            stepper->setSpeedInHz(UserConfig::getStepsPerMM(250));
+            stepper->setSpeedInHz(UserConfig::getStepsPerMM(UserConfig::getHomingSpeed() * 10));
             stepper->moveTo(0, true);
             if (!isSingle && stateMachine->is("homing.run"_s) && calibration.isFirstHomed) {
                 stepper->moveTo(calibration.measuredStrokeSteps, true);

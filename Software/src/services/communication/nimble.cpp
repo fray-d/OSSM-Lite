@@ -230,7 +230,9 @@ void initNimble() {
     initCharacteristic(ossmService, NimBLEUUID(PULLEY_UUID), &pulleyTeethConfigCallbacks, "Number of teeth on the drive pulley.");
     initCharacteristic(ossmService, NimBLEUUID(BPITCH_UUID), &beltPitchConfigCallbacks, "Belt pitch. Distance between the centers of two teeth in mm.");
     initCharacteristic(ossmService, NimBLEUUID(SENSOR_UUID), &sensorLimitConfigCallbacks, "Homing current sensor limit.");
-    initCharacteristic(ossmService, NimBLEUUID(SPDCRV_UUID), &speedCurveConfigCallbacks, "Speed ramp curve");
+    initCharacteristic(ossmService, NimBLEUUID(SPDCRV_UUID), &speedCurveConfigCallbacks, "Speed ramp curve.");
+    initCharacteristic(ossmService, NimBLEUUID(SPDHOM_UUID), &homingSpeedConfigCallbacks, "Homing speed in mm/s.");
+
     //Shared OSSM Settings
     initCharacteristic(ossmService, NimBLEUUID(SPEED_UUID), &speedCallbacks, "Common setting for speed");
     initCharacteristic(ossmService, NimBLEUUID(MAXDEP_UUID), &maxDepthCallbacks, "Common setting for maximum depth");
