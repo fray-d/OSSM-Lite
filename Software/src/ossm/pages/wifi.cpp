@@ -35,7 +35,6 @@ namespace pages {
 
         // Only start portal if not already connected
         if (WiFiClass::status() != WL_CONNECTED) {
-            setWifiSetupActive(true);
             wm.setConfigPortalBlocking(false);
             wm.setCleanConnect(true);
             wm.setConnectTimeout(30);
@@ -67,7 +66,6 @@ namespace pages {
                     if (WiFiClass::status() != WL_CONNECTED) {
                         wm.stopConfigPortal();
                     }
-                    setWifiSetupActive(false);
                     vTaskDelete(nullptr);
                 },
                 "wmProcessTask", 4 * configMINIMAL_STACK_SIZE, nullptr,

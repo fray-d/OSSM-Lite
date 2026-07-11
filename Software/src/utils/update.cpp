@@ -35,12 +35,10 @@ static void updateTask(void *pvParameters) {
 
     ESP_LOGE("UPDATE", "OTA failed: %s", esp_err_to_name(ret));
     stateMachine->process_event(UpdateUnavailable{});
-    setUpdateActive(false);
     vTaskDelete(nullptr);
 }
 
 void ossmStartUpdate() {
-    setUpdateActive(true);
     xTaskCreatePinnedToCore(updateTask, "updateTask",
                             20 * configMINIMAL_STACK_SIZE, nullptr, 1, nullptr,
                             0);

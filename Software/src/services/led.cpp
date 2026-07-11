@@ -3,6 +3,7 @@
 #include <esp_log.h>
 
 #include "components/HeaderBar.h"
+#include "ossm/state/state.h"
 
 CRGB leds[NUM_LEDS];
 static auto TAG = "LED";
@@ -182,56 +183,17 @@ void pulseForCommunication() {
     commPulseActive = true;
 }
 
-// Machine status functions
-static bool homingActiveFlag = false;
-
-void setHomingActive(bool active) {
-    if (homingActiveFlag != active) {
-        homingActiveFlag = active;
-        ESP_LOGI(TAG, "Homing status changed: %s",
-                 active ? "ACTIVE" : "INACTIVE");
-    }
-}
-
-static bool updateActiveFlag = false;
-
-void setUpdateActive(bool active) {
-    if (updateActiveFlag != active) {
-        updateActiveFlag = active;
-        ESP_LOGI(TAG, "Update status changed: %s",
-                 active ? "ACTIVE" : "INACTIVE");
-    }
-}
-
-static bool wifiSetupActiveFlag = false;
-
-void setWifiSetupActive(bool active) {
-    if (wifiSetupActiveFlag != active) {
-        wifiSetupActiveFlag = active;
-        ESP_LOGI(TAG, "Wifi status changed: %s",
-                 active ? "ACTIVE" : "INACTIVE");
-    }
-}
-
-static bool errorActiveFlag = false;
-
-void setErrorActive(bool active) {
-    if (errorActiveFlag != active) {
-        errorActiveFlag = active;
-        ESP_LOGI(TAG, "Error status changed: %s",
-                 active ? "ACTIVE" : "INACTIVE");
-    }
-}
-
 void updateLEDForMachineStatus() {
     // Check if homing is active - this takes priority over BLE status
-    if (errorActiveFlag) {
+    if (stateMachine->is("error.idle"_s))  {
         breatheLED(COLOR_RED, 51);
-    } else if (homingActiveFlag) {
+    } else if (stateMachine->is("homing.run"_s)) {
         breatheLED(COLOR_DEEP_PURPLE, 5);
-    } else if (wifiSetupActiveFlag) {
+    } else if (stateMachine->is("measure.run"_s)) {
+        breatheLED(COLOR_DEEP_PURPLE, 15);
+    } else if (stateMachine->is("wifi.idle"_s)) {
         breatheLED(COLOR_YELLOW, 5);
-    } else if (updateActiveFlag) {
+    } else if (stateMachine->is("update.idle"_s)) {
         breatheLED(COLOR_ORANGE, 51);
     } else {
         // Fall back to BLE status

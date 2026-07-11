@@ -37,9 +37,6 @@ namespace homing {
     static void startHomingTask(void *pvParameters) {
         TickType_t xTaskStartTime = xTaskGetTickCount();
 
-        // Set homing active flag for LED indication
-        setHomingActive(true);
-
         stepper->enableOutputs();
         stepper->setDirectionPin(Pins::Driver::motorDirectionPin, UserConfig::getDirection());
 
@@ -54,14 +51,12 @@ namespace homing {
         if (isNone || (isSingle && stateMachine->is("measure.run"_s) )) {
             calibration.measuredStrokeSteps = UserConfig::getStepsPerMM(UserConfig::getRailLength());
             stateMachine->process_event(Done{});
-            setHomingActive(false);
             vTaskDelete(nullptr);
             return;
         }
 
         if (!UserConfig::getReHome() && !calibration.isFirstHomed) {
             stateMachine->process_event(Done{});
-            setHomingActive(false);
             vTaskDelete(nullptr);
             return;
         }
@@ -152,7 +147,6 @@ namespace homing {
             break;
         };
         
-        setHomingActive(false);
         vTaskDelete(nullptr);
     }
 

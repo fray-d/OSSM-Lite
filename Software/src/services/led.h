@@ -41,12 +41,6 @@ void showBLERainbow(int duration_ms = 1000);
 // Communication pulse functions
 void pulseForCommunication();
 
-// Machine status functions
-void setHomingActive(bool active);
-void setUpdateActive(bool active);
-void setWifiSetupActive(bool active);
-void setErrorActive(bool active);
-
 void updateLEDForMachineStatus();
 
 #endif // OSSM_SOFTWARE_LED_H

@@ -10,7 +10,6 @@
 namespace pages {
 
 void drawError() {
-    setErrorActive(true);
     stepper->forceStop();
     showHeaderIcons = true;
 
