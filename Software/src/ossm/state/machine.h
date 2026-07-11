@@ -98,9 +98,9 @@ struct OSSMStateMachine {
             "streaming.idle"_s + returnToMenu / emergencyStop = "menu"_s,
             "streaming.idle"_s + tryUpdate / emergencyStop = "update"_s,
 
-            "update"_s [isOnline] / (drawUpdate, startUpdate) = "update.checking"_s,
+            "update"_s [isOnline] / (drawUpdate, startUpdate) = "update.idle"_s,
             "update"_s = "wifi"_s,
-            "update.checking"_s + updateUnavailable / drawNoUpdate = "update.idle"_s,
+            "update.idle"_s + updateUnavailable / drawNoUpdate = "update.idle"_s,
             "update.idle"_s + buttonPress = "menu"_s,
 
             "wifi"_s / drawWiFi = "wifi.idle"_s,
