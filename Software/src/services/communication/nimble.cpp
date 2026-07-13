@@ -1,7 +1,5 @@
 #include "nimble.h"
 
-#include <services/tasks.h>
-
 #include "constants/Version.h"
 #include "command.hpp"
 #include "config.hpp"
@@ -11,6 +9,7 @@
 #include "ossm/advanced_penetration/advanced_penetration.h"
 #include "patterns.hpp"
 #include "services/led.h"
+#include "services/tasks.h"
 #include "services/UserConfig.h"
 #include "state.hpp"
 #include "wifi.hpp"
@@ -54,7 +53,7 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     }
 } serverCallbacks;
 
-void notifyValue(char* uuid, String value) {
+void notifyValue(const char* uuid, String value) {
     NimBLEService* ossmService = pServer->getServiceByUUID(OSSM_SERVICE_UUID);
     NimBLECharacteristic* speedChar = ossmService->getCharacteristic(uuid);
     speedChar->setValue(value);

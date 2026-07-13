@@ -16,7 +16,7 @@ namespace UserConfig {
     float sensorLimit = -1;
     float speedCurve = -1;
 
-    float readNVSFloat(char* key, float def) {
+    float readNVSFloat(const char* key, float def) {
         Preferences userConfig;
         userConfig.begin("UserConfig", true);
         float value = userConfig.getFloat(key, def);
@@ -25,7 +25,7 @@ namespace UserConfig {
         return value;
     }
 
-    void writeNVSFloat(char* key, float value) {
+    void writeNVSFloat(const char* key, float value) {
         Preferences userConfig;
         userConfig.begin("UserConfig", false);
         userConfig.putFloat(key, value);

@@ -12,9 +12,9 @@ namespace Tasks {
     extern TaskHandle_t drawPatternControlsTaskH;
     extern TaskHandle_t wmTaskH;
     extern TaskHandle_t drawPreflightTaskH;
-
     extern TaskHandle_t runHomingTaskH;
     extern TaskHandle_t runAdvancedPenetrationTaskH;
+    extern TaskHandle_t runStreamingTaskH;
     extern TaskHandle_t runStrokeEngineTaskH;
 
     // Constants can stay in the header

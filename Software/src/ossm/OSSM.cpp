@@ -53,7 +53,7 @@ void OSSM::ble_click(String commandString) {
             settings.minPosition = (settings.maxPosition - settings.minPosition) / settings.maxPosition * 100.0;
             settings.minPosition = command.value - (settings.minPosition / 100.0f) * command.value;
             settings.minPosition = constrain(settings.minPosition, 0.01f, 100.0f);
-            // Intentionally fall through as Legacy alias: set:depth:X → setMaxPosition
+            [[fallthrough]]; 
         case Commands::setMaxPosition:
             settings.playControl = ui::PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);

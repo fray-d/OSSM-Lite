@@ -7,8 +7,8 @@ namespace Tasks {
     TaskHandle_t drawPatternControlsTaskH = nullptr;
     TaskHandle_t wmTaskH = nullptr;
     TaskHandle_t drawPreflightTaskH = nullptr;
-
     TaskHandle_t runHomingTaskH = nullptr;
     TaskHandle_t runAdvancedPenetrationTaskH = nullptr;
+    TaskHandle_t runStreamingTaskH = nullptr;
     TaskHandle_t runStrokeEngineTaskH = nullptr;
 }

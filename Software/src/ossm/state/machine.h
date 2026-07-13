@@ -26,6 +26,7 @@ struct OSSMStateMachine {
             "homing.run"_s + done[(isOption(Menu::Streaming))] / setHomed = "streaming"_s,
             "homing.run"_s + done / setHomed = "menu"_s,
 
+            "measure.run"_s + error = "error"_s,
             "measure.run"_s + done[(isStrokeTooShort)] = "error"_s,
             "measure.run"_s + done / setHomed = "menu"_s,
 

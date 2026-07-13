@@ -170,7 +170,7 @@ namespace streaming {
 
         xTaskCreatePinnedToCore(startStreamingTask, "startStreamingTask",
                                 stackSize, nullptr, configMAX_PRIORITIES - 1,
-                                nullptr, Tasks::operationTaskCore);
+                                &Tasks::runStreamingTaskH, Tasks::operationTaskCore);
     }
 
 }  // namespace streaming

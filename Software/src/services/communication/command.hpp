@@ -103,6 +103,14 @@ NimBLECharacteristic* initOffsetCharacteristic(NimBLEService* pService, std::str
     return pChar;
 }
 
+void startStreaming() {
+    if (!(stateMachine->is("streaming"_s) || stateMachine->is("streaming.idle"_s))) {
+        stateMachine->process_event(LongPress{});
+        menuState.currentOption = Menu::Streaming;
+        stateMachine->process_event(ButtonPress{});
+    }
+}
+
 class StreamCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         String cmd = pCharacteristic->getValue();
@@ -110,16 +118,13 @@ class StreamCallbacks : public NimBLECharacteristicCallbacks {
         float pos = constrain(cmd.substring(0,split).toFloat(), 0.0, 100.0);
         uint16_t time = cmd.substring(split+1).toInt();
         ESP_LOGI("STREAM", "Move to: %f in %d", pos, time);
+        startStreaming();
         targetQueue.push({pos,time,std::chrono::steady_clock::now(), 0});
         pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        if (!(stateMachine->is("streaming"_s) || stateMachine->is("streaming.idle"_s))) {
-            stateMachine->process_event(LongPress{});
-            menuState.currentOption = Menu::Streaming;
-            stateMachine->process_event(ButtonPress{});
-        }
+        startStreaming();
         pCharacteristic->setValue(String("Ready"));
     }
 
