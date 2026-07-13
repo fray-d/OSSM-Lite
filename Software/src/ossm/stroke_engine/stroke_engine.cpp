@@ -28,8 +28,30 @@ static void startStrokeEngineTask(void *pvParameters) {
         .keepoutBoundary = 6.0};
     SettingPercents lastSetting = settings;
 
+    // Adopt the StrokeEngine origin only when entering right after a real
+    // physical home (justHomed) AND the carriage is actually at the homed rest
+    // position (counter ~0). On a go:menu re-entry neither holds, so we
+    // preserve the existing counter and skip the re-base that used to
+    // accumulate ~6 mm of drift per entry.
+    constexpr int32_t HOME_TOL = 40;  // steps (~2 mm at 20 steps/mm)
+    bool atHome = calibration.justHomed &&
+                  (abs(stepper->getCurrentPosition()) < HOME_TOL);
+    calibration.justHomed = false;
+
+    if (atHome) {
+        // thisIsHome() below (re-)defines the origin at -keepout: the counter
+        // is being re-established, not translated.
+        stepperFrame = StepperFrame::StrokeEngine;
+    } else {
+        // Cross-mode entry (e.g. home -> SimplePenetration -> go:menu ->
+        // here): the counter is still a native-frame value; translate it into
+        // the StrokeEngine frame exactly (no motion). Same-mode re-entry is a
+        // no-op (frame already StrokeEngine) and keeps the counter as-is.
+        stepperTranslateFrame(StepperFrame::StrokeEngine);
+    }
+
     Stroker.begin(&strokingMachine, &servoMotor, stepper);
-    Stroker.thisIsHome();
+    Stroker.thisIsHome(5.0f, atHome);
 
     Stroker.setSensation(calculateSensation(settings.sensation), true);
 

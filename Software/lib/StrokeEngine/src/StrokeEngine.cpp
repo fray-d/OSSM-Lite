@@ -375,7 +375,7 @@ void StrokeEngine::enableAndHome(endstopProperties *endstop, float speed) {
 #endif
 }
 
-void StrokeEngine::thisIsHome(float speed) {
+void StrokeEngine::thisIsHome(float speed, bool resetOrigin) {
     // set homeing speed
     _homeingSpeed = speed * _motor->stepsPerMillimeter;
 
@@ -383,10 +383,17 @@ void StrokeEngine::thisIsHome(float speed) {
         // Enable _servo
         _servo->enableOutputs();
 
-        // Translate current position
-        _servo->setCurrentPosition(abs(_servo->getCurrentPosition())-
-                                       _motor->stepsPerMillimeter *
+        // Only (re-)establish the home origin on a genuine fresh physical home.
+        // On a re-entry (resetOrigin == false) the carriage was NOT re-homed,
+        // so the position counter is already valid in the established frame;
+        // re-basing it here is what accumulated ~6 mm of drift per entry.
+        if (resetOrigin) {
+            // Home == -keepoutBoundary, a constant independent of the current
+            // counter. (The previous abs()-of-current-position re-based the
+            // origin off wherever the carriage happened to sit.)
+            _servo->setCurrentPosition(-_motor->stepsPerMillimeter *
                                        _physics->keepoutBoundary);
+        }
 
         // Change state
         _isHomed = true;
