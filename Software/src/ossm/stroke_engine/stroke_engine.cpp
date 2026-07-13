@@ -38,6 +38,18 @@ static void startStrokeEngineTask(void *pvParameters) {
                   (abs(stepper->getCurrentPosition()) < HOME_TOL);
     calibration.justHomed = false;
 
+    if (atHome) {
+        // thisIsHome() below (re-)defines the origin at -keepout: the counter
+        // is being re-established, not translated.
+        stepperFrame = StepperFrame::StrokeEngine;
+    } else {
+        // Cross-mode entry (e.g. home -> SimplePenetration -> go:menu ->
+        // here): the counter is still a native-frame value; translate it into
+        // the StrokeEngine frame exactly (no motion). Same-mode re-entry is a
+        // no-op (frame already StrokeEngine) and keeps the counter as-is.
+        stepperTranslateFrame(StepperFrame::StrokeEngine);
+    }
+
     Stroker.begin(&strokingMachine, &servoMotor, stepper);
     Stroker.thisIsHome(5.0f, atHome);
 

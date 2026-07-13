@@ -21,8 +21,9 @@ namespace streaming {
 
 static void startStreamingTask(void *pvParameters) {
     // Own the shared stepper config at mode entry (see simple_penetration.cpp:
-    // StrokeEngine leaves the shared DIR polarity inverted; this mode's
-    // targets assume the homing frame's normal polarity).
+    // StrokeEngine leaves the shared DIR polarity inverted and the counter in
+    // its own frame; this mode's targets are native-frame absolutes).
+    stepperTranslateFrame(StepperFrame::Native);
     stepper->setDirectionPin(Pins::Driver::motorDirectionPin, false);
     stepper->enableOutputs();
 
