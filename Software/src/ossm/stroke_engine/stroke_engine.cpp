@@ -28,8 +28,18 @@ static void startStrokeEngineTask(void *pvParameters) {
         .keepoutBoundary = 6.0};
     SettingPercents lastSetting = settings;
 
+    // Adopt the StrokeEngine origin only when entering right after a real
+    // physical home (justHomed) AND the carriage is actually at the homed rest
+    // position (counter ~0). On a go:menu re-entry neither holds, so we
+    // preserve the existing counter and skip the re-base that used to
+    // accumulate ~6 mm of drift per entry.
+    constexpr int32_t HOME_TOL = 40;  // steps (~2 mm at 20 steps/mm)
+    bool atHome = calibration.justHomed &&
+                  (abs(stepper->getCurrentPosition()) < HOME_TOL);
+    calibration.justHomed = false;
+
     Stroker.begin(&strokingMachine, &servoMotor, stepper);
-    Stroker.thisIsHome();
+    Stroker.thisIsHome(5.0f, atHome);
 
     Stroker.setSensation(calculateSensation(settings.sensation), true);
 
