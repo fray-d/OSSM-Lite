@@ -20,6 +20,12 @@ using namespace sml;
 namespace streaming {
 
 static void startStreamingTask(void *pvParameters) {
+    // Own the shared stepper config at mode entry (see simple_penetration.cpp:
+    // StrokeEngine leaves the shared DIR polarity inverted; this mode's
+    // targets assume the homing frame's normal polarity).
+    stepper->setDirectionPin(Pins::Driver::motorDirectionPin, false);
+    stepper->enableOutputs();
+
     auto isInCorrectState = []() {
         return stateMachine->is("streaming"_s) ||
                stateMachine->is("streaming.preflight"_s) ||
