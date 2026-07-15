@@ -78,20 +78,14 @@ jobs:
             done <<< "$MERGE_COMMITS"
           fi
 
-          # If we didn't find it from merge commits, check all branch folders in the bucket
+          # If we didn't find it from merge commits (squash merges never match
+          # that path), scan the bucket for branch folders whose git branch no
+          # longer exists. Discovery is delegated to the rebuild script so
+          # nested folders for slash-named branches (kareem/foo) are found;
+          # it emits URL-encoded branch keys and never emits release channels.
           if [ -z "$MERGED_BRANCH" ]; then
-            echo "Checking all bucket folders for merged branches..."
-            for branch_path in $(supabase storage ls "ss:///ossm-firmware/" --experimental | sed 's:/$::'); do
-              # Never touch release channels; they are not git branches
-              case "$branch_path" in
-                master|alpha|production) continue ;;
-              esac
-
-              # Only consider folders that hold flashable firmware
-              if ! supabase storage ls "ss:///ossm-firmware/$branch_path/manifest.json" --experimental > /dev/null 2>&1; then
-                continue
-              fi
-
+            echo "Checking all bucket branch folders for merged branches..."
+            for branch_path in $(bash .github/scripts/rebuild_registry.sh --list-branches); do
               # Decode branch name (basic URL decode)
               DECODED_BRANCH=$(echo "$branch_path" | sed 's/%2F/\//g' | sed 's/%2B/+/g' | sed 's/%20/ /g')
 
