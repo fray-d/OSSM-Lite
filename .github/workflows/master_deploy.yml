@@ -49,21 +49,7 @@ jobs:
         with:
           version: latest
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Download registry.json
-        id: download_registry
-        run: |
-          if supabase storage cp "ss:///ossm-firmware/registry.json" ./registry.json --experimental; then
-            echo "registry_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Registry.json does not exist. Creating initial registry."
-            echo "{}" > ./registry.json
-            echo "registry_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Determine merged branch and clean up registry
+      - name: Determine merged branch to clean up
         id: cleanup_registry
         run: |
           # Get commits between before and after to find merge commits
@@ -81,10 +67,10 @@ jobs:
                   # URL encode the branch name
                   ENCODED_BRANCH=$(echo "$BRANCH_NAME" | sed 's/\//%2F/g' | sed 's/+/%2B/g' | sed 's/ /%20/g')
                   
-                  # Check if this branch exists in registry
-                  if cat ./registry.json | jq -e "has(\"$ENCODED_BRANCH\")" > /dev/null 2>&1; then
+                  # Check if this branch has firmware in the bucket
+                  if supabase storage ls "ss:///ossm-firmware/$ENCODED_BRANCH/manifest.json" --experimental > /dev/null 2>&1; then
                     MERGED_BRANCH="$ENCODED_BRANCH"
-                    echo "Found merged branch in registry: $MERGED_BRANCH"
+                    echo "Found merged branch in bucket: $MERGED_BRANCH"
                     break
                   fi
                 fi
@@ -92,20 +78,26 @@ jobs:
             done <<< "$MERGE_COMMITS"
           fi
 
-          # If we didn't find it from merge commits, check all branches in registry
+          # If we didn't find it from merge commits, check all branch folders in the bucket
           if [ -z "$MERGED_BRANCH" ]; then
-            echo "Checking all branches in registry for merged branches..."
-            for branch_path in $(cat ./registry.json | jq -r 'keys[]'); do
-              # Skip master branch
-              if [ "$branch_path" = "master" ]; then
+            echo "Checking all bucket folders for merged branches..."
+            for branch_path in $(supabase storage ls "ss:///ossm-firmware/" --experimental | sed 's:/$::'); do
+              # Never touch release channels; they are not git branches
+              case "$branch_path" in
+                master|alpha|production) continue ;;
+              esac
+
+              # Only consider folders that hold flashable firmware
+              if ! supabase storage ls "ss:///ossm-firmware/$branch_path/manifest.json" --experimental > /dev/null 2>&1; then
                 continue
               fi
-              
+
               # Decode branch name (basic URL decode)
               DECODED_BRANCH=$(echo "$branch_path" | sed 's/%2F/\//g' | sed 's/%2B/+/g' | sed 's/%20/ /g')
-              
-              # Check if branch still exists as a remote branch
-              if ! git ls-remote --heads origin "$DECODED_BRANCH" > /dev/null 2>&1; then
+
+              # Check if branch still exists as a remote branch. git ls-remote
+              # exits 0 even when nothing matches, so test its output.
+              if [ -z "$(git ls-remote --heads origin "$DECODED_BRANCH")" ]; then
                 MERGED_BRANCH="$branch_path"
                 echo "Found merged branch (no longer exists): $MERGED_BRANCH"
                 break
@@ -120,41 +112,19 @@ jobs:
             echo "No merged branch found to clean up"
           fi
 
-      - name: Remove merged branch from registry and storage
+      - name: Remove merged branch files from storage
         if: steps.cleanup_registry.outputs.merged_branch != ''
         run: |
           MERGED_BRANCH="${{ steps.cleanup_registry.outputs.merged_branch }}"
-          BUCKET="ossm-firmware"
-
-          # Remove branch from registry
-          REGISTRY=$(cat ./registry.json)
-          REGISTRY=$(echo "$REGISTRY" | jq "del(.[\"$MERGED_BRANCH\"])")
-          echo "$REGISTRY" > ./registry.json
-          echo "Removed $MERGED_BRANCH from registry"
-
-          # Delete all files for this branch from Supabase storage
-          # List all files with the branch prefix
-          RESPONSE=$(curl -s -X POST "https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/list/${BUCKET}" \
-            -H "apikey: ${SUPABASE_ACCESS_TOKEN}" \
-            -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{\"prefix\": \"${MERGED_BRANCH}/\", \"limit\": 1000}")
-
-          # Delete each file
-          echo "$RESPONSE" | jq -r '.[]?.name // empty' | while read -r file; do
-            if [ -n "$file" ]; then
-              echo "Deleting file: $file"
-              curl -s -X DELETE "https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/${BUCKET}/${file}" \
-                -H "apikey: ${SUPABASE_ACCESS_TOKEN}" \
-                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" || true
-            fi
-          done
-
+          supabase storage rm "ss:///ossm-firmware/${MERGED_BRANCH}" -r --experimental --yes
           echo "Cleaned up all files for branch: $MERGED_BRANCH"
 
-      - name: Upload updated registry.json
-        if: steps.cleanup_registry.outputs.merged_branch != ''
-        run: |
-          # Delete existing registry.json if it exists, then upload the updated one
-          supabase storage rm "ss:///ossm-firmware/registry.json" --experimental --yes || true
-          supabase storage cp ./registry.json "ss:///ossm-firmware/registry.json" --content-type "application/json" --cache-control "no-cache" --experimental
+  # registry.json is derived state; rebuild it from the bucket on every push to
+  # main (even when cleanup is skipped) so the registry can never stay stale,
+  # corrupt, or missing. `if: always()` keeps this running when
+  # upload_to_supabase is skipped by check_changes.
+  rebuild_registry:
+    needs: [upload_to_supabase]
+    if: always()
+    uses: ./.github/workflows/registry_rebuild.yml
+    secrets: inherit
