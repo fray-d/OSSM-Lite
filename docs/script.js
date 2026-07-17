@@ -431,12 +431,17 @@ var funscriptData = {};
 var currentAction = 0;
 async function parseFunscript(content) {
     funscriptData = {};
-    var csv = content.split("\n");
-    if (csv.length > 0) {
-        funscriptData.actions = csv.map(item => ({
-            pos: Number(item.split(",")[1]),
-            at: Number(item.split(",")[0])
-        }));
+    try {
+      funscriptData = JSON.parse(content);
+    } catch (err) {
+        console.log("failed to parse as json: " + err + " Attempting CSV");
+        var csv = content.split("\n");
+        if (csv.length > 0) {
+            funscriptData.actions = csv.map(item => ({
+                pos: Number(item.split(",")[1]),
+                at: Number(item.split(",")[0])
+            }));
+        }
     }
     if (!funscriptData.actions || !Array.isArray(funscriptData.actions)) {
         console.log("Could not parse funscript");
@@ -456,10 +461,15 @@ async function parseFunscript(content) {
         }
       }
     )
+    console.log(funscriptData.actions);
+    console.log(funscriptData.simpleActions);
     return true;
 }
 
 async function sendStream(pos, dur) {
+    if (document.getElementById("reverse").checked) {
+        pos = 100 - pos;
+    }
     let value = pos + ":" + dur;
     console.log("Stream: " + value);
     value = encoder.encode(value);
@@ -478,10 +488,10 @@ async function sendStream(pos, dur) {
 }
 
 async function syncFunscript() {
-    var actions = funscriptData.actions;
-    // if (isSimple) {
-    //     actions = funscriptData.simpleActions;
-    // }
+    let actions = funscriptData.actions;
+    if (document.getElementById("simplify").checked) {
+        actions = funscriptData.simpleActions;
+    }
     const currentTime = document.getElementById("video").currentTime * 1000;
     const action = actions[currentAction];
     if (action.at > currentTime) {
@@ -509,6 +519,9 @@ async function pauseStream() {
 async function seekStream() {
     const currentTime = document.getElementById("video").currentTime * 1000;
     var actions = funscriptData.actions;
+    if (document.getElementById("simplify").checked) {
+        actions = funscriptData.simpleActions;
+    }
     currentAction = actions.findIndex(a => a.at > currentTime);
     if (currentAction === -1) {
         currentAction = actions.length;
@@ -566,4 +579,7 @@ async function connectFunscript() {
     await initSetting(document.getElementById('speed'),SPEED_UUID);
     await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID);
     await initSetting(document.getElementById('minDepth'), MINDEP_UUID);
+    document.getElementById("simplify").onchange = function() {
+        seekStream();
+    };
 }

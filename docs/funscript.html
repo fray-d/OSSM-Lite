@@ -18,7 +18,7 @@
     </hgroup>
     <p>Select a video file, and a funscript. Set speed and depth limits. While the video is paused, min and max depth will move the OSSM to those positions. Device will not move if the speed limit is not set.</p>
     <button id="connect" onclick="connectFunscript();">Connect to OSSM</button>
-    <article id="controls" style="display: none;">
+    <article id="controls" style="display: block;">
       <video loop id="video" controls muted style="width: 100%;"
               onplay="playStream()" onpause="pauseStream()" onseeked="seekStream()">
       </video>
@@ -39,6 +39,14 @@
       <input type="range" min="0" max="100" value="0" id="maxDepth">
       <label for="minDepth">Min Depth</label>
       <input type="range" min="0" max="100" value="0" id="minDepth">
+      <fieldset>
+        <label for="reverse">Reverse Script</label>
+        <input type="checkbox" id="reverse" role="switch">
+      </fieldset>
+      <fieldset>
+        <label for="simplify">Simplify Script</label>
+        <input type="checkbox" id="simplify" role="switch">
+      </fieldset>
     </article>
     <p></p>
     <p>
