@@ -17,6 +17,16 @@ using namespace sml;
 namespace simple_penetration {
 
 static void startSimplePenetrationTask(void *pvParameters) {
+    // Own the shared stepper config at mode entry: a preceding StrokeEngine
+    // session leaves the shared DIR polarity inverted (StrokeEngine::begin)
+    // and the counter in the StrokeEngine frame; only homing resets them.
+    // This mode's targets are native-frame absolutes with normal polarity,
+    // so reconcile both explicitly (exact math, no motion) — otherwise every
+    // stroke runs physically reversed and/or displaced into a hard stop.
+    stepperTranslateFrame(StepperFrame::Native);
+    stepper->setDirectionPin(Pins::Driver::motorDirectionPin, false);
+    stepper->enableOutputs();
+
     int fullStrokeCount = 0;
     static int32_t targetPosition = 0;
 

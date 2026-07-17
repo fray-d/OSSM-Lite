@@ -266,7 +266,7 @@ class StrokeEngine {
                     Defaults to 5.0 mm/s
     */
     /**************************************************************************/
-    void thisIsHome(float speed = 5.0);
+    void thisIsHome(float speed = 5.0, bool resetOrigin = true);
 
     /**************************************************************************/
     /*!
