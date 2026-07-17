@@ -16,7 +16,7 @@ class StrokeEngine Stroker;
 
 namespace stroke_engine {
     static bool isChangeSignificant(float oldPct, float newPct) {
-        return oldPct != newPct && (abs(newPct - oldPct) > 2 || newPct == 0 || newPct == 100);
+        return oldPct != newPct && (abs(newPct - oldPct) > 0.5 || newPct == 0.0 || newPct == 100.0);
     }
 
     static float calculateSensation(float sensationPercentage) {
@@ -59,7 +59,8 @@ namespace stroke_engine {
                 //Curve the speed based on userconfig
                 float exp = UserConfig::getSpeedCurve();
                 float speed = settings.speed/100.0;
-                speed = pow( 1 - pow( 1 - speed, exp), 1 / exp) * 100;
+                speed = pow( 1 - pow( 1 - speed, exp), 1 / exp) * 100.0;
+                ESP_LOGI("TEST","SPEED: %f",speed);
                 Stroker.setSpeed(speed, true);
                 lastSetting.speed = settings.speed;
             }

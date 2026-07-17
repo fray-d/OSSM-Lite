@@ -63,13 +63,13 @@ static void drawPlayControlsTask(void *pvParameters) {
         next.speedKnob =
             getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
 
-        if (abs(next.speedKnob - settings.speedKnob) > 2 &&
-            next.speedKnob < settings.speed) {
+        if (abs(next.speedKnob - settings.speedKnob) > 1.0 &&
+            next.speedKnob <= settings.speed ) {
             resetLastSpeedCommandWasFromBLE();
         }
 
         next.speed = next.speedKnob;
-        if (settings.speedBLE > 0) {
+        if (settings.speedBLE > 0.0 || wasLastSpeedCommandFromBLE()) {
             if (USE_SPEED_KNOB_AS_LIMIT) {
                 next.speed = next.speedKnob * settings.speedBLE / 100;
             } else if (wasLastSpeedCommandFromBLE()) {
