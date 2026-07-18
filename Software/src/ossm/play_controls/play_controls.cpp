@@ -34,7 +34,7 @@ static void drawPlayControlsTask(void *pvParameters) {
             break;
     }
 
-    SettingPercents next = {0, 0, 0, 0, 0, 0, 0, StrokePatterns::SimpleStroke};
+    SettingPercents next = {0, 0, 0, 0, 0, 0, 0, 0, StrokePatterns::SimpleStroke};
     unsigned long displayLastUpdated = 0;
 
     auto isInCorrectState = []() {

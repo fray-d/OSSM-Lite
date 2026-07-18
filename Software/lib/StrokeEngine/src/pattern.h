@@ -167,12 +167,12 @@ class SimpleStroke : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         _nextMove.speed = int(_speed);
@@ -289,12 +289,12 @@ class RoboStroke : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         // maximum speed of the trapezoidal motion
@@ -419,12 +419,12 @@ class Deeper : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         _nextMove.speed = int(_speed);
@@ -472,12 +472,12 @@ class StopNGo : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         // maximum speed of the trapezoidal motion
@@ -555,12 +555,12 @@ class Insist : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         _nextMove.speed = int(_speed);
@@ -661,7 +661,7 @@ class RandomStroke : public Pattern {
         }
         _lastTarget = _nextMove.stroke;
         ESP_LOGV(SE, "Target: %f", _nextMove.stroke);
-        _timeOfStroke = std::max(1.5 * dist / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * dist / _speed, 0.01);
         _nextMove.acceleration = int(3.0 * _nextMove.speed / _timeOfStroke);
         _index = index;
         return _nextMove;
@@ -682,12 +682,12 @@ class PointStroke : public Pattern {
     void setSpeed(float speed = 0) {
         _speed = speed;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     void setStroke(int stroke) {
         _stroke = stroke;
         // time of a trapezoidal motion maximizing at speed
-        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.1);
+        _timeOfStroke = std::max(1.5 * _stroke / _speed, 0.01);
     }
     motionParameter nextTarget(unsigned int index) {
         _nextMove.speed = int(_speed);

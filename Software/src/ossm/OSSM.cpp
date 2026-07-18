@@ -50,25 +50,26 @@ void OSSM::ble_click(String commandString) {
             break;
         case Commands::setDepth:
             command.value = constrain(command.value, 1.0f, 100.0f);
-            settings.minPosition = (settings.maxPosition - settings.minPosition) / settings.maxPosition * 100.0;
-            settings.minPosition = command.value - (settings.minPosition / 100.0f) * command.value;
-            settings.minPosition = constrain(settings.minPosition, 0.01f, 100.0f);
+            settings.minPosition = command.value - settings.stroke;
+            settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
             [[fallthrough]]; 
         case Commands::setMaxPosition:
+            command.value = constrain(command.value, 1.0f, 100.0f);
             settings.playControl = ui::PlayControls::MAX_POSITION;
             encoder.setEncoderValue(command.value);
             settings.maxPosition = command.value;
-            settings.maxPosition = constrain(settings.maxPosition, 1.0f, 100.0f);
             break;
         case Commands::setMinPosition:
+            settings.minPosition = constrain(command.value, 0.0f, 99.0f);
             settings.playControl = ui::PlayControls::MIN_POSITION;
-            encoder.setEncoderValue(command.value);
-            settings.minPosition = command.value;
+            encoder.setEncoderValue(settings.minPosition);
+            settings.stroke = settings.maxPosition - settings.minPosition;
             break;
         case Commands::setStroke:
             // Legacy alias: set:stroke:X → minPosition = maxPosition - value
-            settings.minPosition = settings.maxPosition - (command.value / 100.0f) * settings.maxPosition;
-            settings.minPosition = constrain(settings.minPosition, 0.05f, 100.0f);
+            settings.stroke = constrain(command.value, 0.0f, 100.0f);
+            settings.minPosition = settings.maxPosition - settings.stroke;
+            settings.minPosition = constrain(settings.minPosition, 0.0f, 100.0f);
             settings.playControl = ui::PlayControls::MIN_POSITION;
             encoder.setEncoderValue(settings.minPosition);
             break;

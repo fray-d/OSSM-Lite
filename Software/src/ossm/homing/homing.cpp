@@ -102,13 +102,13 @@ namespace homing {
             }
 
             float current = getAnalogAveragePercent(SampleOnPin{
-                                Pins::Driver::currentSensorPin, 50}) -
+                                Pins::Driver::currentSensorPin, 10}) -
                             calibration.currentSensorOffset;
 
             ESP_LOGV("Homing", "Current: %f", current);
 
             if (current < UserConfig::getSensorLimit()) {
-                vTaskDelay(10);  // 10ms to reduce CPU load
+                vTaskDelay(1);
                 continue;
             }
 

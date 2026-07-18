@@ -9,6 +9,7 @@ extern struct SettingPercents {
     float sensation;
     float maxPosition;
     float minPosition;
+    float stroke;
     float buffer;
     float speedKnob;
     float speedBLE;

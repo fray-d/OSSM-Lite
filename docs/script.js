@@ -137,14 +137,14 @@ async function readWiFi(wifiRef) {
     }
     passwordElement.value = "";
 }
-async function writeWiFi() {
+async function writeWiFi(wifiRef) {
     var ssid = document.getElementById("SSID").value;
     var password = document.getElementById("Password").value;
     var value = "set:wifi:" + ssid + "|" + password;
     console.log("Write WiFi: " + ssid);
     value = encoder.encode(value);
     await wifiRef.writeValue(value);
-    readWiFi();
+    await readWiFi(wifiRef);
 }
 
 async function writeUpdate() {
