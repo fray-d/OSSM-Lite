@@ -11,6 +11,7 @@ Preferences wifiPrefs;
 
 void initWM() {
     WiFi.useStaticBuffers(true);
+    WiFi.setAutoReconnect(false);
     esp_wifi_set_ps(WIFI_PS_MAX_MODEM);
 
     wm.setSaveConfigCallback([]() {
