@@ -79,7 +79,7 @@ namespace UserConfig {
     bool getDirection() {
         Preferences userConfig;
         userConfig.begin("UserConfig", true);
-        bool output = userConfig.getBool("Direction",false);
+        bool output = userConfig.getBool("Direction",true);
         userConfig.end();
         ESP_LOGI("USER CONFIG", "Direction read: %d", output);
         return output;
