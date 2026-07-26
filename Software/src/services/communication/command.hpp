@@ -13,7 +13,7 @@
 #include "services/led.h"
 
 static const std::regex commandRegex(
-    R"(go:(strokeEngine|streaming|menu)|set:(speed|stroke|depth|sensation|buffer|pattern):\d+|set:wifi:[^|]+\|.+|stream:\d+:\d+)");
+    R"(go:(strokeEngine|streaming|menu)|set:(max|min|speed|stroke|depth|sensation|buffer|pattern):\d+|set:wifi:[^|]+\|.+|stream:\d+:\d+)");
 
 /** Handler class for characteristic actions */
 class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {

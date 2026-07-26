@@ -122,18 +122,13 @@ String OSSM::getCurrentState() {
             [&currentState](auto state) { currentState = state.c_str(); });
     }
 
-    float stroke = 0.0;
-    if (settings.maxPosition + settings.minPosition > 0.0) {
-        stroke = (settings.maxPosition - settings.minPosition) / settings.maxPosition * 100.0;
-    }
-
     return "{\"timestamp\":" + String((unsigned long)millis()) +
            ",\"state\":\"" + currentState +
            "\",\"speed\":" + String(settings.speed) +
            ",\"minPosition\":" + String(settings.minPosition) +
            ",\"maxPosition\":" + String(settings.maxPosition) +
            ",\"depth\":" + String(settings.maxPosition) +
-           ",\"stroke\":" + String(stroke) +
+           ",\"stroke\":" + String(settings.stroke) +
            ",\"sensation\":" + String(settings.sensation) +
            ",\"buffer\":" + String(settings.buffer) + 
            ",\"pattern\":" + String(static_cast<int>(settings.pattern)) + 

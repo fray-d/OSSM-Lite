@@ -52,6 +52,7 @@ void ossmResetSettingsStrokeEngine() {
     settings.speedBLE = 0;
     settings.minPosition = 0;
     settings.maxPosition = 20;
+    settings.stroke = 20;
     settings.sensation = 50;
     settings.playControl = ui::PlayControls::MAX_POSITION;
 
@@ -64,6 +65,7 @@ void ossmResetSettingsStreaming() {
     settings.speed = 0;
     settings.minPosition = 40;
     settings.maxPosition = 60;
+    settings.stroke = 20;
     settings.sensation = 50;
     settings.buffer = 100;
 
