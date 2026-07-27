@@ -49,20 +49,19 @@ namespace stroke_engine {
 
         while (isInCorrectState()) {
             if (isChangeSignificant(lastSetting.speed, settings.speed)) {
+                //Curve the speed based on userconfig
+                float exp = UserConfig::getSpeedCurve();
+                float speed = settings.speed/100.0;
+                speed = pow( 1 - pow( 1 - speed, exp), 1 / exp) * 100.0;
+                Stroker.setSpeed(speed, true);
+                lastSetting.speed = settings.speed;
+
                 // Speed is float, so give a little wiggle room here to assume 0
                 if (settings.speed < 0.1f) {
                     Stroker.stopMotion();
                 } else if (Stroker.getState() == READY) {
                     Stroker.startPattern();
                 }
-                
-                //Curve the speed based on userconfig
-                float exp = UserConfig::getSpeedCurve();
-                float speed = settings.speed/100.0;
-                speed = pow( 1 - pow( 1 - speed, exp), 1 / exp) * 100.0;
-                ESP_LOGI("TEST","SPEED: %f",speed);
-                Stroker.setSpeed(speed, true);
-                lastSetting.speed = settings.speed;
             }
 
             if (lastSetting.minPosition != settings.minPosition ||
