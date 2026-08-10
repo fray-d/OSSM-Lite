@@ -67,6 +67,9 @@ class MaxDepthCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         settings.maxPosition = constrain(value, 0.0, 100.0);
+        if (settings.maxPosition < settings.minPosition) {
+            settings.maxPosition = constrain(settings.minPosition + 1.0, 0.0, 100.0);
+        }
         settings.playControl = ui::PlayControls::MAX_POSITION;
         encoder.setEncoderValue(settings.maxPosition);
         pulseForCommunication();
@@ -80,6 +83,9 @@ class MinDepthCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         settings.minPosition = constrain(value, 0.0, 100.0);
+        if (settings.maxPosition < settings.minPosition) {
+            settings.minPosition = constrain(settings.maxPosition - 1.0, 0.0, 100.0);
+        }
         settings.playControl = ui::PlayControls::MIN_POSITION;
         encoder.setEncoderValue(settings.minPosition);
         pulseForCommunication();

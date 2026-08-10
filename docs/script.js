@@ -372,7 +372,7 @@ async function writeSetting(element,characteristicRef) {
     }
     console.log("Sent: " + value);
     value = encoder.encode(value);
-    await characteristicRef.writeValueWithoutResponse(value);
+    await characteristicRef.writeValue(value);
 
     const videoPlayer = document.getElementById("video");
     if (videoPlayer != null) {
@@ -388,6 +388,8 @@ async function writeSetting(element,characteristicRef) {
                     break;
             }
         }
+    } else {
+        await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     if (!characteristicRef.properties.notification) {
