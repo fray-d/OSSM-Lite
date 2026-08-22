@@ -202,6 +202,7 @@ void nimbleLoop(void* pvParameters) {
 void initNimble() {
     /** Initialize NimBLE and set the device name */
     NimBLEDevice::init(UserConfig::getDeviceName());
+    NimBLEDevice::setMTU(512);
 
     NimBLEDevice::setSecurityAuth(BLE_SM_PAIR_AUTHREQ_SC);
     pServer = NimBLEDevice::createServer();
