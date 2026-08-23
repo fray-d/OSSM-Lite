@@ -388,11 +388,10 @@ async function writeSetting(element,characteristicRef) {
                     break;
             }
         }
-    } else {
-        await new Promise(resolve => setTimeout(resolve, 250));
     }
 
     if (!characteristicRef.properties.notification) {
+        await new Promise(resolve => setTimeout(resolve, 250));
         await readSetting(null, element, characteristicRef);
     }
 }

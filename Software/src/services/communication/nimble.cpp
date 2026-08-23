@@ -31,6 +31,7 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     void onConnect(NimBLEServer* pServer, NimBLEConnInfo& connInfo) override {
         ESP_LOGI("NIMBLE", "Client connected: %s", connInfo.getAddress().toString().c_str());
         ESP_LOGI("NIMBLE", "Connection count: %d", pServer->getConnectedCount());
+        ble_gattc_exchange_mtu(connInfo.getConnHandle(), nullptr, nullptr);
         lostConnectionTime = 0;
     }
 
