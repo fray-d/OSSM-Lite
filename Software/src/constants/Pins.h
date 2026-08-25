@@ -48,7 +48,7 @@ namespace Pins {
         // define the IO pin where the limit(homingStart) switch(es) are
         // connected to (switches in series in normally open setup) Switches
         // wired from IO pin to ground.
-        constexpr int limitSwitchPin = 12;
+        constexpr int limitSwitchPin = 22;
     }
 
     namespace ControlBoard {
