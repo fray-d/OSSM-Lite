@@ -48,7 +48,7 @@ namespace Pins {
         // define the IO pin where the limit(homingStart) switch(es) are
         // connected to (switches in series in normally open setup) Switches
         // wired from IO pin to ground.
-        constexpr int limitSwitchPin = 22;
+        constexpr int limitSwitchPin = 33;
     }
 
     namespace ControlBoard {
@@ -59,7 +59,6 @@ namespace Pins {
         constexpr int pin1 = 2;
         constexpr int pin2 = 15;
         constexpr int pin3 = 22;
-        constexpr int pin4 = 33;
     }
 
     /** These are configured for the OSSM Remote - which has a screen, a
