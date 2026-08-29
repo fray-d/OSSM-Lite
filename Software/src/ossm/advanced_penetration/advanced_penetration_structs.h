@@ -127,6 +127,7 @@ namespace advanced_penetration {
     struct BaseControl : Control {
         BaseControls id;
         Modifier* modifier;
+        bool fromBLE;
         u8_t getModifiedValue(int strokeCount = -1) {
             if (modifier == nullptr || modifier->stepCount() == 0) {
                 return value;
@@ -179,6 +180,7 @@ namespace advanced_penetration {
         }
         bool processStringCommand(BaseControls control, String cmd) {
             if (control == id) {
+                fromBLE = true;
                 u8_t i = cmd.indexOf(":");
                 if (i == 255) {
                     value = constrain(cmd.toInt(), minValue, maxValue);
@@ -189,9 +191,12 @@ namespace advanced_penetration {
                 }
                 ModifierControls control = static_cast<ModifierControls>(cmd.substring(0, i).toInt());
                 cmd = cmd.substring(i + 1);
-                return modifier->amplitude.processStringCommand(control, cmd) || modifier->inStep.processStringCommand(control, cmd) ||
-                       modifier->inWait.processStringCommand(control, cmd) || modifier->outStep.processStringCommand(control, cmd) ||
-                       modifier->outWait.processStringCommand(control, cmd) || modifier->offset.processStringCommand(control, cmd);
+                return modifier->amplitude.processStringCommand(control, cmd) || 
+                       modifier->inStep.processStringCommand(control, cmd) ||
+                       modifier->inWait.processStringCommand(control, cmd) || 
+                       modifier->outStep.processStringCommand(control, cmd) ||
+                       modifier->outWait.processStringCommand(control, cmd) || 
+                       modifier->offset.processStringCommand(control, cmd);
             }
             return false;
         }
@@ -260,9 +265,12 @@ namespace advanced_penetration {
                 }
                 control = static_cast<BaseControls>(single.substring(0, j).toInt());
                 single = single.substring(j + 1);
-                update = maxDepth.processStringCommand(control, single) || minDepth.processStringCommand(control, single) ||
-                         inSpeed.processStringCommand(control, single) || outSpeed.processStringCommand(control, single) ||
-                         inAcceleration.processStringCommand(control, single) || outAcceleration.processStringCommand(control, single) ||
+                update = maxDepth.processStringCommand(control, single) || 
+                         minDepth.processStringCommand(control, single) ||
+                         inSpeed.processStringCommand(control, single) || 
+                         outSpeed.processStringCommand(control, single) ||
+                         inAcceleration.processStringCommand(control, single) || 
+                         outAcceleration.processStringCommand(control, single) ||
                          speed.processStringCommand(control, single);
             }
             lastStatus = ControlStatus::STATUS_COUNT;

@@ -27,6 +27,7 @@ namespace advanced_penetration {
 
     static void startAdvancedPenetrationMotionTask(void* pvParameters) {
         u32_t strokeCount = 1;
+        u32_t maxAccel = u32_t(UserConfig::getStepsPerMM(UserConfig::getMaxAcceleration()));
         while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
                stateMachine->is("advancedPenetration.presets"_s)) {
             if (currentSettings.speed.value == 0.0) {
@@ -53,6 +54,9 @@ namespace advanced_penetration {
                 targetPosition = targetPosition * currentSettings.minDepth.getNormalizedModifiedValue(strokeCount);
             }
             stepper->setSpeedInHz(speed);
+            if(speed == 0.0) {
+                stepper->setAcceleration(maxAccel);
+            }
             stepper->applySpeedAcceleration();
 
             u32_t distance = abs(targetPosition - stepper->getCurrentPosition());
@@ -63,7 +67,7 @@ namespace advanced_penetration {
             } else {
                 acceleration += minAccel * 9 * currentSettings.outAcceleration.getRampedModifiedValue(0.6, strokeCount);
             }
-            acceleration = min(acceleration, u32_t(UserConfig::getStepsPerMM(UserConfig::getMaxAcceleration())));
+            acceleration = min(acceleration, maxAccel);
             if (acceleration > stepper->getAcceleration() || !stepper->isRunning()) {
                 stepper->setAcceleration(acceleration);
                 stepper->applySpeedAcceleration();

@@ -1,6 +1,6 @@
 #ifndef OSSM_VERSION_H
 #define OSSM_VERSION_H
 
-#define VERSION "1.4.15"
+#define VERSION "1.4.16"
 
 #endif  // OSSM_VERSION_H

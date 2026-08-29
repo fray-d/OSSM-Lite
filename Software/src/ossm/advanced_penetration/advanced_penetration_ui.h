@@ -318,11 +318,10 @@ namespace advanced_penetration {
         updateControl(currentSettings.outAcceleration);
     }
 
-    void handleDrawPage(u8_t speedValue, u8_t encoderValue) {
+    void handleDrawPage(u8_t encoderValue) {
         if (xSemaphoreTake(displayMutex, 100) == pdTRUE) {
             ui::clearPage(display.getU8g2(), true, true);
             ui::setHeader(display.getU8g2(),sp);
-            currentSettings.speed.value = speedValue;
             ui::drawShape::settingBar(display.getU8g2(), "",
                                       currentSettings.speed.value, 0, 0,
                                       ui::LEFT_ALIGNED, 0, 54);
@@ -340,6 +339,7 @@ namespace advanced_penetration {
     static void startAdvancedPenetrationUITask(void* pvParameters) {
         encoder.setAcceleration(0);
         u8_t lastEncoder = 0;
+        u8_t lastSpeed = 0;
         showHeaderIcons = false;
 
         while (stateMachine->is("advancedPenetration"_s) || stateMachine->is("advancedPenetration.idle"_s) ||
@@ -349,12 +349,17 @@ namespace advanced_penetration {
             }
             u8_t speedValue = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
             u8_t encoderValue = encoder.readEncoder();
-            bool speedChange = abs(speedValue - currentSettings.speed.value) > 1 || (speedValue == 0 && currentSettings.speed.value != 0);
+            bool speedChange = abs(speedValue - lastSpeed) > 1 || (speedValue == 0 && lastSpeed != 0);
             if (speedChange) {
-                currentSettings.changed = true;
+                lastSpeed = speedValue;
+                if (!currentSettings.speed.fromBLE || speedValue < currentSettings.speed.value){
+                    currentSettings.speed.fromBLE = false;
+                    currentSettings.speed.value = speedValue;
+                    currentSettings.changed = true;
+                }
             }
             if (speedChange || encoderValue != lastEncoder || currentSettings.status != currentSettings.lastStatus) {
-                handleDrawPage(speedValue, encoderValue);
+                handleDrawPage(encoderValue);
                 lastEncoder = encoderValue;
             }
             vTaskDelay(100);
