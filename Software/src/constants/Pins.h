@@ -45,10 +45,14 @@ namespace Pins {
 
         // define the IO pin the emergency stop switch is connected to
         constexpr int stopPin = 19;
+
         // define the IO pin where the limit(homingStart) switch(es) are
         // connected to (switches in series in normally open setup) Switches
         // wired from IO pin to ground.
         constexpr int limitSwitchPin = 33;
+
+        // The numebr of times the limit switch must sample as 'closed' before we consider ourselves homed
+        constexpr int limitSwitchActivationThreshold = 10;
     }
 
     namespace ControlBoard {

@@ -43,6 +43,7 @@ namespace homing {
         bool isDouble = UserConfig::getHomingType() == UserConfig::HomingType::DoubleTap;
         bool isNone = UserConfig::getHomingType() == UserConfig::HomingType::None;
         bool isSingle = UserConfig::getHomingType() == UserConfig::HomingType::SingleSided;
+        int limitSwitchTriggerCount = 0; // Number of time the limit switch has been read as 'closed'
 
         if (isNone && calibration.isFirstHomed) {
             stepper->setCurrentPosition(-1 * UserConfig::getStepsPerMM(10));
@@ -101,18 +102,33 @@ namespace homing {
                 break;
             }
 
+
+            // We know we're home if:
+            //  - the measured current is >= UserConfig::getSensorLimit
+            //  - OR we've hit the physical limit switch limitSwitchActivationThreshold times
+
+            bool limitSwitchTriggered = digitalRead(Pins::Driver::limitSwitchPin) == LOW;
+            if (limitSwitchTriggered) {
+                limitSwitchTriggerCount ++;
+            } else {
+                // Reset the limit switch count
+                limitSwitchTriggerCount = 0;
+            }
+
             float current = getAnalogAveragePercent(SampleOnPin{
                                 Pins::Driver::currentSensorPin, 10}) -
                             calibration.currentSensorOffset;
 
             ESP_LOGV("Homing", "Current: %f", current);
+            ESP_LOGV("Homing", "Limit Switch: %d", limitSwitchTriggerCount);
 
-            if (current < UserConfig::getSensorLimit()) {
+            if (current < UserConfig::getSensorLimit() && limitSwitchTriggerCount < Pins::Driver::limitSwitchActivationThreshold) {
+                // Current is too low, AND we've not hit the limit switch threshold
                 vTaskDelay(1);
                 continue;
             }
 
-            ESP_LOGD("Homing", "Current over limit: %f", current);
+            ESP_LOGD("Homing", "Current over limit, or limit switch threshold hit");
             stepper->stopMove();
 
             stepper->setSpeedInHz(UserConfig::getStepsPerMM(UserConfig::getHomingSpeed() * 10.0));
