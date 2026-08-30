@@ -351,8 +351,8 @@ namespace advanced_penetration {
             u8_t encoderValue = encoder.readEncoder();
             bool speedChange = abs(speedValue - lastSpeed) > 1 || (speedValue == 0 && lastSpeed != 0);
             if (speedChange) {
-                lastSpeed = speedValue;
-                if (!currentSettings.speed.fromBLE || speedValue < currentSettings.speed.value){
+                if (!currentSettings.speed.fromBLE || speedValue <= currentSettings.speed.value || lastSpeed == 0){
+                    lastSpeed = speedValue;
                     currentSettings.speed.fromBLE = false;
                     currentSettings.speed.value = speedValue;
                     currentSettings.changed = true;
