@@ -34,13 +34,13 @@ static void drawPatternControlsTask(void *pvParameters) {
     showHeaderIcons = true;
 
     while (isInCorrectState()) {
+        nextPattern = StrokePatterns(encoder.readEncoder() / 3);
         settings.speedKnob = getAnalogAveragePercent(SampleOnPin{Pins::Remote::speedPotPin, 50});
         if (settings.speedKnob != settings.speed) {
             shouldUpdateDisplay = true;
             settings.speed = settings.speedKnob;
         }
 
-        nextPattern = StrokePatterns(encoder.readEncoder() / 3);
         shouldUpdateDisplay = shouldUpdateDisplay || settings.pattern != nextPattern;
         if (!shouldUpdateDisplay) {
             vTaskDelay(100);
