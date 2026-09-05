@@ -12,10 +12,11 @@ void initBoard() {
 
     pinMode(Pins::Remote::encoderSwitch, INPUT_PULLDOWN);
 
+    pinMode(Pins::Driver::limitSwitchPin, INPUT_PULLUP);
+
     pinMode(Pins::GPIO::pin1, OUTPUT);
     pinMode(Pins::GPIO::pin2, OUTPUT);
     pinMode(Pins::GPIO::pin3, OUTPUT);
-    pinMode(Pins::GPIO::pin4, OUTPUT);
 
     pinMode(Pins::Driver::motorEnablePin, OUTPUT);
     pinMode(Pins::ControlBoard::button, INPUT_PULLDOWN);

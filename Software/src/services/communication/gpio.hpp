@@ -5,7 +5,7 @@
 
 #include "constants/Pins.h"
 
-// Simple helper to map 1-4 to actual board pins
+// Simple helper to map 1-3 to actual board pins
 static int mapGpioIndexToPin(int index) {
     switch (index) {
         case 1:
@@ -14,8 +14,6 @@ static int mapGpioIndexToPin(int index) {
             return Pins::GPIO::pin2;
         case 3:
             return Pins::GPIO::pin3;
-        case 4:
-            return Pins::GPIO::pin4;
         default:
             return -1;
     }
