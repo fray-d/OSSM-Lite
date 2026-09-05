@@ -337,6 +337,10 @@ class HalfnHalf : public Pattern {
         _speed = speed;
         _updateStrokeTiming();
     }
+    void setStroke(int stroke) {
+        _stroke = stroke;
+        _updateStrokeTiming();
+    }
     motionParameter nextTarget(unsigned int index) {
         // Derive the half/full alternation straight from the stroke index
         // instead of toggling a flag. StrokeEngine re-queries the *same* index
