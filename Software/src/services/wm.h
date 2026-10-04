@@ -7,8 +7,7 @@
 extern WiFiManager wm;
 
 void initWM();
-bool setWiFiCredentials(const String& ssid, const String& password);
-bool connectWiFi();
+bool connectWiFi(const String& ssid, const String& password);
 String getWiFiStatus();
 
 #endif  // OSSM_WM_H

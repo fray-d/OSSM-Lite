@@ -5,6 +5,7 @@ FastAccelStepperEngine stepperEngine = FastAccelStepperEngine();
 FastAccelStepper *stepper = nullptr;
 
 void initStepper() {
+    UserConfig::initUserConfig();
     stepperEngine.init();
     stepper = stepperEngine.stepperConnectToPin(Pins::Driver::motorStepPin);
     if (stepper) {

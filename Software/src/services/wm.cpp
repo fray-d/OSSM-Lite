@@ -1,13 +1,12 @@
 #include "wm.h"
 
 #include <ArduinoJson.h>
-#include <Preferences.h>
+#include "UserConfig.h"
 #include "WiFi.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
 
 WiFiManager wm;
-Preferences wifiPrefs;
 
 void initWM() {
     WiFi.useStaticBuffers(true);
@@ -18,44 +17,13 @@ void initWM() {
         ESP_LOGI("WM", "WiFi credentials saved to NVS");
     });
 
-    wifiPrefs.begin("wifi", true);
-    if (wifiPrefs.isKey("ssid")) {
-        WiFi.begin();
-    }
-    wifiPrefs.end();
-
+    WiFi.begin();
     ESP_LOGI("WM", "WiFi initialization complete, status: %d", WiFi.status());
 }
 
-bool setWiFiCredentials(const String& ssid, const String& password) {
-    // Open preferences in read/write mode
-    if (!wifiPrefs.begin("wifi", false)) {
-        ESP_LOGE("WM", "Failed to open preferences for writing");
-        return false;
-    }
-
-    // Save credentials to NVS
-    wifiPrefs.putString("ssid", ssid);
-    wifiPrefs.putString("password", password);
-    wifiPrefs.end();
-
-    ESP_LOGI("WM", "WiFi credentials saved to NVS");
-    return true;
-}
-
-bool connectWiFi() {
-    // Read credentials from NVS
-    if (!wifiPrefs.begin("wifi", true)) {
-        ESP_LOGE("WM", "Failed to open preferences for reading");
-        return false;
-    }
-
-    String ssid = wifiPrefs.getString("ssid", "");
-    String password = wifiPrefs.getString("password", "");
-    wifiPrefs.end();
-
+bool connectWiFi(const String& ssid, const String& password) {
     if (ssid.length() == 0) {
-        ESP_LOGW("WM", "No SSID found in NVS");
+        ESP_LOGW("WM", "No SSID found");
         return false;
     }
 
@@ -97,17 +65,6 @@ String getWiFiStatus() {
         doc["ssid"] = WiFi.SSID();
         doc["ip"] = WiFi.localIP().toString();
         doc["rssi"] = WiFi.RSSI();
-    } else {
-        // Try to read saved SSID from NVS
-        if (wifiPrefs.begin("wifi", true)) {
-            String savedSSID = wifiPrefs.getString("ssid", "");
-            if (savedSSID.length() > 0) {
-                doc["ssid"] = savedSSID;
-            }
-            wifiPrefs.end();
-        }
-        doc["ip"] = "";
-        doc["rssi"] = 0;
     }
 
     String output;

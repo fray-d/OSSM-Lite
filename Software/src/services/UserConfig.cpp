@@ -3,6 +3,7 @@
 #include <Preferences.h>
 
 namespace UserConfig {
+    Preferences userConfig;
     std::string deviceName = "";
     float railLength = -1;
     float maxAcceleration = -1;
@@ -16,21 +17,41 @@ namespace UserConfig {
     float sensorLimit = -1;
     float speedCurve = -1;
 
-    float readNVSFloat(const char* key, float def) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        float value = userConfig.getFloat(key, def);
+    const char* pref = "UserConfig";
+    const char* tag = "USER CONFIG";
+
+    void initUserConfig() {
+        userConfig.begin(pref);
+        ESP_LOGI(tag, "Initializing Preferences");
         userConfig.end();
-        ESP_LOGI("USER CONFIG","%s read: %f", key, value);
-        return value;
     }
 
+    float readNVSFloat(const char* key, float def) {
+        userConfig.begin(pref, true);
+        float value = userConfig.getFloat(key, def);
+        userConfig.end();
+        ESP_LOGI(tag,"%s read: %f", key, value);
+        return value;
+    }
     void writeNVSFloat(const char* key, float value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
+        userConfig.begin(pref, false);
         userConfig.putFloat(key, value);
         userConfig.end();
-        ESP_LOGI("USER CONFIG", "%s write: %f", key, value);
+        ESP_LOGI(tag, "%s write: %f", key, value);
+    }
+
+    bool readNVSBool(const char* key, bool def) {
+        userConfig.begin(pref, true);
+        bool value = userConfig.getBool(key, def);
+        userConfig.end();
+        ESP_LOGI(tag,"%s read: %d", key, value);
+        return value;
+    }
+    void writeNVSBool(const char* key, bool value) {
+        userConfig.begin(pref, false);
+        userConfig.putBool(key, value);
+        userConfig.end();
+        ESP_LOGI(tag,"%s write: %d", key, value);
     }
 
     float getSpeedCurve() {
@@ -59,8 +80,7 @@ namespace UserConfig {
 
     std::string getDeviceName() {
         if (deviceName.empty()) {
-            Preferences userConfig;
-            userConfig.begin("UserConfig", true);
+            userConfig.begin(pref, true);
             deviceName = userConfig.getString("DeviceName","OSSM").c_str();
             userConfig.end();
             ESP_LOGD("USER CONFIG", "Name read: %s", deviceName.c_str());
@@ -68,28 +88,18 @@ namespace UserConfig {
         return deviceName;
     }
     void setDeviceName(String value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
+        userConfig.begin(pref, false);
         userConfig.putString("DeviceName", value);
         userConfig.end();
-        ESP_LOGI("USER CONFIG", "Rename write: %s", value.c_str());
+        ESP_LOGI(tag, "Rename write: %s", value.c_str());
         ESP.restart();
     }
 
     bool getDirection() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        bool output = userConfig.getBool("Direction",true);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Direction read: %d", output);
-        return output;
+        return readNVSBool("Direction", true);
     }
     void setDirection(bool value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
-        userConfig.putBool("Direction", value);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Direction write: %d", value);
+        writeNVSBool("Direction", value);
         ESP.restart();
     }
     void reverseDirection() {
@@ -97,35 +107,24 @@ namespace UserConfig {
     }
 
     bool getReHome() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
-        bool output = userConfig.getBool("ReHome",true);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Home between moodes read: %d", output);
-        return output;
+        return readNVSBool("ReHome",true);
     }
     void setReHome(bool value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
-        userConfig.putBool("ReHome", value);
-        userConfig.end();
-        ESP_LOGI("USER CONFIG", "Home between modes write: %d", value);
+        writeNVSBool("ReHome", value);
     }
 
     HomingType getHomingType() {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", true);
+        userConfig.begin(pref, true);
         HomingType output = static_cast<HomingType>(userConfig.getInt("HomingType",1));
         userConfig.end();
-        ESP_LOGI("USER CONFIG","Homing type read: %d", output);
+        ESP_LOGI(tag,"Homing type read: %d", output);
         return output;
     }
     void setHomingType(HomingType value) {
-        Preferences userConfig;
-        userConfig.begin("UserConfig", false);
+        userConfig.begin(pref, false);
         userConfig.putInt("HomingType", value);
         userConfig.end();
-        ESP_LOGI("USER CONFIG", "Homing type write: %d", value);
+        ESP_LOGI(tag, "Homing type write: %d", value);
     }
 
     float getRailLength() {

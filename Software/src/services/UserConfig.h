@@ -6,6 +6,8 @@
 namespace UserConfig {
     enum HomingType {None, Default, SingleSided, DoubleTap};
 
+    void initUserConfig();
+
     float getSpeedCurve();
     void setSpeedCurve(float value);
 

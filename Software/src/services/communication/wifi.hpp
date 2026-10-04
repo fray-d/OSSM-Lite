@@ -53,20 +53,12 @@ class WiFiConfigCallbacks : public NimBLECharacteristicCallbacks {
         ESP_LOGI("NIMBLE_WIFI", "Setting WiFi credentials - SSID: %s", ssid.c_str());
 
         // Save credentials and attempt connection
-        if (setWiFiCredentials(ssid, password)) {
-            pCharacteristic->setValue("ok:wifi:saved");
-            
-            // Attempt to connect
-            if (connectWiFi()) {
-                ESP_LOGI("NIMBLE_WIFI", "WiFi connected successfully");
-                pCharacteristic->setValue("ok:wifi:connected");
-            } else {
-                ESP_LOGW("NIMBLE_WIFI", "WiFi connection failed");
-                pCharacteristic->setValue("fail:wifi:connection_failed");
-            }
+        if (connectWiFi(ssid, password)) {
+            ESP_LOGI("NIMBLE_WIFI", "WiFi connected successfully");
+            pCharacteristic->setValue("ok:wifi:connected");
         } else {
-            ESP_LOGE("NIMBLE_WIFI", "Failed to save WiFi credentials");
-            pCharacteristic->setValue("fail:wifi:save_failed");
+            ESP_LOGW("NIMBLE_WIFI", "WiFi connection failed");
+            pCharacteristic->setValue("fail:wifi:connection_failed");
         }
     }
 
