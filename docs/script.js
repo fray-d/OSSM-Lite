@@ -1,5 +1,7 @@
 const LEGACY_OSSM_UUID = "522b443a-4f53-534d-0001-420badbabe69";
-const OSSM_UUID = "4f53534d-0000-0000-0000-000000000000";
+const OSSM_MOTION_UUID = "0000055e-0000-1000-8000-00805f9b34fb";
+const OSSM_CONFIG_UUID = "0000055c-0000-1000-8000-00805f9b34fb";
+const OSSM_ADVANCED_UUID = "0000055a-0000-1000-8000-00805f9b34fb";
 const HOMING_TYPE_UUID = "4f53534d-436f-6e66-6967-486f6d696e67";
 const RAIL_LENGTH_UUID = "4f53534d-436f-6e66-6967-4c656e677468";
 const HOME_BETWEEN_MODES_UUID = "4f53534d-436f-6e66-6967-5265486f6d65";
@@ -17,9 +19,9 @@ const SPDCRV_UUID = "4f53534d-436f-6e66-6967-537064437276";
 const SPDHOM_UUID = "4f53534d-436f-6e66-6967-537064486f6d";
 
 //AP Mode
-const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374"
-const STATUS_UUID = "4f53534d-6164-7661-6e63-656473746174"
-const CONTROL_UUID = "4f53534d-6164-7661-6e63-6564636f6e74"
+const PRESETS_UUID = "4f53534d-6164-7661-6e63-656470727374";
+const STATUS_UUID = "4f53534d-6164-7661-6e63-656473746174";
+const CONTROL_UUID = "4f53534d-6164-7661-6e63-6564636f6e74";
 
 //Common Settings
 const SPEED_UUID = "4f53534d-436f-6d6d-6f6e-005370656564";
@@ -50,14 +52,18 @@ function clearCheck(element) {
 }
 
 // Main server/service
-var serverRef, serviceRef
+var serverRef, motionRef, configRef, advancedRef
 async function handleConnect() {
     var connectButton = document.getElementById("connect");
     connectButton.ariaBusy = true;
     connectButton.ariaDisabled = true;
     try {
         const bleDevice = await navigator.bluetooth.requestDevice({
-            filters:[{services:[OSSM_UUID]}]
+            filters:[
+                {services:[OSSM_CONFIG_UUID]},
+                {services:[OSSM_MOTION_UUID]},
+                {services:[OSSM_ADVANCED_UUID]}
+            ]
         });
         bleDevice.addEventListener('gattserverdisconnected', handleDisconnect);
         console.log("Device Found");
@@ -65,7 +71,9 @@ async function handleConnect() {
         serverRef = await bleDevice.gatt.connect();
         console.log("Connected to server");
         
-        serviceRef = await serverRef.getPrimaryService(OSSM_UUID);
+        motionRef = await serverRef.getPrimaryService(OSSM_MOTION_UUID);
+        configRef = await serverRef.getPrimaryService(OSSM_CONFIG_UUID);
+        advancedRef = await serverRef.getPrimaryService(OSSM_ADVANCED_UUID);
         console.log("Got OSSM service");
 
         connectButton.style.display = 'none';
@@ -100,7 +108,7 @@ async function initDeviceName() {
     let deviceNameElement = document.getElementById("deviceName");
     let saveButton = document.getElementById("save");
     try{
-        let deviceNameRef = await serviceRef.getCharacteristic(DEVICE_NAME_UUID);
+        let deviceNameRef = await configRef.getCharacteristic(DEVICE_NAME_UUID);
 
         console.log("Characteristic " + decodeHex(DEVICE_NAME_UUID) + " connected.")
         saveButton.onclick = function() {
@@ -115,7 +123,7 @@ async function initDeviceName() {
 // Wifi
 async function initWiFi() {
     try{
-        let wifiRef = await serviceRef.getCharacteristic(WIFI_UUID);
+        let wifiRef = await configRef.getCharacteristic(WIFI_UUID);
         console.log("Characteristic " + decodeHex(WIFI_UUID) + " connected.")
         document.getElementById("save").onclick = function() {
             writeWiFi(wifiRef);
@@ -153,7 +161,7 @@ async function writeWiFi(wifiRef) {
 }
 
 async function writeUpdate() {
-    var update = await serviceRef.getCharacteristic(UPDATE_UUID);
+    var update = await configRef.getCharacteristic(UPDATE_UUID);
     await update.writeValue(encoder.encode(true));
 }
 
@@ -162,7 +170,7 @@ var presetRef, presetListElement;
 async function initPresets() {
     presetListElement = document.getElementById("presetList");
     try{
-        presetRef = await serviceRef.getCharacteristic(PRESETS_UUID);
+        presetRef = await advancedRef.getCharacteristic(PRESETS_UUID);
         console.log("Characteristic " + decodeHex(PRESETS_UUID) + " connected");
         await readPresets();
     } catch {
@@ -221,12 +229,12 @@ async function initStatus() {
     outAccelElement = document.getElementById("outAccel");
     speedElement = document.getElementById("speed");
     try{
-        statusRef = await serviceRef.getCharacteristic(STATUS_UUID);
+        statusRef = await advancedRef.getCharacteristic(STATUS_UUID);
         console.log("Characteristic " + decodeHex(STATUS_UUID) + " connected.")
         await statusRef.startNotifications().then(function() {
             statusRef.addEventListener('characteristicvaluechanged', handleStatus);
         });
-        controlRef = await serviceRef.getCharacteristic(CONTROL_UUID);
+        controlRef = await advancedRef.getCharacteristic(CONTROL_UUID);
         console.log("Characteristic " + decodeHex(CONTROL_UUID) + " connected.")
         readStatus();
     } catch {
@@ -416,12 +424,17 @@ const canvas = document.getElementById("speedCurveChart");
 async function initCurve() {
     const element = document.getElementById("speedCurve");
     try {
-        let characteristicRef = await serviceRef.getCharacteristic(SPDCRV_UUID);
+        let characteristicRef = await configRef.getCharacteristic(SPDCRV_UUID);
         console.log("Characteristic " + decodeHex(SPDCRV_UUID) + " connected.")
         element.onchange = function() {
             writeSetting(element, characteristicRef);
             drawChart();
         };
+        await characteristicRef.startNotifications().then(
+            function() {
+                characteristicRef.addEventListener('characteristicvaluechanged', (event) => readSetting(event, element, characteristicRef));
+            }
+        )
         await readSetting(null, element, characteristicRef);
         drawChart();
     } catch {
@@ -430,10 +443,12 @@ async function initCurve() {
 }
 
 // Shared Settings
-async function initSetting(element, uuid) {
+async function initSetting(element, uuid, service) {
+    let characteristicRef;
     try {
-        let characteristicRef = await serviceRef.getCharacteristic(uuid);
+        characteristicRef = await service.getCharacteristic(uuid);
         console.log("Characteristic " + decodeHex(uuid) + " connected.")
+
         if (characteristicRef.properties.notify) {
             await characteristicRef.startNotifications().then(
                 function() {
@@ -447,6 +462,36 @@ async function initSetting(element, uuid) {
         await readSetting(null, element, characteristicRef);
     } catch {
        firmwareWarning();
+       return;
+    }
+
+    try {
+        const c2901 = await characteristicRef.getDescriptor(0x2901);
+        const raw = await c2901.readValue();
+        const decoder8 = new TextDecoder('utf-8');
+        const name = decoder8.decode(raw);
+        const c2904 = await characteristicRef.getDescriptor(0x2904);
+        const value = await c2904.readValue();
+        const format = value.getUint8(0);
+        const ordinal = value.getUint16(5,true);
+        console.log(`Name: ${name}, Format: ${format}, Ordinal: ${ordinal}`);
+        const c2906 = await characteristicRef.getDescriptor(0x2906);
+        const range = await c2906.readValue();
+        switch (format) {
+            case 23:
+                element.min = range.getFloat32(0, true);
+                element.max = range.getFloat32(4, true);
+                break;
+            case 6:
+                element.min = range.getUint16(0, true);
+                element.max = range.getUint16(2, true);
+                break;
+            default:
+                break; 
+        }
+        console.log(`Min: ${element.min}, Max: ${element.max}`);
+    } catch {
+        console.log("Could not find descriptors for min/max/format/ordinal");
     }
 }
 
@@ -511,9 +556,9 @@ async function writeSetting(element,characteristicRef) {
 let streamRef;
 async function initStream() {
     try {
-        streamRef = await serviceRef.getCharacteristic(STREAM_UUID);
+        streamRef = await motionRef.getCharacteristic(STREAM_UUID);
         console.log("Characteristic " + decodeHex(STREAM_UUID) + " connected.")
-        await streamRef.readValue();
+        await sendStream(0,1000);
     } catch {
         firmwareWarning();
     }
@@ -645,7 +690,7 @@ var patternListRef, patternListElement;
 async function initStrokeEngine() {
     patternListElement = document.getElementById("patternList");
     try{
-        patternListRef = await serviceRef.getCharacteristic(SENPTL_UUID);
+        patternListRef = await motionRef.getCharacteristic(SENPTL_UUID);
         console.log("Characteristic " + decodeHex(SENPTL_UUID) + " connected");
     } catch {
         firmwareWarning();
@@ -675,8 +720,9 @@ async function syncPatternDescription(element) {
     document.getElementById("patternDescription").innerText = element.selectedOptions[0].title;
 }
 async function initPatternSetting(element, uuid) {
+    let characteristicRef;
     try {
-        let characteristicRef = await serviceRef.getCharacteristic(uuid);
+        characteristicRef = await motionRef.getCharacteristic(uuid);
         console.log("Characteristic " + decodeHex(uuid) + " connected.")
         if (characteristicRef.properties.notify) {
             await characteristicRef.startNotifications().then(
@@ -694,32 +740,63 @@ async function initPatternSetting(element, uuid) {
         };
         await readSetting(null, element, characteristicRef);
         syncPatternDescription(element);
+        writeSetting(element, characteristicRef);
     } catch {
        firmwareWarning();
+       return;
+    }
+
+    try {
+        const c2901 = await characteristicRef.getDescriptor(0x2901);
+        const raw = await c2901.readValue();
+        const decoder8 = new TextDecoder('utf-8');
+        const name = decoder8.decode(raw);
+        const c2904 = await characteristicRef.getDescriptor(0x2904);
+        const value = await c2904.readValue();
+        const format = value.getUint8(0);
+        const ordinal = value.getUint16(5,true);
+        console.log(`Name: ${name}, Format: ${format}, Ordinal: ${ordinal}`);
+        const c2906 = await characteristicRef.getDescriptor(0x2906);
+        const range = await c2906.readValue();
+        switch (format) {
+            case 23:
+                element.min = range.getFloat32(0, true);
+                element.max = range.getFloat32(4, true);
+                break;
+            case 6:
+                element.min = range.getUint16(0, true);
+                element.max = range.getUint16(2, true);
+                break;
+            default:
+                break; 
+        }
+        console.log(`Min: ${element.min}, Max: ${element.max}`);
+    } catch {
+        console.log("Could not find descriptors for min/max/format/ordinal");
     }
 }
 
 async function connectMotorPage() {
     await handleConnect();
-    await initSetting(document.getElementById("maxAcceleration"), MACCEL_UUID);
-    await initSetting(document.getElementById("motorRPM"), MAXRPM_UUID);
-    await initSetting(document.getElementById("stepsPerRevolution"), STEPPR_UUID);
-    await initSetting(document.getElementById("pulleyTeeth"), PULLEY_UUID);
-    await initSetting(document.getElementById("beltPitch"), BPITCH_UUID);
+    await initSetting(document.getElementById("maxAcceleration"), MACCEL_UUID, configRef);
+    await initSetting(document.getElementById("motorRPM"), MAXRPM_UUID, configRef);
+    await initSetting(document.getElementById("stepsPerRevolution"), STEPPR_UUID, configRef);
+    await initSetting(document.getElementById("pulleyTeeth"), PULLEY_UUID, configRef);
+    await initSetting(document.getElementById("beltPitch"), BPITCH_UUID, configRef);
 }
 
 async function connectHomingPage() {
     await handleConnect();
-    await initSetting(document.getElementById("homingType"), HOMING_TYPE_UUID);
-    await initSetting(document.getElementById("railLength"), RAIL_LENGTH_UUID);
-    await initSetting(document.getElementById("currentLimit"), SENSOR_UUID);
-    await initSetting(document.getElementById("homingSpeed"), SPDHOM_UUID);
-    await initSetting(document.getElementById("homeBetweenModes"), HOME_BETWEEN_MODES_UUID);
+    await initSetting(document.getElementById("homingType"), HOMING_TYPE_UUID, configRef);
+    await initSetting(document.getElementById("railLength"), RAIL_LENGTH_UUID, configRef);
+    await initSetting(document.getElementById("currentLimit"), SENSOR_UUID, configRef);
+    await initSetting(document.getElementById("homingSpeed"), SPDHOM_UUID, configRef);
+    await initSetting(document.getElementById("homeBetweenModes"), HOME_BETWEEN_MODES_UUID, configRef);
 }
 
 async function connectRailPage() {
     await handleConnect();
-    await initSetting(document.getElementById("reverseRail"), REVERSE_RAIL_UUID);
+    await initSetting(document.getElementById("reverseRail"), REVERSE_RAIL_UUID, configRef);
 }
 
 async function connectNamePage() {
@@ -746,9 +823,9 @@ async function connectPresets() {
 async function connectFunscript() {
     await handleConnect();
     await initStream();
-    await initSetting(document.getElementById('speed'),SPEED_UUID);
-    await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID);
-    await initSetting(document.getElementById('minDepth'), MINDEP_UUID);
+    await initSetting(document.getElementById('speed'),SPEED_UUID, motionRef);
+    await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID, motionRef);
+    await initSetting(document.getElementById('minDepth'), MINDEP_UUID, motionRef);
     document.getElementById("simplify").onchange = function() {
         seekStream();
     };
@@ -756,10 +833,11 @@ async function connectFunscript() {
 
 async function connectStrokeEngine() {
     await handleConnect();
-    await initSetting(document.getElementById('speed'),SPEED_UUID);
-    await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID);
-    await initSetting(document.getElementById('minDepth'), MINDEP_UUID);
-    await initSetting(document.getElementById('sensation'), SENSAT_UUID);
     await initStrokeEngine();
     await initPatternSetting(patternListElement, SENPAT_UUID);
+    await initSetting(document.getElementById('speed'),SPEED_UUID, motionRef);
+    await initSetting(document.getElementById('maxDepth'), MAXDEP_UUID, motionRef);
+    await initSetting(document.getElementById('minDepth'), MINDEP_UUID, motionRef);
+    await initSetting(document.getElementById('sensation'), SENSAT_UUID, motionRef);
+    
 }

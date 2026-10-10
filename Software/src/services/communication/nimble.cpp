@@ -54,9 +54,17 @@ class ServerCallbacks : public NimBLEServerCallbacks {
     }
 } serverCallbacks;
 
-void notifyValue(const char* uuid, String value) {
-    NimBLEService* ossmService = pServer->getServiceByUUID(OSSM_SERVICE_UUID);
+void notifyValue(const char* service, const char* uuid, String value) {
+    NimBLEService* ossmService = pServer->getServiceByUUID(service);
+    if (!ossmService) {
+        ESP_LOGE("NIMBLE", "Notifing service is not available?");
+        return;
+    }
     NimBLECharacteristic* noteChar = ossmService->getCharacteristic(uuid);
+    if (!noteChar) {
+        ESP_LOGE("NIMBLE", "Notifying characteristic is not available?");
+        return;
+    }
     if (value != noteChar->getValue()) {
         ESP_LOGD("NIMBLE", "Notifying: %s", value.c_str());
         noteChar->setValue(value);
@@ -66,12 +74,8 @@ void notifyValue(const char* uuid, String value) {
 }
 
 void nimbleLoop(void* pvParameters) {
-    NimBLEServer* pServer = (NimBLEServer*)pvParameters;
-    /** Loop here and send notifications to connected peers */
-
     String lastState = "";
     int lastConnCount = 0;
-    int lastMessageTime = 0;
     while (true) {
         // Check if we should be advertising (no connections)
         if (pServer->getConnectedCount() == 0) {
@@ -140,25 +144,10 @@ void nimbleLoop(void* pvParameters) {
         }
 
         int currentConnCount = pServer->getConnectedCount();
-
         // Clear last state when connection count changes
         if (currentConnCount != lastConnCount) {
             lastState = "";
             lastConnCount = currentConnCount;
-        }
-
-        NimBLEService* pSvc = pServer->getServiceByUUID(LEGACY_SERVICE_UUID);
-        if (!pSvc) {
-            lastState = "";
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            continue;
-        }
-
-        NimBLECharacteristic* pChr = pSvc->getCharacteristic(CHARACTERISTIC_STATE_UUID);
-        if (!pChr) {
-            lastState = "";
-            vTaskDelay(pdMS_TO_TICKS(1000));
-            continue;
         }
 
         // mannage message queue
@@ -166,43 +155,30 @@ void nimbleLoop(void* pvParameters) {
             String cmd = messageQueue.front();
             messageQueue.pop();
             ossm->ble_click(cmd);
-            pChr->setValue("ok:" + cmd);
-
+            notifyValue(LEGACY_SERVICE_UUID, LEGACY_COMMAND_UUID, "Ok:" + cmd);
             // Trigger LED communication pulse for command processing
             pulseForCommunication();
             vTaskDelay(1);
         }
 
-        int currentTime = millis();
         String fingerprint = ossm->getStateFingerprint();
-        bool stateChanged = fingerprint != lastState;
-        bool timeElapsed = (currentTime - lastMessageTime) > 1000;
-
-        if (!stateChanged && !timeElapsed) {
+        if (fingerprint == lastState) {
             vTaskDelay(100);
             continue;
         }
-        lastMessageTime = currentTime;
         lastState = fingerprint;
 
+        notifyValue(OSSM_MOTION_SERVICE_UUID, SPEED_UUID, String(settings.speed));
+        notifyValue(OSSM_MOTION_SERVICE_UUID, MAXDEP_UUID, String(settings.maxPosition));
+        notifyValue(OSSM_MOTION_SERVICE_UUID, MINDEP_UUID, String(settings.minPosition));
+        notifyValue(OSSM_MOTION_SERVICE_UUID, SENSAT_UUID, String(settings.sensation));
+        notifyValue(OSSM_MOTION_SERVICE_UUID, SENPAT_UUID, String((int)settings.pattern));
+        
         String currentState = ossm->getCurrentState();
-        if (stateChanged) {
-            ESP_LOGD("NIMBLE", "State changed to: %s", currentState.c_str());
-            pChr->setValue(currentState);
-            pChr->notify();
-            // Trigger LED communication pulse for state update
-
-            notifyValue(SPEED_UUID, String(settings.speed));
-            notifyValue(MAXDEP_UUID, String(settings.maxPosition));
-            notifyValue(MINDEP_UUID, String(settings.minPosition));
-            notifyValue(SENSAT_UUID, String(settings.sensation));
-            notifyValue(SENPAT_UUID, String((int)settings.pattern));
-
-            notifyValue(STATE_UUID, ossm->getCurrentStateName());
-            pulseForCommunication();
-        }
-
-        lastState = fingerprint;
+        ESP_LOGD("NIMBLE", "State changed to: %s", currentState.c_str());
+        notifyValue(LEGACY_SERVICE_UUID, STATE_UUID, currentState);
+        // Trigger LED communication pulse for state update
+        pulseForCommunication();
         vTaskDelay(1);
     }
 }
@@ -217,48 +193,46 @@ void initNimble() {
     pServer->setCallbacks(&serverCallbacks);
  
     // Create Service
-    NimBLEService* ossmService = pServer->createService(OSSM_SERVICE_UUID);
+    NimBLEService* ossmConfigService = pServer->createService(OSSM_CONFIG_SERVICE_UUID);
+    NimBLEService* ossmMotionService = pServer->createService(OSSM_MOTION_SERVICE_UUID);
+    NimBLEService* ossmAdvancedService = pServer->createService(OSSM_ADVANCED_SERVICE_UUID);
     NimBLEService* lecacyService = pServer->createService(LEGACY_SERVICE_UUID);
     NimBLEService* infoService = pServer->createService(DEVICE_INFO_SERVICE_UUID);
     NimBLEService* fleshyService = pServer->createService(FLESHY_UUID);
 
     // OSSM Service Items
-    advanced_penetration::initNimble(ossmService);
-    initCharacteristic(ossmService, NimBLEUUID(HOMING_UUID),&homingTypeConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(LENGTH_UUID),&railLengthConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(REHOME_UUID),&ReHomeConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(INVERT_UUID), &directionConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(RENAME_UUID), &renameConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(GPIO_UUID), &gpioCallbacks);
-    initUpdateCharacteristic(ossmService, NimBLEUUID(UPDATE_UUID));
-    initWiFiConfigCharacteristic(ossmService, NimBLEUUID(WIFI_UUID));
-    initCharacteristic(ossmService, NimBLEUUID(MACCEL_UUID),&maxAccelerationConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(MAXRPM_UUID),&motorRPMConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(STEPPR_UUID), &motorStepsConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(PULLEY_UUID), &pulleyTeethConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(BPITCH_UUID), &beltPitchConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(SENSOR_UUID), &sensorLimitConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(SPDCRV_UUID), &speedCurveConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(SPDHOM_UUID), &homingSpeedConfigCallbacks);
+    advanced_penetration::initNimble(ossmAdvancedService);
+    initCharacteristic(ossmConfigService, NimBLEUUID(HOMING_UUID), &homingTypeConfigCallbacks, "Homing Type");
+    initCharacteristic(ossmConfigService, NimBLEUUID(LENGTH_UUID), &railLengthConfigCallbacks, "Rail Length");
+    initCharacteristic(ossmConfigService, NimBLEUUID(REHOME_UUID), &ReHomeConfigCallbacks, "Home Between Modes");
+    initCharacteristic(ossmConfigService, NimBLEUUID(INVERT_UUID), &directionConfigCallbacks, "Rail Direction");
+    initCharacteristic(ossmConfigService, NimBLEUUID(RENAME_UUID), &renameConfigCallbacks, "Rename Device");
+    initCharacteristic(ossmConfigService, NimBLEUUID(GPIO_UUID),   &gpioCallbacks, "GPIO");
+    initUpdateCharacteristic(ossmConfigService, NimBLEUUID(UPDATE_UUID));
+    initWiFiConfigCharacteristic(ossmConfigService, NimBLEUUID(WIFI_UUID));
+    initCharacteristic(ossmConfigService, NimBLEUUID(MACCEL_UUID), &maxAccelerationConfigCallbacks, "Max Acceleration");
+    initCharacteristic(ossmConfigService, NimBLEUUID(MAXRPM_UUID), &motorRPMConfigCallbacks, "Max Motor RPM");
+    initCharacteristic(ossmConfigService, NimBLEUUID(STEPPR_UUID), &motorStepsConfigCallbacks, "Steps Per Revolution");
+    initCharacteristic(ossmConfigService, NimBLEUUID(PULLEY_UUID), &pulleyTeethConfigCallbacks, "Pulley Teeth");
+    initCharacteristic(ossmConfigService, NimBLEUUID(BPITCH_UUID), &beltPitchConfigCallbacks, "Belt Pitch");
+    initCharacteristic(ossmConfigService, NimBLEUUID(SENSOR_UUID), &sensorLimitConfigCallbacks, "Current Sensor Limit");
+    initCharacteristic(ossmConfigService, NimBLEUUID(SPDCRV_UUID), &speedCurveConfigCallbacks, "Speed Curve");
+    initCharacteristic(ossmConfigService, NimBLEUUID(SPDHOM_UUID), &homingSpeedConfigCallbacks, "Homing Speed");
 
     //Shared OSSM Settings
-    initCharacteristic(ossmService, NimBLEUUID(SPEED_UUID), &speedCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(MAXDEP_UUID), &maxDepthCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(MINDEP_UUID), &minDepthCallbacks);
-    initOffsetCharacteristic(ossmService, NimBLEUUID(OFFSET_UUID));
-    initCharacteristic(ossmService, NimBLEUUID(BUFFER_UUID), &latencyCompensationConfigCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(STREAM_UUID), &streamCallbacks);
-
-    initStateCharacteristic(ossmService, NimBLEUUID(STATE_UUID));
-    initCharacteristic(ossmService, NimBLEUUID(SENSAT_UUID), &sensationCallbacks);
-    initCharacteristic(ossmService, NimBLEUUID(SENPAT_UUID), &strokeEnginePatternCallbacks);
-    initSimplePatternCharacteristic(ossmService, NimBLEUUID(SENPTL_UUID));
+    initFloatCharacteristic(ossmMotionService, NimBLEUUID(SPEED_UUID),  &speedCallbacks, "Speed", 0);
+    initFloatCharacteristic(ossmMotionService, NimBLEUUID(MAXDEP_UUID), &maxDepthCallbacks, "Max Depth", 1);
+    initFloatCharacteristic(ossmMotionService, NimBLEUUID(MINDEP_UUID), &minDepthCallbacks, "Min Depth", 2);
+    initFloatCharacteristic(ossmMotionService, NimBLEUUID(SENSAT_UUID), &sensationCallbacks, "Sensation", 3);
+    initPatternCommandCharacteristic(ossmMotionService, NimBLEUUID(SENPAT_UUID), &strokeEnginePatternCallbacks);
+    initSimplePatternCharacteristic(ossmMotionService, NimBLEUUID(SENPTL_UUID));
+    initStreamCharacteristic(ossmMotionService, NimBLEUUID(STREAM_UUID), &streamCallbacks, "Stream Input", 50);
 
     // Lecacy Service Items
     initCommandCharacteristic(lecacyService, NimBLEUUID(LEGACY_COMMAND_UUID));
-    initStateCharacteristic(lecacyService, NimBLEUUID(CHARACTERISTIC_STATE_UUID));
-    initCharacteristic(lecacyService, NimBLEUUID(SPEED_KNOB_UUID), &speedKnobConfigCallbacks);
-    initCharacteristic(lecacyService, NimBLEUUID(BUFFER_UUID),&latencyCompensationConfigCallbacks);
+    initStateCharacteristic(lecacyService, NimBLEUUID(STATE_UUID));
+    initCharacteristic(lecacyService, NimBLEUUID(SPEED_KNOB_UUID), &speedKnobConfigCallbacks, "");
+    initCharacteristic(lecacyService, NimBLEUUID(BUFFER_UUID),&latencyCompensationConfigCallbacks, "");
     initPatternsCharacteristic(lecacyService, NimBLEUUID(PATTERN_UUID));
     initPatternDataCharacteristic(lecacyService, NimBLEUUID(PATTERN_DATA_UUID));
 
@@ -275,7 +249,9 @@ void initNimble() {
     // Update advertising to include new services
     NimBLEAdvertising* advert = NimBLEDevice::getAdvertising();
     advert->setName(UserConfig::getDeviceName());
-    advert->addServiceUUID(ossmService->getUUID());
+    advert->addServiceUUID(ossmMotionService->getUUID());
+    advert->addServiceUUID(ossmConfigService->getUUID());
+    advert->addServiceUUID(ossmAdvancedService->getUUID());
     advert->addServiceUUID(lecacyService->getUUID());
     advert->addServiceUUID(infoService->getUUID());
     advert->addServiceUUID(fleshyService->getUUID());

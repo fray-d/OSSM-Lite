@@ -103,17 +103,11 @@ class LatencyCompensationConfigCallbacks : public NimBLECharacteristicCallbacks 
 } inline latencyCompensationConfigCallbacks;
 
 class RenameConfigCallbacks : public NimBLECharacteristicCallbacks {
-    int lastPresetCommand = millis();
-
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
-        int currentTime = millis();
-        if (currentTime - lastPresetCommand > 1000) {
-            String value = pCharacteristic->getValue();
-            value = value.substring(0, 8);
-            UserConfig::setDeviceName(value);
-        }
-        lastPresetCommand = currentTime;
-        pulseForCommunication();
+        String value = pCharacteristic->getValue();
+        value = value.substring(0, 8);
+        UserConfig::setDeviceName(value);
+        //reboots
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic,NimBLEConnInfo& connInfo) override {
@@ -136,7 +130,6 @@ class DirectionConfigCallbacks : public NimBLECharacteristicCallbacks {
             ESP_LOGW("NIMBLE", "Invalid direction config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
-        pulseForCommunication();
     }
 
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -149,6 +142,7 @@ class HomingTypeConfigCallbacks : public NimBLECharacteristicCallbacks {
         std::string value = pCharacteristic->getValue();
         UserConfig::HomingType type = static_cast<UserConfig::HomingType>(std::stoi(value)); 
         UserConfig::setHomingType(type);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -160,6 +154,7 @@ class RailLengthConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setRailLength(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -171,6 +166,7 @@ class SensorLimitConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setSensorLimit(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -182,6 +178,7 @@ class SpeedCurveConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setSpeedCurve(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -202,6 +199,7 @@ class ReHomeConfigCallbacks : public NimBLECharacteristicCallbacks {
             ESP_LOGW("NIMBLE", "Invalid home between modes config value: %s",configValue.c_str());
             pCharacteristic->setValue("error:invalid_value");
         }
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -213,6 +211,7 @@ class MotorRPMConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setMotorRPM(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -224,6 +223,7 @@ class MotorStepsConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setMotorStepsPR(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -235,6 +235,7 @@ class PulleyTeethConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setPulleyTeeth(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -246,6 +247,7 @@ class BeltPitchConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setBeltPitch(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -257,6 +259,7 @@ class MaxAccelerationConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setMaxAcceleration(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
@@ -268,6 +271,7 @@ class HomingSpeedConfigCallbacks : public NimBLECharacteristicCallbacks {
     void onWrite(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {
         float value = std::stof(pCharacteristic->getValue());
         UserConfig::setHomingSpeed(value);
+        pCharacteristic->notify();
         pulseForCommunication();
     }
     void onRead(NimBLECharacteristic* pCharacteristic, NimBLEConnInfo& connInfo) override {

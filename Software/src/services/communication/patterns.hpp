@@ -107,6 +107,8 @@ inline NimBLECharacteristic* initSimplePatternCharacteristic(NimBLEService* pSer
     int patternCount = sizeof(ui::strings::strokeEngineNames) /
                         sizeof(ui::strings::strokeEngineNames[0]);
     pChar->setValue(String(patternCount));
+    NimBLEDescriptor* pDesc = pChar->createDescriptor("2901", NIMBLE_PROPERTY::READ);
+    pDesc->setValue("Pattern Options");
     return pChar;
 }
 
